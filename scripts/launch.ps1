@@ -20,6 +20,7 @@ foreach ($port in @(13306,14445)) {
 }
 New-Item logs -ItemType Directory -Force | Out-Null
 New-Item data -ItemType Directory -Force | Out-Null
+New-Item data/client-cache -ItemType Directory -Force | Out-Null
 $lock = $null
 $dbProcess = $null
 $gameServer = $null

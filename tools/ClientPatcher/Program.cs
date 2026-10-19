@@ -19,6 +19,12 @@ update.Body = new MethodBody(update);
 il = update.Body.GetILProcessor();
 il.Emit(OpCodes.Call, load);
 il.Emit(OpCodes.Ret);
+// Keep this test's cached server/account data separate from other Dragonboy installs.
+var cache = types.Single(t => t.Name == "Rms").Methods.Single(m => m.Name == "GetiPhoneDocumentsPath" && m.Parameters.Count == 0);
+cache.Body = new MethodBody(cache);
+il = cache.Body.GetILProcessor();
+il.Emit(OpCodes.Ldstr, "data/client-cache");
+il.Emit(OpCodes.Ret);
 assembly.Write(args[1]);
 using var verified = AssemblyDefinition.ReadAssembly(args[1]);
 var result = verified.MainModule.Types.Single(t => t.Name == "ServerListScreen")
