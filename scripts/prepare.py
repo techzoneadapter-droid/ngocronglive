@@ -23,7 +23,7 @@ def prepare(upstream, output):
         source = re.sub(r'^import jdk\.nashorn\.[^\n]+\n', '', source, flags=re.M)
         p.write_text(source, encoding='utf-8')
     db = server / 'src/server/DBService.java'
-    source = db.read_text()
+    source = db.read_text(encoding='utf-8')
     source = source.replace('"jdbc:mysql://127.0.0.1:3306/server"',
         'System.getenv().getOrDefault("NRO_DB_URL", "jdbc:mysql://127.0.0.1:13306/server")')
     source = source.replace('String user = "root";', 'String user = "nro";')
@@ -31,18 +31,18 @@ def prepare(upstream, output):
         'String password = System.getenv("NRO_DB_PASSWORD");')
     db.write_text(source, encoding='utf-8')
     manager = server / 'src/server/Manager.java'
-    source = manager.read_text().replace('System.out.println("config: " + key + "-" + value);',
+    source = manager.read_text(encoding='utf-8').replace('System.out.println("config: " + key + "-" + value);',
         'System.out.println("config: " + key + "-" + (key.contains("password") ? "[redacted]" : value));')
     source = source.replace('this.loadDataBase();',
         'this.mysql_user = "nro";\n        this.mysql_pass = System.getenv("NRO_DB_PASSWORD");\n        this.loadDataBase();')
     manager.write_text(source, encoding='utf-8')
     # The upstream listener ignores host; force loopback for this local-only package.
     entry = server / 'src/server/Server.java'
-    source = entry.read_text().replace('new ServerSocket(Server.manager.port)',
+    source = entry.read_text(encoding='utf-8').replace('new ServerSocket(Server.manager.port)',
         'new ServerSocket(Server.manager.port, 50, java.net.InetAddress.getByName("127.0.0.1"))')
     entry.write_text(source, encoding='utf-8')
     controller = server / 'src/server/Controller.java'
-    source = controller.read_text().replace('Util.log("user " + user + " - pass " + pass);',
+    source = controller.read_text(encoding='utf-8').replace('Util.log("user " + user + " - pass " + pass);',
         'Util.log("Login attempt received");')
     controller.write_text(source, encoding='utf-8')
     (server / 'ninja.conf').write_text('''# Local Windows test only
@@ -62,7 +62,7 @@ version-Item: 6
     overlay = Path(__file__).resolve().parents[1] / 'server-overlay'
     shutil.copytree(overlay, server / 'src', dirs_exist_ok=True)
     controller = server / 'src/server/Controller.java'
-    source = controller.read_text().replace('session.player.timer.cancel();',
+    source = controller.read_text(encoding='utf-8').replace('session.player.timer.cancel();',
         'session.player.timer.cancel();\n            try { real.player.LocalPlayerStore.save(session.player); }\n            catch (Exception e) { System.err.println("PLAYER SAVE FAILED"); e.printStackTrace(); }')
     controller.write_text(source, encoding='utf-8')
     # Keep static game data, remove all upstream account/character/clan records.
