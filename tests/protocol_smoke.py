@@ -1,4 +1,5 @@
 """Exercise the actual socket handshake and authentication (not just an open port)."""
+import io
 import json
 import socket
 import struct
@@ -74,7 +75,26 @@ def run(credentials_file):
                 for _ in range(50):
                     created_code, created_data = receive()
                     if created_code == -30 and created_data and created_data[0] == 0:
-                        print('PASS: new character created and full player-state packet received')
+                        state = io.BytesIO(created_data)
+                        def number(fmt):
+                            size = struct.calcsize(fmt)
+                            return struct.unpack(fmt, state.read(size))[0]
+                        assert number('>B') == 0
+                        assert number('>i') > 0
+                        state.read(4)  # task, gender, head
+                        name = state.read(number('>H')).decode('utf-8')
+                        assert name == 'pcprobe'
+                        state.read(2)  # PK fields
+                        assert number('>q') == 1200
+                        state.read(5)  # HP/MP buffs, class
+                        skills = number('>B')
+                        assert skills >= 1
+                        state.read(skills * 2)
+                        assert number('>q') == 20000, 'Windows client expects 64-bit gold'
+                        assert number('>i') == 0, 'Locked gems field mismatch'
+                        assert number('>i') == 20, 'Gems field mismatch'
+                        assert number('>B') == 6, 'Inventory framing mismatch'
+                        print('PASS: new character and player-state layout match the Windows client (gold, gems, starter skill, body slots)')
                         return
                 raise AssertionError('Character creation did not deliver player state')
         raise AssertionError('Authentication did not reach character creation')

@@ -85,6 +85,12 @@ version-Item: 6
                     ps.executeUpdate();
                     check = true;""")
     dao.write_text(source, encoding='utf-8')
+    service = server / 'src/server/Service.java'
+    source = service.read_text(encoding='utf-8').replace('m.writer().writeInt(p.vang);', 'm.writer().writeLong(p.vang);')
+    source = source.replace('msg.writer().writeInt(pl.vang);', 'msg.writer().writeLong(pl.vang);')
+    source = source.replace('msg.writer().writeInt(pl.ngoc);\n            msg.writer().writeInt(pl.ngocKhoa);',
+        'msg.writer().writeInt(pl.ngocKhoa);\n            msg.writer().writeInt(pl.ngoc);')
+    service.write_text(source, encoding='utf-8')
     # Keep static game data, remove all upstream account/character/clan records.
     sql = (upstream / 'NgocRongOnline-Server/server.sql').read_text(encoding='utf-8-sig')
     private_tables = ['account', 'clan', 'clan_member', 'clan_message', 'player',
