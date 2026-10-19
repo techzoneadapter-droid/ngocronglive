@@ -1,24 +1,37 @@
 # Trạng thái kiểm chứng
 
-## Đã kiểm tra tại môi trường phát triển
+Build Windows được kiểm tra: `b32e7f3351161768a6a943581a1e4cda5de214bf`.
+Run: https://github.com/techzoneadapter-droid/ngocronglive/actions/runs/39297074557
 
-- Repo upstream có server Java, SQL seed, Unity project 2021.3.16f1 và một Windows player cũ.
-- 67 file Java upstream biên dịch thành công bằng Eclipse Java Compiler, target Java 8, trên Java 17 sau khi bỏ các Nashorn import không dùng.
-- Kiểm tra tĩnh thấy client dùng server list bên ngoài và DBService có kết nối DB cố định; script tích hợp thay thành môi trường local.
+## Đạt kiểm tra tự động trên Windows
 
-## Kiểm tra Windows tự động
+- Biên dịch server Java và chỉnh client sang localhost; cache riêng, không dùng chung thư mục dữ liệu client khác.
+- Khởi tạo MariaDB riêng, import dữ liệu tĩnh và tạo tài khoản thử mới.
+- Đọc đúng cache kỹ năng Ngọc Rồng; kiểm tra kỹ năng đầu tiên cho ba hệ (ID 0, 14, 28).
+- Lưu các giá trị nhân vật và hành trang thưa vào database; đọc lại qua kết nối độc lập.
+- Socket handshake và đăng nhập tài khoản vừa tạo tới màn hình tạo nhân vật.
+- Tạo nhân vật qua giao thức và nhận gói trạng thái nhân vật.
+- Giải mã phần đầu gói theo client Windows: tên, sức mạnh, kỹ năng, vàng 64 bit, thứ tự ngọc và số ô trang bị.
 
-Kết quả có thẩm quyền nằm ở lần chạy Actions tương ứng commit. Không coi cấu hình workflow là bằng chứng đã chạy thành công.
+## Các sửa đổi so với source gốc
 
-Smoke test chỉ chứng minh database khởi tạo và game server mở cổng. Chưa chứng minh client GUI đăng nhập, tạo nhân vật hoặc gameplay.
+- Loại import Nashorn không dùng để hỗ trợ JDK mới; dùng UTF-8 khi xử lý mã tiếng Việt.
+- Thay driver MySQL cũ bằng MariaDB Connector/J; dùng next() cho các kết quả truy vấn mới.
+- Tách database local ở cổng 13306 và chỉ bind game server vào 127.0.0.1:14445.
+- Loại các bản ghi tài khoản/nhân vật upstream khỏi seed.
+- Bổ sung LocalPlayerStore lưu các cột JSON được Player.setup đọc và gọi khi logout.
+- Mở rộng cột hành trang, giữ mặc định mảng rỗng.
+- Sửa đọc cache kỹ năng, đăng ký kỹ năng và dữ liệu khởi đầu khi tạo nhân vật.
+- Sửa kích thước vàng và thứ tự các trường ngọc trong gói trạng thái cho client đi kèm.
+- Không ghi mật khẩu đăng nhập vào log.
 
-## Còn phải hoàn thành trước khi gọi bản PC hoàn chỉnh
+## Còn phải nghiệm thu trước khi gọi bản game hoàn chỉnh
 
-- Chạy client GUI, đăng nhập bằng tài khoản tạo riêng và tạo đủ hệ nhân vật cần dùng.
-- Kiểm tra map/quái, kỹ năng, nhặt đồ và NPC/shop phù hợp phiên bản client.
-- Đã bổ sung LocalPlayerStore lưu các cột JSON mà Player.setup đọc, gọi khi logout; có kiểm thử tích hợp dữ liệu/slot đồ qua kết nối database mới. Kết quả thực thi xem Actions; vẫn phải kiểm tra đăng nhập lại trong GUI và tình huống crash.
-- Kiểm tra thoát và đăng nhập lại, reconnect, đổi map và dừng server an toàn.
-- Đối chiếu quyền sử dụng code/tài nguyên trước khi phát hành rộng.
-- Chưa có kiểm thử chơi nhiều máy; bản hiện tại cố ý chỉ bind loopback.
+- Chạy GUI trên PC người dùng, kiểm tra hình ảnh, âm thanh, điều khiển và tải tài nguyên.
+- Chơi thực tế: map/quái, kỹ năng, nhặt đồ, NPC/shop và nhiệm vụ.
+- Thoát rồi đăng nhập lại trong GUI, reconnect và tình huống app/server bị đóng đột ngột.
+- Chưa kiểm tra chơi nhiều máy; bản này cố ý chỉ chạy local.
+- Chưa build lại toàn bộ Unity player từ Unity project; dùng player binary upstream và thay assembly chọn server/cache.
+- Kiểm tra quyền sử dụng code/tài nguyên trước khi phân phối rộng.
 
-Đây là checkpoint phát triển và gói thử khi CI đạt, không phải tuyên bố đáp ứng toàn bộ mục tiêu sản phẩm.
+Đây là bản PC để kiểm thử local, chưa phải bản nghiệm thu toàn bộ gameplay hoặc server vận hành lâu dài. Các commit chỉ sửa tài liệu sau build không thay đổi gói đã kiểm tra.

@@ -2,7 +2,9 @@
 
 Dự án dựng bản PC để kiểm thử local trước; Android/iOS triển khai sau. Mục tiêu sử dụng: tải ZIP, giải nén, chạy PLAY.cmd; không cần launcher cửa hàng.
 
-**Trạng thái hiện tại: bản phát triển, chưa nghiệm thu gameplay.** Chưa có bản phát hành hoàn chỉnh. Xem [docs/STATUS.md](docs/STATUS.md) trước khi thử.
+**Trạng thái: bản PC thử nghiệm local.** Build Windows đã vượt kiểm tra kỹ năng, database, lưu dữ liệu, đăng nhập, tạo nhân vật và bố cục gói trạng thái nhân vật. Giao diện/chiến đấu chưa được nghiệm thu trực tiếp. Xem [docs/STATUS.md](docs/STATUS.md).
+
+[Bản build PC để tải thử](https://github.com/techzoneadapter-droid/ngocronglive/actions/runs/39297074557) → Artifacts → `NgocRongLive-PC-local-test`.
 
 ## Tải bản thử khi build đạt
 
