@@ -65,6 +65,13 @@ try {
     $env:NRO_DB_PASSWORD = $credentials.database
     $env:NRO_DB_URL = 'jdbc:mysql://127.0.0.1:13306/server'
     $java = Join-Path $root 'runtime/java/bin/java.exe'
+    if ($SmokeTest) {
+        Push-Location (Join-Path $root 'server')
+        try {
+            & $java '-Dfile.encoding=UTF-8' '-cp' 'classes;lib/*' 'real.player.LocalPlayerStore' '--test-isolated-db'
+            if ($LASTEXITCODE) { throw 'Persistence integration test failed' }
+        } finally { Pop-Location }
+    }
     $gameServer = Start-Process $java -WorkingDirectory (Join-Path $root 'server') -ArgumentList @('-Dfile.encoding=UTF-8','-Xms128m','-Xmx768m','-cp','"classes;lib/*"','server.Server') -PassThru -WindowStyle Hidden -RedirectStandardOutput logs/server.log -RedirectStandardError logs/server-error.log
     Wait-Port 14445 $gameServer
     if ($SmokeTest) {

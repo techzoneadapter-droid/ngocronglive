@@ -37,9 +37,11 @@ $dbBase = 'https://archive.mariadb.org/mariadb-10.11.11/winx64-packages/'
 $dbName = 'mariadb-10.11.11-winx64.zip'
 Invoke-WebRequest ($dbBase + $dbName) -OutFile cache/mariadb.zip
 $sums = (Invoke-WebRequest ($dbBase + 'sha256sums.txt')).Content
-$line = @($sums -split "`n" | Where-Object { $_ -match ('\s\*?' + [regex]::Escape($dbName) + '\s*$') })
+if ($sums -is [byte[]]) { $sums = [Text.Encoding]::UTF8.GetString($sums) }
+$line = @($sums -split "`n" | Where-Object { $_ -match [regex]::Escape($dbName) })
 if ($line.Count -ne 1) { throw 'Missing vendor database checksum' }
-$expected = ($line[0] -split '\s+')[0]
+$expected = [regex]::Match($line[0], '[a-fA-F0-9]{64}').Value
+if ($expected.Length -ne 64) { throw 'Invalid vendor database checksum format' }
 if ((Get-FileHash cache/mariadb.zip -Algorithm SHA256).Hash -ne $expected) { throw 'Database checksum mismatch' }
 Expand-Archive cache/mariadb.zip "$out/runtime/db-unpack"
 $db = @(Get-ChildItem "$out/runtime/db-unpack" -Directory)
