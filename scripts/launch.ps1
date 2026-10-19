@@ -69,6 +69,8 @@ try {
     if ($SmokeTest) {
         Push-Location (Join-Path $root 'server')
         try {
+            & $java '-Dfile.encoding=UTF-8' '-cp' 'classes;lib/*' 'real.skill.SkillSmoke'
+            if ($LASTEXITCODE) { throw 'Skill-data compatibility test failed' }
             & $java '-Dfile.encoding=UTF-8' '-cp' 'classes;lib/*' 'real.player.LocalPlayerStore' '--test-isolated-db'
             if ($LASTEXITCODE) { throw 'Persistence integration test failed' }
         } finally { Pop-Location }
@@ -83,7 +85,7 @@ try {
     } else {
         "Tai khoan: tester`r`nMat khau: $($credentials.player)" | Set-Content TAI-KHOAN.txt -Encoding utf8
         Write-Host 'Tai khoan nam trong TAI-KHOAN.txt. Thoat game binh thuong truoc khi dong cua so nay.'
-        $client = Start-Process (Join-Path $root 'client/Dragonboy_vn_v230.exe') -PassThru
+        $client = Start-Process (Join-Path $root 'client/Dragonboy_vn_v230.exe') -WorkingDirectory $root -PassThru
         $client.WaitForExit()
         Start-Sleep -Seconds 3
     }

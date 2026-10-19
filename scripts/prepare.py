@@ -67,7 +67,7 @@ version-Item: 6
         'session.player.timer.cancel();\n            try { real.player.LocalPlayerStore.save(session.player); }\n            catch (Exception e) { System.err.println("PLAYER SAVE FAILED"); e.printStackTrace(); }')
     controller.write_text(source, encoding='utf-8')
     skills = server / 'src/real/skill/SkillData.java'
-    source = skills.read_text(encoding='utf-8').replace('//Skills.add(nClasss[j].skillTemplates[k].skills[l]);',
+    source = skills.read_text(encoding='utf-8').replace('data/NRskill_v5', 'res/cache/NRskill').replace('sOptionTemplates[i].type = (int) dis.readByte();', '').replace('//Skills.add(nClasss[j].skillTemplates[k].skills[l]);',
         'Skills.add(nClasss[j].skillTemplates[k].skills[l]);')
     skills.write_text(source, encoding='utf-8')
     registry = server / 'src/real/skill/Skills.java'
