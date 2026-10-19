@@ -1,0 +1,29 @@
+name: Reproduce Windows PowerShell 5 Unicode path
+on:
+  push:
+    paths: [.github/workflows/windows-compat.yml]
+  workflow_dispatch:
+permissions:
+  actions: read
+  contents: read
+jobs:
+  reproduce:
+    runs-on: windows-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: NgocRongLive-PC-local-test
+          run-id: 39297074557
+          github-token: ${{ github.token }}
+          path: 'Tài liệu/Downloads/NgocRongLive-PC-local-test'
+      - name: Run original shipped launcher using Windows PowerShell 5
+        shell: powershell
+        run: |
+          $path = '.\T' + [char]0x00E0 + 'i li' + [char]0x1EC7 + 'u\Downloads\NgocRongLive-PC-local-test\launch.ps1'
+          & $path -SmokeTest
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: unicode-powershell5-diagnostics
+          path: 'Tài liệu/Downloads/NgocRongLive-PC-local-test/logs/'
