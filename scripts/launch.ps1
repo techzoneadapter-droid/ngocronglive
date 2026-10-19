@@ -3,9 +3,21 @@ $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 $root = $PSScriptRoot
 Set-Location $root
-function Wait-Port([int]$Port, $Process) {
+function Wait-Port([int]$Port, $Process, [string]$ErrorLog) {
     for ($i=0; $i -lt 60; $i++) {
-        if ($Process.HasExited) { throw "Process exited before port $Port opened. See logs." }
+        if ($Process.HasExited) {
+            $detail = ''
+            if ($ErrorLog -and (Test-Path $ErrorLog)) {
+                $detail = (Get-Content -LiteralPath $ErrorLog -Encoding UTF8 -Tail 35 -ErrorAction SilentlyContinue) -join "`n"
+            }
+            if (!$detail -and $ErrorLog) {
+                $standardLog = $ErrorLog.Replace('-error.log', '.log')
+                if (Test-Path $standardLog) {
+                    $detail = (Get-Content -LiteralPath $standardLog -Encoding UTF8 -Tail 35 -ErrorAction SilentlyContinue) -join "`n"
+                }
+            }
+            throw "Process exited before port $Port opened (exit $($Process.ExitCode)). Log: $ErrorLog`n$detail"
+        }
         $tcp = New-Object Net.Sockets.TcpClient
         try { $tcp.Connect('127.0.0.1', $Port); return } catch {} finally { $tcp.Dispose() }
         Start-Sleep -Milliseconds 500
@@ -45,7 +57,7 @@ try {
     if (!(Test-Path $mysqld)) { $mysqld = Join-Path $bin 'mysqld.exe' }
     $dbArgs = @('--no-defaults', "--basedir=`"$dbHome`"", "--datadir=`"$data`"", '--port=13306', '--bind-address=127.0.0.1', '--sql-mode=', '--console')
     $dbProcess = Start-Process $mysqld -ArgumentList $dbArgs -PassThru -WindowStyle Hidden -RedirectStandardOutput logs/db.log -RedirectStandardError logs/db-error.log
-    Wait-Port 13306 $dbProcess
+    Wait-Port 13306 $dbProcess (Join-Path $root 'logs/db-error.log')
     $cnf = "[client]`nuser=root`npassword=$($credentials.root)`nhost=127.0.0.1`nport=13306`nprotocol=tcp`n"
     [IO.File]::WriteAllText((Join-Path $root 'data/client.ini'), $cnf)
     $mysql = Join-Path $bin 'mariadb.exe'
@@ -76,7 +88,7 @@ try {
         } finally { Pop-Location }
     }
     $gameServer = Start-Process $java -WorkingDirectory (Join-Path $root 'server') -ArgumentList @('-Dfile.encoding=UTF-8','-Xms128m','-Xmx768m','-cp','"classes;lib/*"','server.Server') -PassThru -WindowStyle Hidden -RedirectStandardOutput logs/server.log -RedirectStandardError logs/server-error.log
-    Wait-Port 14445 $gameServer
+    Wait-Port 14445 $gameServer (Join-Path $root 'logs/server-error.log')
     if ($SmokeTest) {
         & python (Join-Path $root 'protocol_smoke.py') (Join-Path $root 'data/credentials.json')
         if ($LASTEXITCODE) { throw 'Socket authentication test failed' }
