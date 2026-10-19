@@ -75,6 +75,8 @@ try {
     $gameServer = Start-Process $java -WorkingDirectory (Join-Path $root 'server') -ArgumentList @('-Dfile.encoding=UTF-8','-Xms128m','-Xmx768m','-cp','"classes;lib/*"','server.Server') -PassThru -WindowStyle Hidden -RedirectStandardOutput logs/server.log -RedirectStandardError logs/server-error.log
     Wait-Port 14445 $gameServer
     if ($SmokeTest) {
+        & python (Join-Path $root 'protocol_smoke.py') (Join-Path $root 'data/credentials.json')
+        if ($LASTEXITCODE) { throw 'Socket authentication test failed' }
         Write-Host 'PASS: isolated database seeded; game server listening on 127.0.0.1:14445.'
         Write-Host 'This does not verify graphical login, character creation or gameplay.'
     } else {

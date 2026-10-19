@@ -48,6 +48,7 @@ $db = @(Get-ChildItem "$out/runtime/db-unpack" -Directory)
 if ($db.Count -ne 1) { throw 'Unexpected MariaDB archive layout' }
 Move-Item $db[0].FullName "$out/runtime/mariadb"
 Remove-Item "$out/runtime/db-unpack" -Recurse
+Copy-Item tests/protocol_smoke.py "$out/protocol_smoke.py"
 Copy-Item scripts/launch.ps1 "$out/launch.ps1"
 Copy-Item scripts/PLAY.cmd "$out/PLAY.cmd"
 Copy-Item README.md "$out/README.md"
