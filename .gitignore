@@ -1,0 +1,10 @@
+/upstream/
+/build/
+/dist/
+/runtime/
+/data/
+/logs/
+**/bin/
+**/obj/
+*.local.json
+__pycache__/
