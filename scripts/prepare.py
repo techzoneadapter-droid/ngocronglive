@@ -66,6 +66,25 @@ version-Item: 6
     source = controller.read_text(encoding='utf-8').replace('session.player.timer.cancel();',
         'session.player.timer.cancel();\n            try { real.player.LocalPlayerStore.save(session.player); }\n            catch (Exception e) { System.err.println("PLAYER SAVE FAILED"); e.printStackTrace(); }')
     controller.write_text(source, encoding='utf-8')
+    skills = server / 'src/real/skill/SkillData.java'
+    source = skills.read_text(encoding='utf-8').replace('//Skills.add(nClasss[j].skillTemplates[k].skills[l]);',
+        'Skills.add(nClasss[j].skillTemplates[k].skills[l]);')
+    skills.write_text(source, encoding='utf-8')
+    registry = server / 'src/real/skill/Skills.java'
+    source = registry.read_text(encoding='utf-8').replace('Skills.skills.add(skill.skillId, skill);',
+        'while (Skills.skills.size() <= skill.skillId) Skills.skills.add(null);\n        Skills.skills.set(skill.skillId, skill);')
+    registry.write_text(source, encoding='utf-8')
+    dao = server / 'src/real/player/PlayerDAO.java'
+    source = dao.read_text(encoding='utf-8').replace('check = true;', """ps = conn.prepareStatement("UPDATE player SET hp_goc=?,mp_goc=?,dame_goc=?,def_goc=0,crit_goc=0,skill=? WHERE id=?");
+                    ps.setInt(1, gender == 0 ? 200 : 100);
+                    ps.setInt(2, gender == 1 ? 200 : 100);
+                    ps.setInt(3, gender == 2 ? 15 : 12);
+                    short starter = SkillData.nClasss[gender].skillTemplates[0].skills[0].skillId;
+                    ps.setString(4, "[{" + (char)34 + "id" + (char)34 + ":" + starter + "," + (char)34 + "point" + (char)34 + ":1}]");
+                    ps.setInt(5, playerId);
+                    ps.executeUpdate();
+                    check = true;""")
+    dao.write_text(source, encoding='utf-8')
     # Keep static game data, remove all upstream account/character/clan records.
     sql = (upstream / 'NgocRongOnline-Server/server.sql').read_text(encoding='utf-8-sig')
     private_tables = ['account', 'clan', 'clan_member', 'clan_message', 'player',

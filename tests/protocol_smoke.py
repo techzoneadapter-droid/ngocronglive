@@ -70,7 +70,13 @@ def run(credentials_file):
             code, _ = receive()
             if code == 2:
                 print('PASS: handshake and fresh test-account authentication reached character creation')
-                return
+                send(-28, bytes([2]) + utf('pcprobe') + bytes([0, 64]))
+                for _ in range(50):
+                    created_code, created_data = receive()
+                    if created_code == -30 and created_data and created_data[0] == 0:
+                        print('PASS: new character created and full player-state packet received')
+                        return
+                raise AssertionError('Character creation did not deliver player state')
         raise AssertionError('Authentication did not reach character creation')
 
 
