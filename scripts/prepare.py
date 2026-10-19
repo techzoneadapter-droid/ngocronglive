@@ -92,7 +92,7 @@ version-Item: 6
     for table in private_tables:
         sql = re.sub(r'INSERT INTO `' + re.escape(table) + r'`[\s\S]*?;\s*', '', sql)
     # Sparse JSON inventories can exceed the upstream 999-character field limit.
-    sql += '\nALTER TABLE player MODIFY itembag MEDIUMTEXT NOT NULL, MODIFY itembox MEDIUMTEXT NOT NULL, MODIFY itembody MEDIUMTEXT NOT NULL, MODIFY skill TEXT NOT NULL;\n'
+    sql += '\nALTER TABLE player MODIFY itembag MEDIUMTEXT NOT NULL DEFAULT \'[]\', MODIFY itembox MEDIUMTEXT NOT NULL DEFAULT \'[]\', MODIFY itembody MEDIUMTEXT NOT NULL DEFAULT \'[]\', MODIFY skill TEXT NOT NULL DEFAULT \'[]\';\n'
     (server / 'seed.sql').write_text(sql, encoding='utf-8')
     shutil.copytree(upstream / 'Client/Dragonboy_vn_v230', output / 'client')
     print('Prepared', output, 'at upstream', PIN)
