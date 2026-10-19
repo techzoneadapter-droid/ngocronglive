@@ -12,6 +12,9 @@ python scripts/prepare.py upstream build/NgocRongLive-PC
 if ($LASTEXITCODE) { throw 'Preparation failed' }
 $out = Join-Path $root 'build/NgocRongLive-PC'
 $server = Join-Path $out 'server'
+# Replace the legacy MySQL 5.1.23 driver; its collation mapping fails with modern MariaDB.
+Remove-Item "$server/lib/mysql-connector*.jar"
+Invoke-WebRequest 'https://repo.maven.apache.org/maven2/org/mariadb/jdbc/mariadb-java-client/3.5.3/mariadb-java-client-3.5.3.jar' -OutFile "$server/lib/mariadb-java-client-3.5.3.jar"
 Push-Location $server
 try {
     $sources = @(Get-ChildItem src -Recurse -Filter '*.java' | ForEach-Object { '"' + $_.FullName.Replace('\','/') + '"' })

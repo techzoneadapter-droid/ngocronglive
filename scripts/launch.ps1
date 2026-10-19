@@ -64,7 +64,7 @@ try {
         'ready' | Set-Content data/initialized
     }
     $env:NRO_DB_PASSWORD = $credentials.database
-    $env:NRO_DB_URL = 'jdbc:mysql://127.0.0.1:13306/server'
+    $env:NRO_DB_URL = 'jdbc:mariadb://127.0.0.1:13306/server'
     $java = Join-Path $root 'runtime/java/bin/java.exe'
     if ($SmokeTest) {
         Push-Location (Join-Path $root 'server')

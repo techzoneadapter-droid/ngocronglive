@@ -20,12 +20,13 @@ def prepare(upstream, output):
     for p in (server / 'src').rglob('*.java'):
         source = p.read_text(encoding='utf-8-sig')
         # These unused imports refer to Nashorn internals removed from modern JDKs.
+        source = source.replace('jdbc:mysql:', 'jdbc:mariadb:').replace('com.mysql.jdbc.Driver', 'org.mariadb.jdbc.Driver').replace('.first()', '.next()')
         source = re.sub(r'^import jdk\.nashorn\.[^\n]+\n', '', source, flags=re.M)
         p.write_text(source, encoding='utf-8')
     db = server / 'src/server/DBService.java'
     source = db.read_text(encoding='utf-8')
-    source = source.replace('"jdbc:mysql://127.0.0.1:3306/server"',
-        'System.getenv().getOrDefault("NRO_DB_URL", "jdbc:mysql://127.0.0.1:13306/server")')
+    source = source.replace('"jdbc:mariadb://127.0.0.1:3306/server"',
+        'System.getenv().getOrDefault("NRO_DB_URL", "jdbc:mariadb://127.0.0.1:13306/server")')
     source = source.replace('String user = "root";', 'String user = "nro";')
     source = source.replace('String password = "";',
         'String password = System.getenv("NRO_DB_PASSWORD");')
