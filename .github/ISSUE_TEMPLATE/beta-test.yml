@@ -1,0 +1,36 @@
+name: Báo lỗi chơi thử
+description: Gửi lỗi của bản PC beta cùng bước tái hiện và log đã kiểm tra.
+title: '[Beta] '
+body:
+  - type: markdown
+    attributes:
+      value: 'Chạy REPORT.cmd để gom log. Kiểm tra file trước khi đính kèm: issue công khai. Không gửi mật khẩu, mã nạp, local-data hay file cấu hình server.'
+  - type: input
+    id: version
+    attributes:
+      label: Phiên bản / build
+      description: Xem build-info.json trong thư mục chơi.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Các bước gây lỗi
+      placeholder: 'Đăng nhập → tới map… → nói chuyện NPC… → chọn…'
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Mong đợi và kết quả thực tế
+    validations:
+      required: true
+  - type: input
+    id: context
+    attributes:
+      label: Hành tinh, map, NPC, tên nhiệm vụ hoặc phím
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Ảnh / video / log
+      description: Kéo ZIP tạo bởi REPORT.cmd vào đây. Tên nhân vật chỉ cần cung cấp nếu bạn đồng ý công khai.
