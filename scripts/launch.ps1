@@ -49,12 +49,30 @@ New-Item data/client-cache -ItemType Directory -Force | Out-Null
 $lock = $null
 $dbProcess = $null
 $gameServer = $null
+$temporaryJava = $null
 try {
     $java = Join-Path $root 'runtime/java/bin/java.exe'
     foreach ($relative in @('bin/java.exe', 'bin/java.dll', 'bin/server/jvm.dll', 'lib/modules')) {
         if (!(Test-Path -LiteralPath (Join-Path "$root/runtime/java" $relative))) {
             throw "Bundled Java is incomplete ($relative missing). Extract the entire ZIP again into C:\NgocRongLive; do not copy java.exe alone."
         }
+    }
+    if ($java -match '[^\x00-\x7F]') {
+        # The bundled native Java launcher cannot locate java.dll under Unicode paths.
+        $candidates = @($env:TEMP, (Join-Path $env:PUBLIC 'Documents'))
+        foreach ($candidate in $candidates) {
+            if (!$candidate -or $candidate -match '[^\x00-\x7F]') { continue }
+            $destination = Join-Path $candidate ('NgocRongLive-Java-' + [Guid]::NewGuid().ToString('N'))
+            try {
+                New-Item -Path $destination -ItemType Directory -ErrorAction Stop | Out-Null
+            } catch { continue }
+            $temporaryJava = $destination
+            Copy-Item -LiteralPath (Join-Path $root 'runtime/java') -Destination (Join-Path $destination 'java') -Recurse
+            $java = Join-Path $destination 'java/bin/java.exe'
+            Write-Host 'Using temporary ASCII path for bundled Java.'
+            break
+        }
+        if ($java -match '[^\x00-\x7F]') { throw 'No writable ASCII temporary path. Extract the entire ZIP into C:\NgocRongLive.' }
     }
     $javaCheck = Start-Process $java -ArgumentList '-version' -Wait -PassThru -WindowStyle Hidden -RedirectStandardOutput logs/java.log -RedirectStandardError logs/java-error.log
     if ($javaCheck.ExitCode -ne 0) {
@@ -132,6 +150,7 @@ try {
         & $admin ('--defaults-file=' + (Join-Path $root 'data/client.ini')) shutdown 2>$null
         $dbProcess.WaitForExit(10000) | Out-Null
     }
+    if ($null -ne $temporaryJava) { Remove-Item -LiteralPath $temporaryJava -Recurse -Force -ErrorAction SilentlyContinue }
     Remove-Item Env:NRO_DB_PASSWORD -ErrorAction SilentlyContinue
     if ($null -ne $lock) { $lock.Dispose() }
 }
