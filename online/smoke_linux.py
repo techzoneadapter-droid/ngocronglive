@@ -65,6 +65,21 @@ try:
     c = protocol.Client(); c.login('beta-fixture-password'); assert c.world()[0] == map_id; c.sock.close(); time.sleep(5)
     assert json.loads(sql("SELECT data_task FROM player WHERE name='pcprobe'")) == [0, 0, 0]
     print('PASS: Linux login, create, map, movement, quest zero, non-admin cannot skip quests, relogin persistence')
+    # Two independent accounts connected and moving in the same map concurrently.
+    sql("INSERT INTO account(username,password,active,server_login) VALUES ('tester2','beta-fixture-password',1,1)")
+    first = protocol.Client(); first.login('beta-fixture-password'); first.world()
+    second = protocol.Client(username='tester2', character='pcprobe2'); second.login('beta-fixture-password')
+    second.until(lambda code, body: code == 2)
+    second.send(-28, bytes([2]) + protocol.utf('pcprobe2') + bytes([0, 64]))
+    map2, x2, y2 = second.world()
+    assert map2 == map_id
+    first.send(-7, bytes([0]) + struct.pack('>hh', x+32, y))
+    second.send(-7, bytes([0]) + struct.pack('>hh', x2+16, y2))
+    time.sleep(1)
+    first.sock.close(); second.sock.close(); time.sleep(5)
+    assert json.loads(sql("SELECT data_location FROM player WHERE name='pcprobe'"))[:3] == [x+32, y, map_id]
+    assert json.loads(sql("SELECT data_location FROM player WHERE name='pcprobe2'"))[:3] == [x2+16, y2, map2]
+    print('PASS: two simultaneous accounts in one map, separate movement and persisted positions')
     for proc in processes:
         status = Path(f'/proc/{proc.pid}/status').read_text()
         print('JVM memory:', next(line for line in status.splitlines() if line.startswith('VmRSS:')))
@@ -79,5 +94,6 @@ finally:
         except subprocess.TimeoutExpired: proc.kill(); proc.wait()
     for handle in handles: handle.close()
     for component in ('login', 'server'):
-        path = root / 'logs' / (component + '-error.log')
-        if path.exists(): print(component + ' stderr:\n' + path.read_text(errors='replace')[-8000:])
+        for suffix in ('.log', '-error.log'):
+            path = root / 'logs' / (component + suffix)
+            if path.exists(): print(component + suffix + ':\n' + path.read_text(errors='replace')[-8000:])

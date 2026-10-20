@@ -20,7 +20,9 @@ def prepare(upstream, output):
     from client_patch import patch_client
     patch_client(output/'client')
     for java in output.rglob('*.java'):
-        java.write_text(java.read_text(encoding='utf-8-sig'), encoding='utf-8')
+        # Linux paths are case-sensitive; upstream assets use KhanhDTK.
+        text = java.read_text(encoding='utf-8-sig').replace('resources/khanhdtk/', 'resources/KhanhDTK/')
+        java.write_text(text, encoding='utf-8')
     shutil.copy2(upstream/'LICENSE',output/'UPSTREAM-LICENSE')
     # Record the supplied executable identity; companion metadata/DLL are patched.
     import hashlib
