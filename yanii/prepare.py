@@ -7,6 +7,8 @@ def prepare(upstream, output):
     output.mkdir(parents=True)
     for src,dest in [('Server','server'),('Login','login'),('AppLocal','client')]:
         shutil.copytree(upstream/src,output/dest,ignore=shutil.ignore_patterns('target','log','logs','*.jar','run.bat','*.mp4'))
+    for java in output.rglob('*.java'):
+        java.write_text(java.read_text(encoding='utf-8-sig'), encoding='utf-8')
     shutil.copy2(upstream/'LICENSE',output/'UPSTREAM-LICENSE')
     # Keep the supplied client binary intact; record its identity.
     import hashlib

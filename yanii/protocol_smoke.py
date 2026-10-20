@@ -72,7 +72,7 @@ class Client:
         raise AssertionError('World entry failed')
 def run(root,password):
     c=Client();c.login(password);c.until(lambda code,p:code==2)
-    c.send(-28,bytes([2])+utf('pcprobe')+bytes([0,0]))
+    c.send(-28,bytes([2])+utf('pcprobe')+bytes([0,64]))
     mapid,x,y=c.world()
     for delta in (8,16,24):c.send(-7,bytes([0])+struct.pack('>hh',x+delta,y));time.sleep(.15)
     # Query an authoritative persisted location after disconnect; no map switch requested.
