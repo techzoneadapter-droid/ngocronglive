@@ -6,6 +6,8 @@ Repo này chứa mã đóng gói, chỉnh sửa server và kiểm thử. Script 
 
 ## Tải và chơi thử
 
+[Bản Windows đã vượt kiểm tra tự động](https://github.com/techzoneadapter-droid/ngocronglive/actions/runs/39364727414) → Artifacts → `NgocRongLive-Yanii-PC-test`.
+
 Mở Actions → **Yanii Windows local test package** → lần chạy thành công → Artifacts → `NgocRongLive-Yanii-PC-test`.
 Giải nén **toàn bộ vào thư mục mới**, chạy `PLAY.cmd`. Đọc tài khoản trong `TAI-KHOAN.txt` sau khi server sẵn sàng. Không cần cài Java hoặc database toàn hệ thống. Không trộn server/client của bản cũ vào bản Yanii.
 
@@ -26,6 +28,8 @@ Windows x64, Git, Python 3.12, JDK 17 và Maven. Chạy `pwsh -File yanii/build-
 - Tắt thread lịch bảo trì local vốn chạy vòng lặp không nghỉ; giảm pool database cho máy cá nhân.
 - Bind TCP game/login vào localhost; sửa nhãn cột SQL của dịch vụ login cho tương thích JDBC.
 - Chỉ dùng dữ liệu game tĩnh, loại tài khoản/nhân vật/lịch sử của upstream khỏi seed.
+- Xử lý thông báo quản trị trống; khóa ghi socket và dùng hàng đợi packet an toàn khi nhiều luồng gửi cùng lúc.
+- Chuẩn hóa UTF-8/BOM và tên thư mục dữ liệu Unity để dựng/chạy từ gói sạch.
 - Giữ cách xử lý Java trong đường dẫn có dấu; lỗi khởi động hiện kèm nội dung log.
 
 Kiểm thử tự động và kiểm thử giao diện là hai việc riêng: CI sẽ kiểm tra đăng nhập, tải dữ liệu, tạo nhân vật, nhận bản đồ, di chuyển cùng map, lưu vị trí và đăng nhập lại. Chế độ Unity batch kiểm tra engine và scene đầu trong 20 giây rồi dừng tiến trình chủ động; client gốc không tự thoát với -quit trên CI. Phép kiểm tra này không xác nhận hình ảnh, điều khiển hoặc đánh quái bằng giao diện. Xem `docs/STATUS.md` để biết trạng thái đã xác minh.
