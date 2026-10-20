@@ -27,11 +27,12 @@ jobs:
       - name: Test shipped launcher with PowerShell 5 and Unicode path
         shell: powershell
         run: |
+          $workspace = (Get-Location).Path
           $unicode = 'T' + [char]0x00E0 + 'i li' + [char]0x1EC7 + 'u'
           $target = Join-Path (Get-Location) $unicode
           Move-Item build/NgocRongLive-PC $target
           try { & (Join-Path $target 'launch.ps1') -SmokeTest }
-          finally { Move-Item -LiteralPath $target -Destination build/NgocRongLive-PC }
+          finally { Set-Location -LiteralPath $workspace; Move-Item -LiteralPath $target -Destination build/NgocRongLive-PC }
       - name: Verify no external Java installation is needed
         shell: powershell
         run: |
