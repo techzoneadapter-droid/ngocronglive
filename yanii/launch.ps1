@@ -1,4 +1,4 @@
-param([switch]$SmokeTest)
+param([switch]$SmokeTest, [switch]$ClientPreview)
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 $root = $PSScriptRoot
@@ -161,7 +161,8 @@ wait.login=0
         & python (Join-Path $root 'protocol_smoke.py') (Join-Path $root 'local-data/credentials.json')
         if ($LASTEXITCODE) { throw 'Yanii protocol test failed' }
         Write-Host 'PASS: Yanii login and game protocol checks completed.'
-        Write-Host 'This does not verify graphical login, character creation or gameplay.'
+        if ($ClientPreview) { & (Join-Path $root 'client-preview.ps1') -ClientDirectory (Join-Path $root 'client') -OutputDirectory (Join-Path $root 'logs/preview') }
+        Write-Host 'Protocol tests do not verify graphical login, character creation or gameplay.'
     } else {
         "Tai khoan: tester`r`nMat khau: $($credentials.player)" | Set-Content TAI-KHOAN.txt -Encoding utf8
         Write-Host 'Tai khoan nam trong TAI-KHOAN.txt. Thoat game binh thuong truoc khi dong cua so nay.'

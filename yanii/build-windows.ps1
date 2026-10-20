@@ -48,6 +48,7 @@ Move-Item $db[0].FullName "$out/runtime/mariadb"
 Remove-Item "$out/runtime/db-unpack" -Recurse
 
 Copy-Item yanii/launch.ps1 "$out/launch.ps1"
+Copy-Item yanii/client-preview.ps1 "$out/client-preview.ps1"
 Copy-Item scripts/PLAY.cmd "$out/PLAY.cmd"
 Copy-Item yanii/protocol_smoke.py "$out/protocol_smoke.py"
 Copy-Item README.md "$out/README.md"

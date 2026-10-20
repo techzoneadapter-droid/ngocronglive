@@ -28,7 +28,7 @@ jobs:
           $workspace = (Get-Location).Path
           $target = Join-Path $workspace ('T' + [char]0x00E0 + 'i li' + [char]0x1EC7 + 'u')
           Move-Item build/NgocRongLive-Yanii-PC $target
-          try { & (Join-Path $target 'launch.ps1') -SmokeTest }
+          try { & (Join-Path $target 'launch.ps1') -SmokeTest -ClientPreview }
           finally { Set-Location -LiteralPath $workspace; Move-Item -LiteralPath $target -Destination build/NgocRongLive-Yanii-PC }
       - name: Initialize supplied Unity player in batch mode
         if: ${{ always() && steps.build.outcome == 'success' }}
