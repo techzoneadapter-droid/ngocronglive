@@ -114,6 +114,10 @@ version-Item: 6
     source = source.replace('msg.writer().writeInt(pl.vang);', 'msg.writer().writeLong(pl.vang);')
     source = source.replace('msg.writer().writeInt(pl.ngoc);\n            msg.writer().writeInt(pl.ngocKhoa);',
         'msg.writer().writeInt(pl.ngocKhoa);\n            msg.writer().writeInt(pl.ngoc);')
+    start = source.index('    public void mapTemp(')
+    end = source.index('    public void updateBag(', start)
+    block = source[start:end].replace('        } catch (Exception e) {\n        }', '        } catch (Exception e) {\n            e.printStackTrace();\n        }')
+    source = source[:start] + block + source[end:]
     service.write_text(source, encoding='utf-8')
     # Keep static game data, remove all upstream account/character/clan records.
     sql = (upstream / 'NgocRongOnline-Server/server.sql').read_text(encoding='utf-8-sig')
