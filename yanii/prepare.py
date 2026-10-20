@@ -48,6 +48,12 @@ def prepare(upstream, output):
     p=output/'server/src/main/java/nro/noti/NotiManager.java'
     s=p.read_text(encoding='utf-8-sig').replace('Service.getInstance().sendThongBaoFromAdmin(player, alert.content);', 'if (alert != null) Service.getInstance().sendThongBaoFromAdmin(player, alert.content);')
     p.write_text(s,encoding='utf-8')
+    # This upstream shortcut was outside the admin guard; testers must not skip quests by chat.
+    p=output/'server/src/main/java/nro/services/Service.java'
+    s=p.read_text(encoding='utf-8-sig')
+    old='if (text.equals("nnvquanct") && player.playerTask.taskMain.id <= 31)'
+    if s.count(old) != 1: raise ValueError('Quest shortcut integration point changed')
+    p.write_text(s.replace(old, 'if (player.isAdmin() && text.equals("nnvquanct") && player.playerTask.taskMain.id <= 31)'), encoding='utf-8')
     # Ship static content only; do not redistribute upstream accounts/history/player saves.
     sql=(upstream/'Tutorial/Database/ngocrong.sql').read_text(encoding='utf-8-sig')
     keep={'attribute_server','attribute_template','cai_trang','caption','collection_book','event','flag_bag','head_avatar','img_by_name','intrinsic','item_option_template','item_shop','item_shop_option','item_template','map_template','mini_pet','mob_template','nclass','npc_template','skill','skill_template','shop','shop_tab','task_main_template','task_sub_template','side_task_template','radar_template','mount','pet','pet_template','task_template','achivements','global_data','part','pet_follow','power_limit','small_version','tab_shop','type_map'}

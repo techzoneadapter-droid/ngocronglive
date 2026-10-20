@@ -3,6 +3,9 @@ on:
   push:
     branches: [deploy/beta-online]
   workflow_dispatch:
+concurrency:
+  group: online-beta-${{ github.ref }}
+  cancel-in-progress: true
 permissions:
   contents: read
 jobs:

@@ -54,6 +54,8 @@ try:
     c = protocol.Client(); c.login('beta-fixture-password'); c.until(lambda code, body: code == 2)
     c.send(-28, bytes([2]) + protocol.utf('pcprobe') + bytes([0, 64]))
     map_id, x, y = c.world()
+    c.send(44, protocol.utf("nnvquanct"))
+    time.sleep(.5)
     for delta in (8, 16, 24):
         import struct
         c.send(-7, bytes([0]) + struct.pack('>hh', x+delta, y)); time.sleep(.15)
@@ -62,7 +64,7 @@ try:
     assert json.loads(sql("SELECT data_task FROM player WHERE name='pcprobe'")) == [0, 0, 0]
     c = protocol.Client(); c.login('beta-fixture-password'); assert c.world()[0] == map_id; c.sock.close(); time.sleep(5)
     assert json.loads(sql("SELECT data_task FROM player WHERE name='pcprobe'")) == [0, 0, 0]
-    print('PASS: Linux login, create, map, movement, quest zero and persistence across relogin')
+    print('PASS: Linux login, create, map, movement, quest zero, non-admin cannot skip quests, relogin persistence')
     for proc in processes:
         status = Path(f'/proc/{proc.pid}/status').read_text()
         print('JVM memory:', next(line for line in status.splitlines() if line.startswith('VmRSS:')))
