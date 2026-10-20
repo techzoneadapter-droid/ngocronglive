@@ -71,9 +71,32 @@ def run(credentials_file):
             code, _ = receive()
             if code == 2:
                 print('PASS: handshake and fresh test-account authentication reached character creation')
+                # A clean client downloads templates before a character exists.
+                send(-87, b'')
+                for request in (6, 7, 8):
+                    send(-28, bytes([request]))
+                expected = {(-87, 98), (-28, 6), (-28, 7), (-28, 8)}
+                item_parts = set()
+                for _ in range(30):
+                    asset_code, asset_data = receive()
+                    if asset_data:
+                        expected.discard((asset_code, asset_data[0]))
+                        if asset_code == -28 and asset_data[0] == 8:
+                            item_parts.add(asset_data[2])
+                    if not expected and item_parts == {0, 1, 2, 100}:
+                        break
+                assert not expected and item_parts == {0, 1, 2, 100}, 'Bootstrap templates missing before character creation'
+                print('PASS: clean client receives data/map/skills/all item parts before a player exists')
+                send(-28, bytes([13]))  # clientOk before character creation must be harmless
                 send(-28, bytes([2]) + utf('pcprobe') + bytes([0, 64]))
-                for _ in range(50):
+                player_loaded = False
+                map_loaded = False
+                for _ in range(70):
                     created_code, created_data = receive()
+                    if created_code == -28 and created_data and created_data[0] == 4:
+                        send(-28, bytes([13]))  # Cached templates are ready after version negotiation.
+                    if created_code == -24:
+                        map_loaded = True
                     if created_code == -30 and created_data and created_data[0] == 0:
                         state = io.BytesIO(created_data)
                         def number(fmt):
@@ -95,7 +118,17 @@ def run(credentials_file):
                         assert number('>i') == 20, 'Gems field mismatch'
                         assert number('>B') == 6, 'Inventory framing mismatch'
                         print('PASS: new character and player-state layout match the Windows client (gold, gems, starter skill, body slots)')
-                        return
+                        player_loaded = True
+                    if player_loaded and map_loaded:
+                        send(-28, bytes([10]))
+                        for _ in range(30):
+                            map_code, map_data = receive()
+                            if map_code == -28 and map_data and map_data[0] == 10:
+                                width, height = map_data[1:3]
+                                assert width and height and len(map_data) >= 3 + width * height
+                                print('PASS: clientOk delivers player, world map and requested tile template')
+                                return
+                        raise AssertionError('World map tile template not delivered')
                 raise AssertionError('Character creation did not deliver player state')
         raise AssertionError('Authentication did not reach character creation')
 

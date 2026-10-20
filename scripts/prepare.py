@@ -36,6 +36,14 @@ def prepare(upstream, output):
         'System.out.println("config: " + key + "-" + (key.contains("password") ? "[redacted]" : value));')
     source = source.replace('this.loadDataBase();',
         'this.mysql_user = "nro";\n        this.mysql_pass = System.getenv("NRO_DB_PASSWORD");\n        this.loadDataBase();')
+    # Static bootstrap assets belong to a connection, not to a spawned character.
+    start = source.index('    public static void sendData(Player p)')
+    end = source.index('    public static Map getMapid', start)
+    block = source[start:end]
+    for method in ('sendData', 'sendMap', 'sendSkill', 'sendItem'):
+        block = block.replace(method + '(Player p)', method + '(server.io.Session session)')
+    block = block.replace('p.session.', 'session.').replace('session.doSendMessage(m);', 'session.sendMessage(m);')
+    source = source[:start] + block + source[end:]
     manager.write_text(source, encoding='utf-8')
     # The upstream listener ignores host; force loopback for this local-only package.
     entry = server / 'src/server/Server.java'
@@ -45,7 +53,23 @@ def prepare(upstream, output):
     controller = server / 'src/server/Controller.java'
     source = controller.read_text(encoding='utf-8').replace('Util.log("user " + user + " - pass " + pass);',
         'Util.log("Login attempt received");')
+    for method in ('sendData', 'sendMap', 'sendSkill', 'sendItem'):
+        source = source.replace('Manager.' + method + '(player);', 'Manager.' + method + '(_session);')
+    # World packets reference skill/item templates: wait for the real client's clientOk.
+    source = source.replace('                        sendInfo(session);', '')
+    source = source.replace('                    sendInfo(session);', '')
+    source = source.replace('Util.log("client ok");', '''Util.log("client ok");
+                        if (player != null && !_session.worldEntered) {
+                            _session.worldEntered = true;
+                            sendInfo(_session);
+                        }''')
     controller.write_text(source, encoding='utf-8')
+    session_source = server / 'src/server/io/Session.java'
+    text = session_source.read_text(encoding='utf-8')
+    text = text.replace('public class Session', 'public class Session', 1)
+    brace = text.index('{', text.index('public class Session'))
+    text = text[:brace + 1] + '\n    public boolean worldEntered = false;\n' + text[brace + 1:]
+    session_source.write_text(text, encoding='utf-8')
     (server / 'ninja.conf').write_text('''# Local Windows test only
 host: 127.0.0.1
 port: 14445
