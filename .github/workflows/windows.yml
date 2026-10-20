@@ -51,6 +51,15 @@ jobs:
         run: |
           Remove-Item build/NgocRongLive-PC/data -Recurse -Force
           Remove-Item build/NgocRongLive-PC/logs -Recurse -Force
+      - name: Upload world-entry repair for existing installations
+        uses: actions/upload-artifact@v4
+        with:
+          name: NgocRongLive-PC-fix-world-entry
+          path: |
+            build/NgocRongLive-PC/launch.ps1
+            build/NgocRongLive-PC/server/classes/
+            build/NgocRongLive-PC/server/data/map/temp/
+          retention-days: 14
       - name: Upload local test package
         uses: actions/upload-artifact@v4
         with:
