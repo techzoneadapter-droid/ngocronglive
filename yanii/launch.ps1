@@ -177,6 +177,10 @@ wait.login=0
         Write-Host 'PASS: Yanii login and game protocol checks completed.'
         & python (Join-Path $root 'admin_smoke.py')
         if ($LASTEXITCODE) { throw 'Owner console integration tests failed' }
+        if ($env:NRO_UI_TEST -eq '1') {
+            & python (Join-Path $root 'admin_ui_smoke.py')
+            if ($LASTEXITCODE) { throw 'Owner console browser test failed' }
+        }
         if ($ClientPreview) { & (Join-Path $root 'client-preview.ps1') -ClientDirectory (Join-Path $root 'client') -OutputDirectory (Join-Path $root 'logs/preview') }
         Write-Host 'Protocol tests do not verify graphical login, character creation or gameplay.'
     } elseif ($ServerOnly) {
