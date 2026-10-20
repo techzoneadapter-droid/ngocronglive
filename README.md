@@ -28,4 +28,4 @@ Windows x64, Git, Python 3.12, JDK 17 và Maven. Chạy `pwsh -File yanii/build-
 - Chỉ dùng dữ liệu game tĩnh, loại tài khoản/nhân vật/lịch sử của upstream khỏi seed.
 - Giữ cách xử lý Java trong đường dẫn có dấu; lỗi khởi động hiện kèm nội dung log.
 
-Kiểm thử tự động và kiểm thử giao diện là hai việc riêng: CI sẽ kiểm tra đăng nhập, tải dữ liệu, tạo nhân vật, nhận bản đồ, di chuyển cùng map, lưu vị trí và đăng nhập lại. Chế độ Unity batch chỉ kiểm tra client khởi tạo, không xác nhận thao tác chơi/đánh quái bằng giao diện. Xem `docs/STATUS.md` để biết trạng thái đã xác minh.
+Kiểm thử tự động và kiểm thử giao diện là hai việc riêng: CI sẽ kiểm tra đăng nhập, tải dữ liệu, tạo nhân vật, nhận bản đồ, di chuyển cùng map, lưu vị trí và đăng nhập lại. Chế độ Unity batch kiểm tra engine và scene đầu trong 20 giây rồi dừng tiến trình chủ động; client gốc không tự thoát với -quit trên CI. Phép kiểm tra này không xác nhận hình ảnh, điều khiển hoặc đánh quái bằng giao diện. Xem `docs/STATUS.md` để biết trạng thái đã xác minh.

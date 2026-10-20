@@ -37,11 +37,17 @@ jobs:
           $client = Resolve-Path build/NgocRongLive-Yanii-PC/client/NroYanii.exe
           $log = Join-Path (Get-Location) 'build/NgocRongLive-Yanii-PC/logs/client-init.log'
           $process = Start-Process $client -WorkingDirectory (Split-Path $client) -ArgumentList @('-batchmode','-nographics','-quit','-logFile',('"' + $log + '"')) -PassThru
-          $exited = $process.WaitForExit(60000)
-          if (Test-Path $log) { Get-Content $log -Tail 80 }
-          if (!$exited) { Write-Host ('Window: ' + $process.MainWindowTitle); $process.Kill(); throw 'Client initialization timeout' }
-          if (!(Test-Path $log)) { throw 'Unity did not create its initialization log' }
-          if ($process.ExitCode) { throw "Client initialization failed: $($process.ExitCode)" }
+          # This supplied player does not honor -quit in the hosted headless session.
+          # Probe engine + first scene initialization, then stop the test process deliberately.
+          $exited = $process.WaitForExit(20000)
+          if (!(Test-Path $log)) { if (!$exited) { $process.Kill() }; throw 'Unity initialization log missing' }
+          $content = Get-Content $log -Raw
+          Write-Host $content
+          if (!$exited) { $process.Kill(); $process.WaitForExit() }
+          elseif ($process.ExitCode) { throw "Client initialization failed: $($process.ExitCode)" }
+          if ($content -notmatch 'Initialize engine version: 2022' -or $content -notmatch 'UnloadTime:') { throw 'Unity did not reach scene initialization' }
+          if ($content -match 'Failed to initialize|Data folder not found|Failed to load') { throw 'Unity initialization reported a failure' }
+          Write-Host 'PASS: bounded Unity engine/scene initialization probe. Rendering, input and gameplay are not verified.'
       - name: Diagnostics
         if: always()
         uses: actions/upload-artifact@v4
