@@ -1,7 +1,7 @@
 # Trạng thái kiểm chứng
 
-Build Windows được kiểm tra: `b32e7f3351161768a6a943581a1e4cda5de214bf`.
-Run: https://github.com/techzoneadapter-droid/ngocronglive/actions/runs/39297074557
+Build Windows được kiểm tra: `d9d6df4176c941302725de68e5d05b968f9f43a6`.
+Run: https://github.com/techzoneadapter-droid/ngocronglive/actions/runs/39349948123
 
 ## Đạt kiểm tra tự động trên Windows
 
@@ -35,3 +35,9 @@ Run: https://github.com/techzoneadapter-droid/ngocronglive/actions/runs/39297074
 - Kiểm tra quyền sử dụng code/tài nguyên trước khi phân phối rộng.
 
 Đây là bản PC để kiểm thử local, chưa phải bản nghiệm thu toàn bộ gameplay hoặc server vận hành lâu dài. Các commit chỉ sửa tài liệu sau build không thay đổi gói đã kiểm tra.
+
+## Kiểm thử hồi quy khởi động
+
+- PowerShell 5 và thư mục `Tài liệu`: đạt; tái hiện và xử lý lỗi tìm java.dll.
+- Runtime Java đi kèm chạy với JAVA_HOME/JRE_HOME trỏ tới đường dẫn không tồn tại: đạt.
+- Giao diện và chiến đấu vẫn chưa được kiểm thử trực tiếp.

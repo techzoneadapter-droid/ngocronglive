@@ -4,7 +4,7 @@ Dự án dựng bản PC để kiểm thử local trước; Android/iOS triển 
 
 **Trạng thái: bản PC thử nghiệm local.** Build Windows đã vượt kiểm tra kỹ năng, database, lưu dữ liệu, đăng nhập, tạo nhân vật và bố cục gói trạng thái nhân vật. Giao diện/chiến đấu chưa được nghiệm thu trực tiếp. Xem [docs/STATUS.md](docs/STATUS.md).
 
-[Bản build PC để tải thử](https://github.com/techzoneadapter-droid/ngocronglive/actions/runs/39297074557) → Artifacts → `NgocRongLive-PC-local-test`.
+[Bản build PC để tải thử](https://github.com/techzoneadapter-droid/ngocronglive/actions/runs/39349948123) → Artifacts → `NgocRongLive-PC-local-test`.
 
 ## Tải bản thử khi build đạt
 
@@ -31,3 +31,7 @@ Upstream: https://github.com/nvt25/Online_nro tại commit `1732e1f258b69dd812de
 Repo này lưu mã tích hợp/đóng gói và tham chiếu upstream thay vì chép toàn bộ kho/binary vào lịch sử Git. Giữ nguyên ghi nhận nguồn. Upstream chưa thấy LICENSE ở gốc; không gán MIT hoặc cấp lại quyền cho code/tài nguyên của họ. Cần xác minh quyền sử dụng trước khi phát hành rộng rãi.
 
 Các file tải từ nroluachua.online chỉ dùng nghiên cứu định dạng, không được đưa vào gói này. Không dùng server, tài khoản hoặc chứng thư của game mẫu.
+
+### Sửa lỗi Java trong đường dẫn có dấu
+
+Đã tái hiện `could not find java.dll` với file DLL đầy đủ trong thư mục `Tài liệu`. Launcher mới tự dùng thư mục tạm không dấu cho Java khi cần và xóa bản tạm lúc thoát. Đã vượt kiểm thử PowerShell 5, khởi động database/server, đăng nhập, tạo nhân vật và lưu dữ liệu trong đường dẫn có dấu. Nếu báo thiếu file runtime, giải nén lại toàn bộ ZIP. Giữ nguyên thư mục `data` của bản cũ nếu cần giữ nhân vật; không ghi đè hoặc xóa dữ liệu đang dùng.
