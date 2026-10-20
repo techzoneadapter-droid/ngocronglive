@@ -1,7 +1,7 @@
 # Trạng thái kiểm chứng
 
-Build Windows được kiểm tra: `d9d6df4176c941302725de68e5d05b968f9f43a6`.
-Run: https://github.com/techzoneadapter-droid/ngocronglive/actions/runs/39349948123
+Build Windows được kiểm tra: `9673c4b0ecbef03619317ecb066564e89f523efe`.
+Run: https://github.com/techzoneadapter-droid/ngocronglive/actions/runs/39359914275
 
 ## Đạt kiểm tra tự động trên Windows
 
@@ -41,3 +41,12 @@ Run: https://github.com/techzoneadapter-droid/ngocronglive/actions/runs/39349948
 - PowerShell 5 và thư mục `Tài liệu`: đạt; tái hiện và xử lý lỗi tìm java.dll.
 - Runtime Java đi kèm chạy với JAVA_HOME/JRE_HOME trỏ tới đường dẫn không tồn tại: đạt.
 - Giao diện và chiến đấu vẫn chưa được kiểm thử trực tiếp.
+
+## Hồi quy vào bản đồ
+
+- Tải NRdata, map, kỹ năng, bốn phần item trước khi tạo nhân vật: đạt.
+- Chỉ gửi trạng thái nhân vật và bản đồ sau clientOk: đã triển khai.
+- Địa hình khởi đầu 39/40/41 lấy từ res/mymap trong Unity source, kiểm tra kích thước byte: đạt.
+- Nhận trạng thái nhân vật, bản đồ và yêu cầu ô địa hình qua socket: đạt.
+- Đăng xuất và đăng nhập lại nhân vật hiện có, tải template và vào map lần nữa: đạt.
+- Chưa kiểm thử giao diện thực tế, điều khiển hoặc chiến đấu.

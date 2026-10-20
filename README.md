@@ -4,7 +4,7 @@ Dự án dựng bản PC để kiểm thử local trước; Android/iOS triển 
 
 **Trạng thái: bản PC thử nghiệm local.** Build Windows đã vượt kiểm tra kỹ năng, database, lưu dữ liệu, đăng nhập, tạo nhân vật và bố cục gói trạng thái nhân vật. Giao diện/chiến đấu chưa được nghiệm thu trực tiếp. Xem [docs/STATUS.md](docs/STATUS.md).
 
-[Bản build PC để tải thử](https://github.com/techzoneadapter-droid/ngocronglive/actions/runs/39349948123) → Artifacts → `NgocRongLive-PC-local-test`.
+[Bản build PC để tải thử](https://github.com/techzoneadapter-droid/ngocronglive/actions/runs/39359914275) → Artifacts → `NgocRongLive-PC-local-test`.
 
 ## Tải bản thử khi build đạt
 
@@ -35,3 +35,10 @@ Các file tải từ nroluachua.online chỉ dùng nghiên cứu định dạng,
 ### Sửa lỗi Java trong đường dẫn có dấu
 
 Đã tái hiện `could not find java.dll` với file DLL đầy đủ trong thư mục `Tài liệu`. Launcher mới tự dùng thư mục tạm không dấu cho Java khi cần và xóa bản tạm lúc thoát. Đã vượt kiểm thử PowerShell 5, khởi động database/server, đăng nhập, tạo nhân vật và lưu dữ liệu trong đường dẫn có dấu. Nếu báo thiếu file runtime, giải nén lại toàn bộ ZIP. Giữ nguyên thư mục `data` của bản cũ nếu cần giữ nhân vật; không ghi đè hoặc xóa dữ liệu đang dùng.
+
+### Vá lỗi vào game chỉ thấy nền
+
+[Tải gói vá khoảng 169 KB](https://github.com/techzoneadapter-droid/ngocronglive/actions/runs/39359914275/artifacts/12236389214).
+Thoát game bình thường và chờ cửa sổ PLAY kết thúc. Sao lưu thư mục `data` rồi giải nén gói vá; chép `launch.ps1` và thư mục `server` vào thư mục chứa `PLAY.cmd`, chọn thay thế file khi được hỏi. Không xóa thư mục `server` cũ: chỉ gộp/chép đè các file trong gói vá. Gói vá không chứa thư mục `data` ở gốc nên giữ tài khoản và nhân vật. Chạy lại `PLAY.cmd`. Nhật ký client mới nằm tại `logs/client.log`.
+
+Đã sửa tải template qua Session khi chưa có Player, chờ `clientOk` trước khi gửi nhân vật/bản đồ và bổ sung địa hình thiếu từ tài nguyên Unity cùng upstream. Kiểm thử socket trên Windows đạt tạo nhân vật, nhận map/ô địa hình và đăng nhập lại nhân vật cũ. Chưa nghiệm thu đồ họa hoặc chiến đấu trực tiếp.
