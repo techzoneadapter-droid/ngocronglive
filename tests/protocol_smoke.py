@@ -4,6 +4,7 @@ import json
 import socket
 import struct
 import sys
+import time
 
 
 def utf(value):
@@ -11,7 +12,7 @@ def utf(value):
     return struct.pack('>H', len(data)) + data
 
 
-def run(credentials_file):
+def run(credentials_file, existing=False):
     credentials = json.load(open(credentials_file, encoding='ascii'))
     with socket.create_connection(('127.0.0.1', 14445), timeout=8) as sock:
         sock.settimeout(8)
@@ -68,9 +69,9 @@ def run(credentials_file):
         send(-29, bytes([2, 4, 1, 0]) + struct.pack('>ii', 1024, 600) + bytes([1, 1]) + utf('Windows local test'))
         send(-29, bytes([0]) + utf('tester') + utf(credentials['player']) + utf('2.3.0') + bytes([0]))
         for _ in range(30):
-            code, _ = receive()
-            if code == 2:
-                print('PASS: handshake and fresh test-account authentication reached character creation')
+            code, login_data = receive()
+            if (not existing and code == 2) or (existing and code == -28 and login_data and login_data[0] == 4):
+                print('PASS: handshake and authentication reached ' + ('existing character' if existing else 'character creation'))
                 # A clean client downloads templates before a character exists.
                 send(-87, b'')
                 for request in (6, 7, 8):
@@ -88,7 +89,8 @@ def run(credentials_file):
                 assert not expected and item_parts == {0, 1, 2, 100}, 'Bootstrap templates missing before character creation'
                 print('PASS: clean client receives data/map/skills/all item parts before a player exists')
                 send(-28, bytes([13]))  # clientOk before character creation must be harmless
-                send(-28, bytes([2]) + utf('pcprobe') + bytes([0, 64]))
+                if not existing:
+                    send(-28, bytes([2]) + utf('pcprobe') + bytes([0, 64]))
                 player_loaded = False
                 map_loaded = False
                 for _ in range(70):
@@ -135,3 +137,6 @@ def run(credentials_file):
 
 if __name__ == '__main__':
     run(sys.argv[1])
+    time.sleep(1)
+    run(sys.argv[1], existing=True)
+    print('PASS: existing character can log out and re-enter the world')
