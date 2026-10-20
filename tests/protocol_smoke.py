@@ -5,6 +5,7 @@ import socket
 import struct
 import sys
 import time
+from pathlib import Path
 
 
 def utf(value):
@@ -136,7 +137,14 @@ def run(credentials_file, existing=False):
 
 
 if __name__ == '__main__':
-    run(sys.argv[1])
-    time.sleep(1)
-    run(sys.argv[1], existing=True)
-    print('PASS: existing character can log out and re-enter the world')
+    try:
+        run(sys.argv[1])
+        time.sleep(1)
+        run(sys.argv[1], existing=True)
+        print('PASS: existing character can log out and re-enter the world')
+    except Exception:
+        for name in ('server-error.log', 'server.log'):
+            path = Path(__file__).resolve().parent / 'logs' / name
+            if path.exists():
+                print(name + ':\n' + '\n'.join(path.read_text(encoding='utf-8', errors='replace').splitlines()[-65:]), flush=True)
+        raise
