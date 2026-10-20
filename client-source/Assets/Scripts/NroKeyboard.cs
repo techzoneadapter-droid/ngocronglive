@@ -1,89 +1,75 @@
-using System;
 using System.Collections.Generic;
 using UnityEngine;
 
+// F10 documents the existing gameplay controls. It never remaps keys.
 public static class NroKeyboard
 {
-    private const string Preference = "NgocRongLive.KeyBindings.v1";
-    private static readonly NroBindings bindings = new NroBindings();
     private static readonly Dictionary<KeyCode, int> held = new Dictionary<KeyCode, int>();
-    private static bool initialized, visible;
-    private static int waiting = -1;
-    private static string notice = "F10: mở/đóng. Esc: hủy chọn phím.";
-    private static readonly string[] labels = { "Lên / bay", "Xuống", "Sang trái", "Sang phải", "Hành động / chọn", "Ô kỹ năng 1", "Ô kỹ năng 2", "Ô kỹ năng 3", "Ô kỹ năng 4", "Ô kỹ năng 5", "Ô kỹ năng 6", "Ô kỹ năng 7", "Ô kỹ năng 8", "Ô kỹ năng 9" };
-    [Serializable] private class Saved { public string[] keys; }
-
-    private static void Initialize()
-    {
-        if (initialized) return;
-        initialized = true;
-        try {
-            var saved = JsonUtility.FromJson<Saved>(PlayerPrefs.GetString(Preference, "{}"));
-            if (saved != null && saved.keys != null) {
-                foreach (string key in saved.keys) { KeyCode parsed; if (!Enum.TryParse(key, out parsed) || !Enum.IsDefined(typeof(KeyCode), parsed)) return; }
-                bindings.Restore(saved.keys);
-            }
-        } catch (Exception) { notice = "Cấu hình phím lỗi; dùng phím mặc định."; }
-    }
-    private static void Save()
-    {
-        PlayerPrefs.SetString(Preference, JsonUtility.ToJson(new Saved { keys = bindings.Snapshot() }));
-        PlayerPrefs.Save();
-    }
+    private static bool visible;
+    private static Vector2 scroll;
+    private static readonly string[,] help = {
+        { "R", "Mở ô chat" },
+        { "U", "Bật / tắt tự động đánh" },
+        { "N", "Bật / tắt tự động nhặt đồ" },
+        { "F", "Dùng bông tai Porata (cần có vật phẩm và đủ điều kiện hợp thể)" },
+        { "Mũi tên", "Di chuyển / bay" },
+        { "Enter", "Hành động / xác nhận theo màn hình hiện tại" },
+        { "1–9, 0", "Chọn ô kỹ năng đã gán" },
+        { "Z", "Mở hành trang" },
+        { "E", "Mở danh sách bạn bè" },
+        { "M", "Mở danh sách khu" },
+        { "H", "Yêu cầu cập nhật khu" },
+        { "X", "Mở menu chức năng: bản đồ, luyện tập, nhặt đồ, đệ tử..." },
+        { "G", "Mời giao dịch với nhân vật đang chọn" },
+        { "J / K / L", "Chuyển theo lối trái / giữa / phải bằng chức năng Xmap" },
+        { "W / A / S / D", "Di chuyển nhanh của bản nguồn (khác phím mũi tên)" },
+        { "F10 / Esc", "Đóng bảng hướng dẫn" }
+    };
     public static int MapKey(KeyCode key, bool released)
     {
-        Initialize();
-        int result;
-        if (released && held.TryGetValue(key, out result)) { held.Remove(key); return result; }
-        bool gameplay = GameCanvas.currentScreen is GameScr && GameCanvas.currentDialog == null
-            && (GameCanvas.panel == null || !GameCanvas.panel.isShow) && !ChatTextField.gI().isShow;
-        result = bindings.Map(key.ToString(), MyKeyMap.map(key), gameplay);
-        if (!released && result != 0) held[key] = result;
-        return result;
+        int code;
+        if (released && held.TryGetValue(key, out code)) { held.Remove(key); return code; }
+        code = MyKeyMap.map(key);
+        if (!released && code != 0) held[key] = code;
+        return code;
     }
     public static void ClearPressed() { ReleaseHeld(); }
     private static void ReleaseHeld()
     {
-        if (GameMidlet.gameCanvas != null) foreach (int code in held.Values) GameMidlet.gameCanvas.keyReleasedz(code);
+        if (GameMidlet.gameCanvas != null)
+            foreach (int code in held.Values) GameMidlet.gameCanvas.keyReleasedz(code);
         held.Clear();
         GameCanvas.clearKeyHold();
         GameCanvas.clearKeyPressed();
     }
-    // Called before Main processes mouse/keyboard, so editing cannot move a character.
     public static bool Draw()
     {
-        Initialize();
         var ev = Event.current;
         if (ev == null) return visible;
         if (ev.type == EventType.KeyDown && ev.keyCode == KeyCode.F10) {
-            visible = !visible; waiting = -1; ReleaseHeld(); ev.Use();
+            visible = !visible; ReleaseHeld(); ev.Use();
         }
         if (!visible) return false;
-        if (ev.type == EventType.KeyDown) {
-            if (ev.keyCode == KeyCode.Escape) { if (waiting >= 0) waiting = -1; else visible = false; }
-            else if (waiting >= 0) {
-                if (bindings.Bind(NroBindings.Names[waiting], ev.keyCode.ToString())) { Save(); waiting = -1; notice = "Đã lưu phím. Áp dụng khi chơi, giữ nguyên nhập chat."; }
-                else notice = "Phím trùng hoặc dành riêng. Chọn phím khác.";
-            }
-            ev.Use();
+        if (ev.type == EventType.KeyDown && ev.keyCode == KeyCode.Escape) {
+            visible = false; ReleaseHeld(); ev.Use(); return true;
         }
-        if (!visible) return true;
-        float width = Mathf.Min(510, Screen.width - 12), height = Mathf.Min(590, Screen.height - 12);
-        GUI.Window(9071, new Rect((Screen.width-width)/2, (Screen.height-height)/2, width, height), Window, "NgocRongLive — Phím tắt (F10)");
+        float width = Mathf.Min(680, Screen.width - 12);
+        float height = Mathf.Min(560, Screen.height - 12);
+        GUI.Window(9071, new Rect((Screen.width-width)/2, (Screen.height-height)/2, width, height),
+            Window, "NgocRongLive — Hướng dẫn thao tác (F10)");
         return true;
     }
-    private static Vector2 scroll;
     private static void Window(int id)
     {
-        GUILayout.Label(notice);
-        scroll = GUILayout.BeginScrollView(scroll, GUILayout.Height(Mathf.Min(420, Screen.height - 150)));
-        for (int i = 0; i < NroBindings.Names.Length; i++) {
-            GUILayout.BeginHorizontal(); GUILayout.Label(labels[i], GUILayout.Width(180));
-            if (GUILayout.Button(waiting == i ? "Nhấn phím mới…" : bindings.Get(NroBindings.Names[i]))) waiting = i;
+        GUILayout.Label("Phím thao tác có sẵn trong bản nguồn. Đóng ô chat trước khi sử dụng.");
+        scroll = GUILayout.BeginScrollView(scroll, GUILayout.Height(Mathf.Max(40, Mathf.Min(430, Screen.height - 150))));
+        for (int i = 0; i < help.GetLength(0); i++) {
+            GUILayout.BeginHorizontal();
+            GUILayout.Label(help[i, 0], GUILayout.Width(135));
+            GUILayout.Label(help[i, 1]);
             GUILayout.EndHorizontal();
         }
         GUILayout.EndScrollView();
-        if (GUILayout.Button("Khôi phục mặc định")) { bindings.Reset(); waiting = -1; Save(); }
-        if (GUILayout.Button("Đóng")) { visible = false; waiting = -1; ReleaseHeld(); }
+        if (GUILayout.Button("Đóng")) { visible = false; ReleaseHeld(); }
     }
 }
