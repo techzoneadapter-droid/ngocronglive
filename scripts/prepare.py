@@ -119,6 +119,23 @@ version-Item: 6
     block = source[start:end].replace('        } catch (Exception e) {\n        }', '        } catch (Exception e) {\n            e.printStackTrace();\n        }')
     source = source[:start] + block + source[end:]
     service.write_text(source, encoding='utf-8')
+    # Upstream omits terrain responses for starter maps 39/40/41.
+    # Reuse the matching raw tile grids shipped with its Unity source assets.
+    map_assets = upstream / 'Client/Source_Unity/Assets/Resources/res/mymap'
+    for asset in map_assets.glob('*.bytes'):
+        if not asset.stem.isdigit():
+            continue
+        target = server / 'data/map/temp' / asset.stem
+        if target.exists():
+            continue
+        grid = asset.read_bytes()
+        if len(grid) < 2 or not grid[0] or not grid[1] or len(grid) != 2 + grid[0] * grid[1]:
+            raise ValueError('Invalid terrain asset: ' + str(asset))
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_bytes(bytes([10]) + grid)
+    for home in (39, 40, 41):
+        if not (server / 'data/map/temp' / str(home)).exists():
+            raise ValueError('Missing starter terrain: ' + str(home))
     # Keep static game data, remove all upstream account/character/clan records.
     sql = (upstream / 'NgocRongOnline-Server/server.sql').read_text(encoding='utf-8-sig')
     private_tables = ['account', 'clan', 'clan_member', 'clan_message', 'player',
