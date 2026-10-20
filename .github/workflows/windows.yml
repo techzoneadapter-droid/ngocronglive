@@ -24,9 +24,21 @@ jobs:
       - name: Compile server and prepare Windows package
         shell: pwsh
         run: ./scripts/build-windows.ps1
-      - name: Smoke test isolated database and server
-        shell: pwsh
-        run: ./build/NgocRongLive-PC/launch.ps1 -SmokeTest
+      - name: Test shipped launcher with PowerShell 5 and Unicode path
+        shell: powershell
+        run: |
+          $unicode = 'T' + [char]0x00E0 + 'i li' + [char]0x1EC7 + 'u'
+          $target = Join-Path (Get-Location) $unicode
+          Move-Item build/NgocRongLive-PC $target
+          try { & (Join-Path $target 'launch.ps1') -SmokeTest }
+          finally { Move-Item -LiteralPath $target -Destination build/NgocRongLive-PC }
+      - name: Verify no external Java installation is needed
+        shell: powershell
+        run: |
+          $env:JAVA_HOME = 'C:\nonexistent-java'
+          $env:JRE_HOME = 'C:\nonexistent-java'
+          & ./build/NgocRongLive-PC/runtime/java/bin/java.exe -version
+          if ($LASTEXITCODE) { throw 'Bundled Java failed' }
       - name: Keep diagnostic logs
         if: always()
         uses: actions/upload-artifact@v4

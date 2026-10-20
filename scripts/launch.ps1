@@ -2,7 +2,20 @@ param([switch]$SmokeTest)
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 $root = $PSScriptRoot
-Set-Location $root
+# Use Windows' short path where available: older native launchers may reject Unicode.
+Add-Type -TypeDefinition @'
+using System;
+using System.Text;
+using System.Runtime.InteropServices;
+public static class NroNativePath {
+    [DllImport("kernel32.dll", CharSet=CharSet.Unicode, SetLastError=true)]
+    public static extern uint GetShortPathName(string path, StringBuilder result, uint size);
+}
+'@
+$shortRoot = New-Object Text.StringBuilder 32768
+$shortLength = [NroNativePath]::GetShortPathName($root, $shortRoot, 32768)
+if ($shortLength -gt 0 -and $shortLength -lt 32768) { $root = $shortRoot.ToString() }
+Set-Location -LiteralPath $root
 function Wait-Port([int]$Port, $Process, [string]$ErrorLog) {
     for ($i=0; $i -lt 60; $i++) {
         if ($Process.HasExited) {
@@ -37,6 +50,17 @@ $lock = $null
 $dbProcess = $null
 $gameServer = $null
 try {
+    $java = Join-Path $root 'runtime/java/bin/java.exe'
+    foreach ($relative in @('bin/java.exe', 'bin/java.dll', 'bin/server/jvm.dll', 'lib/modules')) {
+        if (!(Test-Path -LiteralPath (Join-Path "$root/runtime/java" $relative))) {
+            throw "Bundled Java is incomplete ($relative missing). Extract the entire ZIP again into C:\NgocRongLive; do not copy java.exe alone."
+        }
+    }
+    $javaCheck = Start-Process $java -ArgumentList '-version' -Wait -PassThru -WindowStyle Hidden -RedirectStandardOutput logs/java.log -RedirectStandardError logs/java-error.log
+    if ($javaCheck.ExitCode -ne 0) {
+        $detail = (Get-Content -LiteralPath logs/java-error.log -Tail 35 -ErrorAction SilentlyContinue) -join "`n"
+        throw "Bundled Java failed before database startup (exit $($javaCheck.ExitCode)). Extract the entire ZIP into C:\NgocRongLive and retry. Log: logs/java-error.log`n$detail"
+    }
     $lock = [IO.File]::Open((Join-Path $root 'data/run.lock'), 'OpenOrCreate', 'ReadWrite', 'None')
     if (!(Test-Path data/credentials.json)) {
         $credentials = @{ root = [Guid]::NewGuid().ToString('N'); database = [Guid]::NewGuid().ToString('N'); player = [Guid]::NewGuid().ToString('N').Substring(0,12) }
@@ -77,7 +101,6 @@ try {
     }
     $env:NRO_DB_PASSWORD = $credentials.database
     $env:NRO_DB_URL = 'jdbc:mariadb://127.0.0.1:13306/server'
-    $java = Join-Path $root 'runtime/java/bin/java.exe'
     if ($SmokeTest) {
         Push-Location (Join-Path $root 'server')
         try {
