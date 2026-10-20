@@ -7,6 +7,9 @@ def prepare(upstream, output):
     output.mkdir(parents=True)
     for src,dest in [('Server','server'),('Login','login'),('AppLocal','client')]:
         shutil.copytree(upstream/src,output/dest,ignore=shutil.ignore_patterns('target','log','logs','*.jar','run.bat','*.mp4'))
+    # Unity's native player resolves <executable>_Data next to its executable.
+    if (output/'client/Data').exists():
+        (output/'client/Data').rename(output/'client/NroYanii_Data')
     for java in output.rglob('*.java'):
         java.write_text(java.read_text(encoding='utf-8-sig'), encoding='utf-8')
     shutil.copy2(upstream/'LICENSE',output/'UPSTREAM-LICENSE')
