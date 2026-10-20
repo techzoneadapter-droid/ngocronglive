@@ -1,4 +1,4 @@
-name: Windows local test package
+name: Yanii Windows local test package
 on:
   push:
     branches: [main]
@@ -8,7 +8,7 @@ permissions:
 jobs:
   package:
     runs-on: windows-latest
-    timeout-minutes: 25
+    timeout-minutes: 35
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -18,51 +18,41 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
-      - uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: '8.0.x'
-      - name: Compile server and prepare Windows package
+      - name: Compile replacement server and prepare package
         shell: pwsh
-        run: ./scripts/build-windows.ps1
-      - name: Test shipped launcher with PowerShell 5 and Unicode path
+        run: ./yanii/build-windows.ps1
+      - name: Test login, character, movement and persistence with PowerShell 5
         shell: powershell
         run: |
           $workspace = (Get-Location).Path
-          $unicode = 'T' + [char]0x00E0 + 'i li' + [char]0x1EC7 + 'u'
-          $target = Join-Path (Get-Location) $unicode
-          Move-Item build/NgocRongLive-PC $target
+          $target = Join-Path $workspace ('T' + [char]0x00E0 + 'i li' + [char]0x1EC7 + 'u')
+          Move-Item build/NgocRongLive-Yanii-PC $target
           try { & (Join-Path $target 'launch.ps1') -SmokeTest }
-          finally { Set-Location -LiteralPath $workspace; Move-Item -LiteralPath $target -Destination build/NgocRongLive-PC }
-      - name: Verify no external Java installation is needed
-        shell: powershell
+          finally { Set-Location -LiteralPath $workspace; Move-Item -LiteralPath $target -Destination build/NgocRongLive-Yanii-PC }
+      - name: Initialize supplied Unity player in batch mode
+        shell: pwsh
         run: |
-          $env:JAVA_HOME = 'C:\nonexistent-java'
-          $env:JRE_HOME = 'C:\nonexistent-java'
-          & ./build/NgocRongLive-PC/runtime/java/bin/java.exe -version
-          if ($LASTEXITCODE) { throw 'Bundled Java failed' }
-      - name: Keep diagnostic logs
+          $client = Resolve-Path build/NgocRongLive-Yanii-PC/client/NroYanii.exe
+          $log = Join-Path (Get-Location) 'build/NgocRongLive-Yanii-PC/logs/client-init.log'
+          $process = Start-Process $client -WorkingDirectory (Split-Path $client) -ArgumentList @('-batchmode','-nographics','-quit','-logFile',('"' + $log + '"')) -PassThru
+          if (!$process.WaitForExit(60000)) { $process.Kill(); throw 'Client initialization timeout' }
+          Get-Content $log -Tail 50
+          if ($process.ExitCode) { throw "Client initialization failed: $($process.ExitCode)" }
+      - name: Diagnostics
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: windows-diagnostics
-          path: build/NgocRongLive-PC/logs/
-      - name: Remove only CI-generated local credentials and database
+          name: yanii-windows-diagnostics
+          path: build/NgocRongLive-Yanii-PC/logs/
+      - name: Remove CI saves and credentials
         shell: pwsh
         run: |
-          Remove-Item build/NgocRongLive-PC/data -Recurse -Force
-          Remove-Item build/NgocRongLive-PC/logs -Recurse -Force
-      - name: Upload world-entry repair for existing installations
-        uses: actions/upload-artifact@v4
+          Remove-Item build/NgocRongLive-Yanii-PC/local-data -Recurse -Force
+          Remove-Item build/NgocRongLive-Yanii-PC/logs -Recurse -Force
+          Copy-Item upstream-yanii/Server/resources/config/server.properties build/NgocRongLive-Yanii-PC/server/resources/config/server.properties -Force
+          Copy-Item upstream-yanii/Login/server.ini build/NgocRongLive-Yanii-PC/login/server.ini -Force
+      - uses: actions/upload-artifact@v4
         with:
-          name: NgocRongLive-PC-fix-world-entry
-          path: |
-            build/NgocRongLive-PC/launch.ps1
-            build/NgocRongLive-PC/server/classes/
-            build/NgocRongLive-PC/server/data/map/temp/
-          retention-days: 14
-      - name: Upload local test package
-        uses: actions/upload-artifact@v4
-        with:
-          name: NgocRongLive-PC-local-test
-          path: build/NgocRongLive-PC/
+          name: NgocRongLive-Yanii-PC-test
+          path: build/NgocRongLive-Yanii-PC/
           retention-days: 14

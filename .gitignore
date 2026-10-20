@@ -8,3 +8,5 @@
 **/obj/
 *.local.json
 __pycache__/
+/upstream-yanii/
+/local-data/
