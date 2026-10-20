@@ -10,17 +10,12 @@ def prepare(upstream, output):
     # Unity's native player resolves <executable>_Data next to its executable.
     if (output/'client/Data').exists():
         (output/'client/Data').rename(output/'client/NroYanii_Data')
-    # Local launch starts the game scene rather than WebIP's external bootstrap.
-    scene=output/'client/NroYanii_Data'
-    import hashlib
-    if hashlib.sha256((scene/'level0').read_bytes()).hexdigest() != 'a4c3ec4739f9a151b763d87cc936f346895146ce2a31b8687ed783e1f7f8d79c':
-        raise ValueError('Unexpected WebIP scene; refusing startup patch')
-    shutil.copy2(scene/'level0',scene/'level0.webip-original')
-    shutil.copy2(scene/'level1',scene/'level0')
+    from client_patch import patch_client
+    patch_client(output/'client')
     for java in output.rglob('*.java'):
         java.write_text(java.read_text(encoding='utf-8-sig'), encoding='utf-8')
     shutil.copy2(upstream/'LICENSE',output/'UPSTREAM-LICENSE')
-    # Keep the supplied client binary intact; record its identity.
+    # Record the supplied executable identity; companion metadata/DLL are patched.
     import hashlib
     (output/'provenance.json').write_text(json.dumps({'upstream':'https://github.com/yanii7905/Nro_Yanii','commit':PIN,'client_sha256':hashlib.sha256((output/'client/NroYanii.exe').read_bytes()).hexdigest()},indent=2))
     p=output/'server/src/main/java/nro/server/ServerManager.java'
@@ -28,7 +23,9 @@ def prepare(upstream, output):
     s=s.replace('new Thread(AutoMaintenance.gI(), "Thread Bảo Trì Định Kỳ").start();','// Local package has no scheduled maintenance or idle busy loop.')
     s=s.replace('while (true) {\n                String line = sc.nextLine();','while (sc.hasNextLine()) {\n                String line = sc.nextLine();')
     # LAN broadcaster kept for supplied client's discovery; game TCP stays loopback.
+    s=s.replace('public static void main(String[] args) {', 'public static void main(String[] args) {\n        nro.LocalBootstrap.start();')
     p.write_text(s,encoding='utf-8')
+    shutil.copy2(Path(__file__).with_name('LocalBootstrap.java'), output/'server/src/main/java/nro/LocalBootstrap.java')
     p=output/'login/src/main/java/server/Server.java';s=p.read_text(encoding='utf-8-sig').replace('new ServerSocket(this.config.getListen())','new ServerSocket(this.config.getListen(), 50, java.net.InetAddress.getLoopbackAddress())').replace('while (true) {\n                String line = sc.nextLine();','while (sc.hasNextLine()) {\n                String line = sc.nextLine();');p.write_text(s,encoding='utf-8')
     p=output/'login/src/main/java/server/Config.java';s=p.read_text(encoding='utf-8-sig').replace('String.format("Config - %s: %s", t, u)','String.format("Config - %s: %s", t, t.toString().contains("password") ? "[redacted]" : u)');p.write_text(s,encoding='utf-8')
     p=output/'login/src/main/java/model/User.java';s=p.read_text(encoding='utf-8-sig');s=re.sub(r'rs.getInt\("account\.([^"\n]+)"\)',r'rs.getInt("\1")',s);p.write_text(s,encoding='utf-8')

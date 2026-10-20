@@ -38,7 +38,7 @@ function Wait-Port([int]$Port, $Process, [string]$ErrorLog) {
     throw "Timed out waiting for port $Port. See logs."
 }
 # Refuse occupied ports. Never attach to or change another installed database/server.
-foreach ($port in @(13307,3105,14445)) {
+foreach ($port in @(13307,3105,14445,14446)) {
     $test = New-Object Net.Sockets.TcpClient
     try { $test.Connect('127.0.0.1', $port); throw "Port $port is in use. Close the previous local test first." }
     catch [Net.Sockets.SocketException] {} finally { $test.Dispose() }
