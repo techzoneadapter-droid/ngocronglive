@@ -7,6 +7,13 @@ def prepare(upstream, output):
     output.mkdir(parents=True)
     for src,dest in [('Server','server'),('Login','login'),('AppLocal','client')]:
         shutil.copytree(upstream/src,output/dest,ignore=shutil.ignore_patterns('target','log','logs','*.jar','run.bat','*.mp4'))
+    # Reviewed Java source is kept in this repository; apply local edits before compatibility patches.
+    reviewed = Path(__file__).resolve().parents[1] / 'game-source'
+    for component in ('server', 'login'):
+        source = reviewed / component / 'src'
+        if source.is_dir():
+            shutil.rmtree(output / component / 'src')
+            shutil.copytree(source, output / component / 'src')
     # Unity's native player resolves <executable>_Data next to its executable.
     if (output/'client/Data').exists():
         (output/'client/Data').rename(output/'client/NroYanii_Data')
