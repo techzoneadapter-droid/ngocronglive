@@ -51,6 +51,8 @@ Copy-Item yanii/launch.ps1 "$out/launch.ps1"
 Copy-Item yanii/client-preview.ps1 "$out/client-preview.ps1"
 Copy-Item scripts/PLAY.cmd "$out/PLAY.cmd"
 Copy-Item yanii/protocol_smoke.py "$out/protocol_smoke.py"
+foreach ($name in @('SERVER.cmd','CLIENT.cmd','ADMIN.cmd','STOP.cmd','BACKUP.cmd','backup.ps1','admin_smoke.py')) { Copy-Item (Join-Path 'yanii' $name) (Join-Path $out $name) }
+Copy-Item docs/ADMIN.md "$out/ADMIN-GUIDE.md"
 Copy-Item README.md "$out/README.md"
 @{ upstream='a443509f203eb21b7f39bb5a5234df4b1ddcfbea'; builtUTC=[DateTime]::UtcNow.ToString('o') } | ConvertTo-Json | Set-Content "$out/build-info.json"
 Write-Host "Built Yanii local package: $out"

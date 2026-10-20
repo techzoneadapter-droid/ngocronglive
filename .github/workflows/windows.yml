@@ -30,6 +30,9 @@ jobs:
           Move-Item build/NgocRongLive-Yanii-PC $target
           try { & (Join-Path $target 'launch.ps1') -SmokeTest -ClientPreview }
           finally { Set-Location -LiteralPath $workspace; Move-Item -LiteralPath $target -Destination build/NgocRongLive-Yanii-PC }
+      - name: Verify standalone server restart and graceful owner shutdown
+        shell: powershell
+        run: ./yanii/test-standalone.ps1 -Package build/NgocRongLive-Yanii-PC
       - name: Initialize supplied Unity player in batch mode
         if: ${{ always() && steps.build.outcome == 'success' }}
         shell: pwsh
@@ -59,24 +62,27 @@ jobs:
         run: |
           Remove-Item build/NgocRongLive-Yanii-PC/local-data -Recurse -Force
           Remove-Item build/NgocRongLive-Yanii-PC/logs -Recurse -Force
+          Remove-Item build/NgocRongLive-Yanii-PC/backups -Recurse -Force -ErrorAction SilentlyContinue
+          Remove-Item build/NgocRongLive-Yanii-PC/QUAN-TRI.txt,build/NgocRongLive-Yanii-PC/TAI-KHOAN.txt -Force -ErrorAction SilentlyContinue
           Copy-Item upstream-yanii/Server/resources/config/server.properties build/NgocRongLive-Yanii-PC/server/resources/config/server.properties -Force
           Copy-Item upstream-yanii/Login/server.ini build/NgocRongLive-Yanii-PC/login/server.ini -Force
       - name: Prepare small repair for existing Yanii package
         shell: pwsh
         run: |
           $source = 'build/NgocRongLive-Yanii-PC'
-          $patch = 'build/NgocRongLive-Yanii-startup-fix'
+          $patch = 'build/NgocRongLive-Admin-update'
           New-Item "$patch/server","$patch/client/NroYanii_Data/il2cpp_data/Metadata" -ItemType Directory -Force | Out-Null
           Copy-Item "$source/launch.ps1" "$patch/launch.ps1"
+          foreach ($name in @('SERVER.cmd','CLIENT.cmd','ADMIN.cmd','STOP.cmd','BACKUP.cmd','backup.ps1','ADMIN-GUIDE.md')) { Copy-Item (Join-Path $source $name) (Join-Path $patch $name) }
           Copy-Item "$source/server/app.jar" "$patch/server/app.jar"
           Copy-Item "$source/client/GameAssembly.dll" "$patch/client/GameAssembly.dll"
           Copy-Item "$source/client/NroYanii_Data/level0" "$patch/client/NroYanii_Data/level0"
           Copy-Item "$source/client/NroYanii_Data/il2cpp_data/Metadata/global-metadata.dat" "$patch/client/NroYanii_Data/il2cpp_data/Metadata/global-metadata.dat"
-          'Close game and PLAY.cmd. Extract this patch into the existing Yanii folder, next to PLAY.cmd, and replace matching files. Keep local-data unchanged. Start PLAY.cmd.' | Set-Content "$patch/INSTALL.txt"
+          'Close game and PLAY.cmd. Extract this update into the existing Yanii folder next to PLAY.cmd, replacing matching files. Keep local-data unchanged. Start SERVER.cmd, read QUAN-TRI.txt, open ADMIN.cmd. Use CLIENT.cmd to play and STOP.cmd to save and stop.' | Set-Content "$patch/INSTALL.txt"
       - uses: actions/upload-artifact@v4
         with:
-          name: NgocRongLive-Yanii-startup-fix
-          path: build/NgocRongLive-Yanii-startup-fix/
+          name: NgocRongLive-Admin-update
+          path: build/NgocRongLive-Admin-update/
           retention-days: 14
       - uses: actions/upload-artifact@v4
         with:

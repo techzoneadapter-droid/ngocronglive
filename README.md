@@ -4,6 +4,10 @@ Nền tảng mặc định đã chuyển từ `nvt25/Online_nro` sang [yanii7905
 
 Repo này chứa mã đóng gói, chỉnh sửa server và kiểm thử. Script tải nguyên bộ upstream cố định, biên dịch mã Java của game/login bằng Maven và ghép client Windows **có sẵn** của upstream. Chưa có mã nguồn Unity client trong bộ Yanii; không tuyên bố đã build lại client. Giữ giấy phép upstream trong gói.
 
+## Quản trị local và server độc lập
+
+Đã bổ sung console chủ server tại `http://127.0.0.1:14447`: tài khoản, tài nguyên, vật phẩm, giftcode, lịch XP, nhật ký và nạp mô phỏng. Mở `SERVER.cmd`, đọc mật khẩu trong `QUAN-TRI.txt`, dùng `ADMIN.cmd` để quản trị và `CLIENT.cmd` để chơi. Dừng bằng `STOP.cmd`. Xem [hướng dẫn quản trị](docs/ADMIN.md) trước khi nâng cấp. Chưa kết nối thanh toán thật hoặc phát hành Internet.
+
 ## Tải và chơi thử
 
 [Bản Windows đã vượt kiểm tra tự động](https://github.com/techzoneadapter-droid/ngocronglive/actions/runs/39369730178) → Artifacts → `NgocRongLive-Yanii-PC-test`.

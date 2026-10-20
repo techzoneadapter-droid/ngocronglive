@@ -1,4 +1,4 @@
-param([switch]$SmokeTest, [switch]$ClientPreview)
+param([switch]$SmokeTest, [switch]$ClientPreview, [switch]$ServerOnly)
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 $root = $PSScriptRoot
@@ -38,7 +38,7 @@ function Wait-Port([int]$Port, $Process, [string]$ErrorLog) {
     throw "Timed out waiting for port $Port. See logs."
 }
 # Refuse occupied ports. Never attach to or change another installed database/server.
-foreach ($port in @(13307,3105,14445,14446)) {
+foreach ($port in @(13307,3105,14445,14446,14447)) {
     $test = New-Object Net.Sockets.TcpClient
     try { $test.Connect('127.0.0.1', $port); throw "Port $port is in use. Close the previous local test first." }
     catch [Net.Sockets.SocketException] {} finally { $test.Dispose() }
@@ -81,6 +81,12 @@ try {
         throw "Bundled Java failed before database startup (exit $($javaCheck.ExitCode)). Extract the entire ZIP into C:\NgocRongLive and retry. Log: logs/java-error.log`n$detail"
     }
     $lock = [IO.File]::Open((Join-Path $root 'local-data/run.lock'), 'OpenOrCreate', 'ReadWrite', 'None')
+    Remove-Item (Join-Path $root 'local-data/stop.request') -ErrorAction SilentlyContinue
+    $adminPasswordFile=Join-Path $root 'local-data/admin-password.txt'
+    if (!(Test-Path $adminPasswordFile)) { [Guid]::NewGuid().ToString('N') | Set-Content $adminPasswordFile -Encoding ascii }
+    $env:NRO_ADMIN_PASSWORD=(Get-Content $adminPasswordFile -Raw).Trim()
+    if ($env:NRO_ADMIN_PASSWORD.Length -lt 16) { throw 'Admin password must have at least 16 characters: local-data/admin-password.txt' }
+
     if (!(Test-Path local-data/credentials.json)) {
         $credentials = @{ root = [Guid]::NewGuid().ToString('N'); database = [Guid]::NewGuid().ToString('N'); player = [Guid]::NewGuid().ToString('N').Substring(0,12) }
         $credentials | ConvertTo-Json | Set-Content local-data/credentials.json -Encoding ascii
@@ -118,6 +124,8 @@ try {
         if ($LASTEXITCODE) { throw 'Test account creation failed' }
         'ready' | Set-Content local-data/initialized
     }
+    # Take a recoverable SQL backup before the first owner-console schema migration.
+    if (!(Test-Path (Join-Path $root 'local-data/admin-v1-ready'))) { & (Join-Path $root 'backup.ps1') }
     $serverConfig = @"
 server.db.ip=127.0.0.1
 server.db.port=13307
@@ -157,12 +165,24 @@ wait.login=0
     Wait-Port 3105 $loginServer (Join-Path $root 'logs/login-error.log')
     $gameServer = Start-Process $java -WorkingDirectory (Join-Path $root 'server') -ArgumentList @('-Dfile.encoding=UTF-8','-Xms128m','-Xmx1024m','-jar','app.jar') -PassThru -WindowStyle Hidden -RedirectStandardOutput logs/server.log -RedirectStandardError logs/server-error.log
     Wait-Port 14445 $gameServer (Join-Path $root 'logs/server-error.log')
+    Wait-Port 14447 $gameServer (Join-Path $root 'logs/server-error.log')
+    'ready' | Set-Content (Join-Path $root 'local-data/admin-v1-ready') -Encoding ascii
+    if (!$SmokeTest) {
+        "Admin URL: http://127.0.0.1:14447`r`nAdmin password: $env:NRO_ADMIN_PASSWORD" | Set-Content (Join-Path $root 'QUAN-TRI.txt') -Encoding utf8
+        "Tai khoan: tester`r`nMat khau: $($credentials.player)" | Set-Content (Join-Path $root 'TAI-KHOAN.txt') -Encoding utf8
+    }
     if ($SmokeTest) {
         & python (Join-Path $root 'protocol_smoke.py') (Join-Path $root 'local-data/credentials.json')
         if ($LASTEXITCODE) { throw 'Yanii protocol test failed' }
         Write-Host 'PASS: Yanii login and game protocol checks completed.'
+        & python (Join-Path $root 'admin_smoke.py')
+        if ($LASTEXITCODE) { throw 'Owner console integration tests failed' }
         if ($ClientPreview) { & (Join-Path $root 'client-preview.ps1') -ClientDirectory (Join-Path $root 'client') -OutputDirectory (Join-Path $root 'logs/preview') }
         Write-Host 'Protocol tests do not verify graphical login, character creation or gameplay.'
+    } elseif ($ServerOnly) {
+        Write-Host 'SERVER READY. Admin: http://127.0.0.1:14447 - password in QUAN-TRI.txt'
+        Write-Host 'Use CLIENT.cmd to play. Use STOP.cmd or the admin page to save and stop.'
+        while (!$gameServer.HasExited -and !(Test-Path (Join-Path $root 'local-data/stop.request'))) { Start-Sleep -Seconds 1 }
     } else {
         "Tai khoan: tester`r`nMat khau: $($credentials.player)" | Set-Content TAI-KHOAN.txt -Encoding utf8
         Write-Host 'Tai khoan nam trong TAI-KHOAN.txt. Thoat game binh thuong truoc khi dong cua so nay.'
@@ -171,7 +191,11 @@ wait.login=0
         Start-Sleep -Seconds 3
     }
 } finally {
-    if ($null -ne $gameServer -and !$gameServer.HasExited) { Stop-Process -Id $gameServer.Id }
+    $stopFailed=$false
+    if ($null -ne $gameServer -and !$gameServer.HasExited) {
+        'stop' | Set-Content (Join-Path $root 'local-data/stop.request') -Encoding ascii
+        if (!$gameServer.WaitForExit(60000)) { $stopFailed=$true; Stop-Process -Id $gameServer.Id }
+    }
     if ($null -ne $loginServer -and !$loginServer.HasExited) { Stop-Process -Id $loginServer.Id }
     if ($null -ne $dbProcess -and !$dbProcess.HasExited) {
         $admin = Join-Path $root 'runtime/mariadb/bin/mariadb-admin.exe'
@@ -180,6 +204,8 @@ wait.login=0
         $dbProcess.WaitForExit(10000) | Out-Null
     }
     if ($null -ne $temporaryJava) { Remove-Item -LiteralPath $temporaryJava -Recurse -Force -ErrorAction SilentlyContinue }
+    Remove-Item Env:NRO_ADMIN_PASSWORD -ErrorAction SilentlyContinue
     Remove-Item Env:NRO_DB_PASSWORD -ErrorAction SilentlyContinue
     if ($null -ne $lock) { $lock.Dispose() }
+    if ($stopFailed) { throw 'Graceful game shutdown timed out; inspect server logs before continuing.' }
 }

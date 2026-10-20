@@ -10,3 +10,8 @@
 __pycache__/
 /upstream-yanii/
 /local-data/
+
+backups/
+QUAN-TRI.txt
+TAI-KHOAN.txt
+__pycache__/

@@ -48,6 +48,8 @@ def prepare(upstream, output):
     (output/'server/seed.sql').write_text(sql,encoding='utf-8')
     # Reduce pools to a local test workload; no gameplay/protocol rewrites.
     p=output/'server/src/main/java/nro/jdbc/DBHika.java';s=p.read_text(encoding='utf-8-sig').replace('setMinimumIdle(20)','setMinimumIdle(2)').replace('setMaximumPoolSize(100)','setMaximumPoolSize(10)');p.write_text(s,encoding='utf-8')
+    from admin.integrate import integrate
+    integrate(output)
     print('Prepared Yanii at',PIN)
 if __name__=='__main__':
     a=argparse.ArgumentParser();a.add_argument('upstream',type=Path);a.add_argument('output',type=Path);n=a.parse_args();prepare(n.upstream,n.output)
