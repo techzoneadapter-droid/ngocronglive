@@ -25,6 +25,9 @@ def prepare(upstream, output):
     p=output/'login/src/main/java/server/Server.java';s=p.read_text(encoding='utf-8-sig').replace('new ServerSocket(this.config.getListen())','new ServerSocket(this.config.getListen(), 50, java.net.InetAddress.getLoopbackAddress())').replace('while (true) {\n                String line = sc.nextLine();','while (sc.hasNextLine()) {\n                String line = sc.nextLine();');p.write_text(s,encoding='utf-8')
     p=output/'login/src/main/java/server/Config.java';s=p.read_text(encoding='utf-8-sig').replace('String.format("Config - %s: %s", t, u)','String.format("Config - %s: %s", t, t.toString().contains("password") ? "[redacted]" : u)');p.write_text(s,encoding='utf-8')
     p=output/'login/src/main/java/model/User.java';s=p.read_text(encoding='utf-8-sig');s=re.sub(r'rs.getInt\("account\.([^"\n]+)"\)',r'rs.getInt("\1")',s);p.write_text(s,encoding='utf-8')
+    p=output/'server/src/main/java/nro/server/io/MessageSender.java'
+    s=p.read_text(encoding='utf-8-sig').replace('import java.util.ArrayList;', 'import java.util.concurrent.ConcurrentLinkedQueue;').replace('ArrayList<Message>', 'ConcurrentLinkedQueue<Message>').replace('new ArrayList<>()', 'new ConcurrentLinkedQueue<>()').replace('sendingMessage.remove(0)', 'sendingMessage.poll()').replace('public void doSendMessage(Message msg)', 'public synchronized void doSendMessage(Message msg)')
+    p.write_text(s,encoding='utf-8')
     p=output/'server/src/main/java/nro/noti/NotiManager.java'
     s=p.read_text(encoding='utf-8-sig').replace('Service.getInstance().sendThongBaoFromAdmin(player, alert.content);', 'if (alert != null) Service.getInstance().sendThongBaoFromAdmin(player, alert.content);')
     p.write_text(s,encoding='utf-8')

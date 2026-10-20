@@ -19,6 +19,7 @@ jobs:
           distribution: temurin
           java-version: '17'
       - name: Compile replacement server and prepare package
+        id: build
         shell: pwsh
         run: ./yanii/build-windows.ps1
       - name: Test login, character, movement and persistence with PowerShell 5
@@ -30,6 +31,7 @@ jobs:
           try { & (Join-Path $target 'launch.ps1') -SmokeTest }
           finally { Set-Location -LiteralPath $workspace; Move-Item -LiteralPath $target -Destination build/NgocRongLive-Yanii-PC }
       - name: Initialize supplied Unity player in batch mode
+        if: ${{ always() && steps.build.outcome == 'success' }}
         shell: pwsh
         run: |
           $client = Resolve-Path build/NgocRongLive-Yanii-PC/client/NroYanii.exe
