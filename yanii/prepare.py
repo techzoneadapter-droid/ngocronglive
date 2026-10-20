@@ -10,6 +10,13 @@ def prepare(upstream, output):
     # Unity's native player resolves <executable>_Data next to its executable.
     if (output/'client/Data').exists():
         (output/'client/Data').rename(output/'client/NroYanii_Data')
+    # Local launch starts the game scene rather than WebIP's external bootstrap.
+    scene=output/'client/NroYanii_Data'
+    import hashlib
+    if hashlib.sha256((scene/'level0').read_bytes()).hexdigest() != 'a4c3ec4739f9a151b763d87cc936f346895146ce2a31b8687ed783e1f7f8d79c':
+        raise ValueError('Unexpected WebIP scene; refusing startup patch')
+    shutil.copy2(scene/'level0',scene/'level0.webip-original')
+    shutil.copy2(scene/'level1',scene/'level0')
     for java in output.rglob('*.java'):
         java.write_text(java.read_text(encoding='utf-8-sig'), encoding='utf-8')
     shutil.copy2(upstream/'LICENSE',output/'UPSTREAM-LICENSE')

@@ -165,7 +165,7 @@ wait.login=0
     } else {
         "Tai khoan: tester`r`nMat khau: $($credentials.player)" | Set-Content TAI-KHOAN.txt -Encoding utf8
         Write-Host 'Tai khoan nam trong TAI-KHOAN.txt. Thoat game binh thuong truoc khi dong cua so nay.'
-        $client = Start-Process (Join-Path $root 'client/NroYanii.exe') -WorkingDirectory $root -ArgumentList @('-logFile', ('"' + (Join-Path $root 'logs/client.log') + '"')) -PassThru
+        $client = Start-Process (Join-Path $root 'client/NroYanii.exe') -WorkingDirectory (Join-Path $root 'client') -ArgumentList @('-logFile', ('"' + (Join-Path $root 'logs/client.log') + '"')) -PassThru
         $client.WaitForExit()
         Start-Sleep -Seconds 3
     }
