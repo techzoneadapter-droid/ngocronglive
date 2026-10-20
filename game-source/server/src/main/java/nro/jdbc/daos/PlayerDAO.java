@@ -194,9 +194,9 @@ public class PlayerDAO {
             String itemTime = dataItemTime.toJSONString();
 
             JSONArray dataTask = new JSONArray();
-            dataTask.add(0);
-            dataTask.add(20);
-            dataTask.add(0);
+            dataTask.add(0); // current subtask count
+            dataTask.add(0); // start the introduction; never skip straight to task 20
+            dataTask.add(0); // current subtask index
             String task = dataTask.toJSONString();
 
             JSONArray dataAchive = new JSONArray();

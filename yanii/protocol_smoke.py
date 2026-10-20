@@ -80,8 +80,16 @@ def run(root,password):
     db=root/'runtime/mariadb/bin/mariadb.exe'
     result=subprocess.check_output([str(db),'--defaults-file='+str(root/'local-data/client.ini'),'-N','-B','ngocrong','-e',"SELECT data_location FROM player WHERE name='pcprobe'"],text=True)
     location=json.loads(result.strip());assert location[:3]==[x+24,y,mapid],('Movement changed map or was not saved',location,[x+24,y,mapid])
+    task_query=[str(db),'--defaults-file='+str(root/'local-data/client.ini'),'-N','-B','ngocrong','-e',"SELECT data_task FROM player WHERE name='pcprobe'"]
+    task=json.loads(subprocess.check_output(task_query,text=True).strip())
+    assert task == [0,0,0], ('New character skipped the introductory quest',task)
+    print('PASS: new character starts at introductory quest 0, step 0',flush=True)
     print('PASS: movement stayed in map and coordinates persisted:',location,flush=True)
     c=Client();c.login(password);newmap,_,_=c.world();assert newmap==mapid;c.sock.close()
+    time.sleep(4)
+    saved_task=json.loads(subprocess.check_output(task_query,text=True).strip())
+    assert saved_task == task, ('Quest progress changed during relogin',task,saved_task)
+    print('PASS: introductory quest persisted across relogin',flush=True)
     print('PASS: saved character can log in again',flush=True)
 if __name__=='__main__':
     sys.stdout.reconfigure(encoding='utf-8',errors='backslashreplace');sys.stderr.reconfigure(encoding='utf-8',errors='backslashreplace')
