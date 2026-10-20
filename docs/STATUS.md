@@ -40,3 +40,20 @@ Nguồn upstream: https://github.com/yanii7905/Nro_Yanii — `a443509f203eb21b7f
 Chưa đăng nhập và chơi nhân vật trực tiếp bằng giao diện: hình ảnh nhân vật, phím mũi tên, qua cổng map, đánh quái, NPC, nhiệm vụ và hai người cùng chơi. Phép thử Unity batch không kiểm tra đồ họa/đầu vào; client gốc không tự thoát bằng -quit trong môi trường CI.
 
 Kết quả giao thức không phải cam kết toàn bộ game đã hoàn chỉnh. Nhân vật bản cũ không chuyển tự động; dùng thư mục riêng cho Yanii.
+
+
+## Console chủ server và chế độ độc lập — 20/10/2026
+
+Mã kiểm thử: `9cfc0a783ef17b0bcc1f921e8273e10ca9721138`.
+Windows run: https://github.com/techzoneadapter-droid/ngocronglive/actions/runs/39390037977
+
+- Kiểm tra API với database MariaDB thật: chưa đăng nhập/CSRF sai bị từ chối; tạo, khóa/mở và đặt mật khẩu tài khoản.
+- Xếp hàng cộng ngọc, phát vật phẩm kèm chỉ số; lệnh chưa sửa inventory trước khi đăng nhập lại. Sau đăng nhập, so sánh JSON đã lưu trong DB. Đăng nhập tiếp không cộng lần hai.
+- Gửi lại cùng mã yêu cầu không tạo quà trùng; mã cũ với payload khác bị từ chối. Trừ quá số dư được REJECTED và không thay đổi tiền.
+- Duyệt đơn nạp mô phỏng hai lần chỉ có một quà; cột VNĐ/tổng nạp thương mại không bị thay đổi.
+- Giftcode một lần/tài khoản và giới hạn lượt toàn server; lịch XP bật/tắt, hệ số đọc đúng.
+- Mở SERVER độc lập, đọc lại hàng đợi/sự kiện sau restart, dừng qua API chủ server; tất cả cổng game/login/DB/admin đã đóng sau khi launcher kết thúc.
+- Sao lưu SQL trước lần migration đầu tiên, bao gồm trường hợp đường dẫn Windows có dấu.
+- Edge thật: đăng nhập console, hiển thị tài khoản/nhật ký, bảy mục điều hướng, chiều rộng mobile 390px không tràn ngang, đăng xuất, không có JavaScript exception.
+
+Phạm vi: một chủ server trên máy local; chưa phát hành VPS/public, chưa website đăng ký người chơi public, thanh toán thật hoặc mẫu sự kiện boss/nhiệm vụ mới. Giao diện game native chỉ kiểm tra khởi động/menu; quà/di chuyển/lưu nhân vật kiểm tra qua giao thức và DB, chưa tự động chơi toàn bộ game bằng chuột/phím.

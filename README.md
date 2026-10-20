@@ -6,13 +6,15 @@ Repo này chứa mã đóng gói, chỉnh sửa server và kiểm thử. Script 
 
 ## Quản trị local và server độc lập
 
+Tải artifact **NgocRongLive-Admin-update** từ [lần kiểm thử Windows](https://github.com/techzoneadapter-droid/ngocronglive/actions/runs/39390037977), giải nén chép đè vào thư mục Yanii hiện tại khi đã thoát game; giữ nguyên `local-data`.
+
 Đã bổ sung console chủ server tại `http://127.0.0.1:14447`: tài khoản, tài nguyên, vật phẩm, giftcode, lịch XP, nhật ký và nạp mô phỏng. Mở `SERVER.cmd`, đọc mật khẩu trong `QUAN-TRI.txt`, dùng `ADMIN.cmd` để quản trị và `CLIENT.cmd` để chơi. Dừng bằng `STOP.cmd`. Xem [hướng dẫn quản trị](docs/ADMIN.md) trước khi nâng cấp. Chưa kết nối thanh toán thật hoặc phát hành Internet.
 
 ## Tải và chơi thử
 
-[Bản Windows đã vượt kiểm tra tự động](https://github.com/techzoneadapter-droid/ngocronglive/actions/runs/39369730178) → Artifacts → `NgocRongLive-Yanii-PC-test`.
+[Bản Windows đã vượt kiểm tra tự động](https://github.com/techzoneadapter-droid/ngocronglive/actions/runs/39390037977) → Artifacts → `NgocRongLive-Yanii-PC-test`.
 
-**Đã có bản Yanii bị màn hình đen:** tải artifact `NgocRongLive-Yanii-startup-fix` trong lần chạy trên (~25 MB). Thoát game và PLAY, giải nén vào đúng thư mục cạnh `PLAY.cmd`, chép đè các file trùng tên. Giữ nguyên `local-data`. Chạy lại PLAY và bấm nút NgocRongLive.
+**Đã có bản Yanii:** tải artifact `NgocRongLive-Admin-update` trong lần chạy trên (~25 MB, gồm cả bản sửa khởi động). Thoát game và PLAY, giải nén vào đúng thư mục cạnh `PLAY.cmd`, chép đè các file trùng tên. Giữ nguyên `local-data`. Chạy lại PLAY và bấm nút NgocRongLive.
 
 Mở Actions → **Yanii Windows local test package** → lần chạy thành công → Artifacts → `NgocRongLive-Yanii-PC-test`.
 Giải nén **toàn bộ vào thư mục mới**, chạy `PLAY.cmd`. Đọc tài khoản trong `TAI-KHOAN.txt` sau khi server sẵn sàng. Không cần cài Java hoặc database toàn hệ thống. Không trộn server/client của bản cũ vào bản Yanii.
