@@ -61,6 +61,23 @@ jobs:
           Remove-Item build/NgocRongLive-Yanii-PC/logs -Recurse -Force
           Copy-Item upstream-yanii/Server/resources/config/server.properties build/NgocRongLive-Yanii-PC/server/resources/config/server.properties -Force
           Copy-Item upstream-yanii/Login/server.ini build/NgocRongLive-Yanii-PC/login/server.ini -Force
+      - name: Prepare small repair for existing Yanii package
+        shell: pwsh
+        run: |
+          $source = 'build/NgocRongLive-Yanii-PC'
+          $patch = 'build/NgocRongLive-Yanii-startup-fix'
+          New-Item "$patch/server","$patch/client/NroYanii_Data/il2cpp_data/Metadata" -ItemType Directory -Force | Out-Null
+          Copy-Item "$source/launch.ps1" "$patch/launch.ps1"
+          Copy-Item "$source/server/app.jar" "$patch/server/app.jar"
+          Copy-Item "$source/client/GameAssembly.dll" "$patch/client/GameAssembly.dll"
+          Copy-Item "$source/client/NroYanii_Data/level0" "$patch/client/NroYanii_Data/level0"
+          Copy-Item "$source/client/NroYanii_Data/il2cpp_data/Metadata/global-metadata.dat" "$patch/client/NroYanii_Data/il2cpp_data/Metadata/global-metadata.dat"
+          'Close game and PLAY.cmd. Extract this patch into the existing Yanii folder, next to PLAY.cmd, and replace matching files. Keep local-data unchanged. Start PLAY.cmd.' | Set-Content "$patch/INSTALL.txt"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: NgocRongLive-Yanii-startup-fix
+          path: build/NgocRongLive-Yanii-startup-fix/
+          retention-days: 14
       - uses: actions/upload-artifact@v4
         with:
           name: NgocRongLive-Yanii-PC-test
