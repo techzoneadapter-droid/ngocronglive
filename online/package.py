@@ -17,7 +17,7 @@ def package(base, output, host, commit):
     shutil.copy2(base / 'login/app.jar', server / 'login/app.jar')
     # Never ship upstream connection credentials or generated CI credentials.
     (server / 'server/resources/config/server.properties').write_text('# Written by install.sh\n')
-    for name in ('install.sh', 'configure.py', 'status.sh', 'stop.sh', 'backup.sh'):
+    for name in ('install.sh', 'configure.py', 'status.sh', 'stop.sh', 'backup.sh', 'wait_ready.py'):
         shutil.copy2(Path(__file__).parent / name, server / name)
     shutil.copytree(base / 'client', client / 'client')
     digest = patch(client / 'client/NroYanii_Data/il2cpp_data/Metadata/global-metadata.dat', host)

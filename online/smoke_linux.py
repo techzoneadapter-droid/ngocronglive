@@ -25,7 +25,7 @@ def start(component, heap):
     out = (root / 'logs' / (component + '.log')).open('w')
     err = (root / 'logs' / (component + '-error.log')).open('w')
     handles.extend([out, err])
-    proc = subprocess.Popen(['java', '-Dfile.encoding=UTF-8', '-Xms32m', '-Xmx'+heap, '-Xss256k', '-XX:ActiveProcessorCount=2', '-jar', 'app.jar'], cwd=root / component, env=env, stdout=out, stderr=err)
+    proc = subprocess.Popen(['java', '-Djava.net.preferIPv4Stack=true', '-Dfile.encoding=UTF-8', '-Xms32m', '-Xmx'+heap, '-Xss256k', '-XX:ActiveProcessorCount=2', '-jar', 'app.jar'], cwd=root / component, env=env, stdout=out, stderr=err)
     processes.append(proc)
     return proc
 def wait(port, proc):

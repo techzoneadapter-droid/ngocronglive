@@ -53,7 +53,7 @@ User=nrolive
 Group=nrolive
 WorkingDirectory=/opt/nrolive-beta/login
 EnvironmentFile=/etc/nrolive-beta.env
-ExecStart=/usr/bin/java -Dfile.encoding=UTF-8 -Xms32m -Xmx96m -Xss256k -jar app.jar
+ExecStart=/usr/bin/java -Djava.net.preferIPv4Stack=true -Dfile.encoding=UTF-8 -Xms32m -Xmx96m -Xss256k -jar app.jar
 Restart=on-failure
 RestartSec=5
 UMask=0027
@@ -73,7 +73,7 @@ Group=nrolive
 WorkingDirectory=/opt/nrolive-beta/server
 EnvironmentFile=/etc/nrolive-beta.env
 ExecStartPre=/usr/bin/rm -f /opt/nrolive-beta/local-data/stop.request
-ExecStart=/usr/bin/java -Dfile.encoding=UTF-8 -Xms128m -Xmx${NRO_GAME_HEAP}m -Xss256k -XX:ActiveProcessorCount=2 -jar app.jar
+ExecStart=/usr/bin/java -Djava.net.preferIPv4Stack=true -Dfile.encoding=UTF-8 -Xms128m -Xmx${NRO_GAME_HEAP}m -Xss256k -XX:ActiveProcessorCount=2 -jar app.jar
 ExecStop=/bin/bash /opt/nrolive-beta/stop.sh $MAINPID
 TimeoutStopSec=90
 Restart=on-failure
@@ -125,5 +125,6 @@ ufw default allow outgoing
 ufw --force enable
 systemctl daemon-reload
 systemctl enable --now nrolive-login nrolive-game nrolive-backup.timer
-echo 'Installed. Wait for game startup, then run: bash /opt/nrolive-beta/status.sh'
+python3 "$target/wait_ready.py"
+echo 'Installed. Run: bash /opt/nrolive-beta/status.sh'
 echo 'Owner console uses SSH tunnel only; read /etc/nrolive-beta.env locally for its password.'
