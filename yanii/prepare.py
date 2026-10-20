@@ -18,6 +18,9 @@ def prepare(upstream, output):
     # Record the supplied executable identity; companion metadata/DLL are patched.
     import hashlib
     (output/'provenance.json').write_text(json.dumps({'upstream':'https://github.com/yanii7905/Nro_Yanii','commit':PIN,'client_sha256':hashlib.sha256((output/'client/NroYanii.exe').read_bytes()).hexdigest()},indent=2))
+    p=output/'server/src/main/java/nro/server/Manager.java'
+    s=p.read_text(encoding='utf-8-sig').replace('DataGame.LINK_IP_PORT = linkServer.substring(0, linkServer.length() - 1);', 'DataGame.LINK_IP_PORT = nro.LocalBootstrap.SERVER_LIST;')
+    p.write_text(s,encoding='utf-8')
     p=output/'server/src/main/java/nro/server/ServerManager.java'
     s=p.read_text(encoding='utf-8-sig').replace('ServerBroadcaster.startBroadcasting', 'nro.ServerBroadcaster.startBroadcasting').replace('new ServerSocket(PORT)','new ServerSocket(PORT, 50, java.net.InetAddress.getLoopbackAddress())')
     s=s.replace('new Thread(AutoMaintenance.gI(), "Thread Bảo Trì Định Kỳ").start();','// Local package has no scheduled maintenance or idle busy loop.')

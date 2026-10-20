@@ -47,7 +47,7 @@ try {
  if (Test-Path $log) {
   $content=Get-Content $log -Raw
   Get-Content $log -Tail 80
-  if ($content -match 'NullReferenceException|ArgumentNullException|Failed to load') { throw 'Client startup exception: see captured preview and client.log. Package is not playable.' }
+  if ($content -match 'NullReferenceException|ArgumentNullException|Failed to load|Error parsing|JsonReaderException') { throw 'Client startup exception: see captured preview and client.log. Package is not playable.' }
  }
  Write-Host ('Client window: '+$p.MainWindowTitle)
 } finally { if (!$p.HasExited) { $p.Kill(); $p.WaitForExit() } }
