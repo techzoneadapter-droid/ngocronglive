@@ -6,12 +6,14 @@ Repo này chứa mã đóng gói, chỉnh sửa server và kiểm thử. Script 
 
 ## Tải và chơi thử
 
-[Bản Windows đã vượt kiểm tra tự động](https://github.com/techzoneadapter-droid/ngocronglive/actions/runs/39364727414) → Artifacts → `NgocRongLive-Yanii-PC-test`.
+[Bản Windows đã vượt kiểm tra tự động](https://github.com/techzoneadapter-droid/ngocronglive/actions/runs/39369730178) → Artifacts → `NgocRongLive-Yanii-PC-test`.
+
+**Đã có bản Yanii bị màn hình đen:** tải artifact `NgocRongLive-Yanii-startup-fix` trong lần chạy trên (~25 MB). Thoát game và PLAY, giải nén vào đúng thư mục cạnh `PLAY.cmd`, chép đè các file trùng tên. Giữ nguyên `local-data`. Chạy lại PLAY và bấm nút NgocRongLive.
 
 Mở Actions → **Yanii Windows local test package** → lần chạy thành công → Artifacts → `NgocRongLive-Yanii-PC-test`.
 Giải nén **toàn bộ vào thư mục mới**, chạy `PLAY.cmd`. Đọc tài khoản trong `TAI-KHOAN.txt` sau khi server sẵn sàng. Không cần cài Java hoặc database toàn hệ thống. Không trộn server/client của bản cũ vào bản Yanii.
 
-Database riêng ở `127.0.0.1:13307`, dịch vụ login `127.0.0.1:3105`, game `127.0.0.1:14445`. Đóng bản cũ trước khi chạy. Gói có hai tiến trình Java, một database và client Unity. Dữ liệu mới nằm trong `local-data`; nhân vật của nền tảng cũ không được chuyển tự động vì schema khác.
+Database riêng ở `127.0.0.1:13307`, dịch vụ login `127.0.0.1:3105`, game `127.0.0.1:14445`, danh sách server local HTTP `127.0.0.1:14446`. Đóng bản cũ trước khi chạy. Gói có hai tiến trình Java, một database và client Unity. Dữ liệu mới nằm trong `local-data`; nhân vật của nền tảng cũ không được chuyển tự động vì schema khác.
 
 Client nguyên bản có cơ chế khám phá server LAN; game/login của gói thử chỉ bind loopback. Đây là bản kiểm thử trên một máy, chưa phải gói multiplayer cho bạn bè qua Internet.
 
@@ -23,7 +25,8 @@ Windows x64, Git, Python 3.12, JDK 17 và Maven. Chạy `pwsh -File yanii/build-
 
 ## Thay đổi có chủ đích
 
-- Biên dịch server/login từ source cùng bộ upstream; giữ client binary nguyên bản.
+- Biên dịch server/login từ source cùng bộ upstream; vá DLL/metadata của client đi kèm với kiểm tra SHA-256/byte nguồn.
+- Chuyển WebIP khỏi URL upstream 404 sang danh sách server HTTP local; dùng shader 2D có sẵn và bỏ thông báo khởi động gây null trước khi Info sẵn sàng.
 - Tách database và dữ liệu lưu; sinh mật khẩu riêng khi chạy.
 - Tắt thread lịch bảo trì local vốn chạy vòng lặp không nghỉ; giảm pool database cho máy cá nhân.
 - Bind TCP game/login vào localhost; sửa nhãn cột SQL của dịch vụ login cho tương thích JDBC.
@@ -32,4 +35,4 @@ Windows x64, Git, Python 3.12, JDK 17 và Maven. Chạy `pwsh -File yanii/build-
 - Chuẩn hóa UTF-8/BOM và tên thư mục dữ liệu Unity để dựng/chạy từ gói sạch.
 - Giữ cách xử lý Java trong đường dẫn có dấu; lỗi khởi động hiện kèm nội dung log.
 
-Kiểm thử tự động và kiểm thử giao diện là hai việc riêng: CI sẽ kiểm tra đăng nhập, tải dữ liệu, tạo nhân vật, nhận bản đồ, di chuyển cùng map, lưu vị trí và đăng nhập lại. Chế độ Unity batch kiểm tra engine và scene đầu trong 20 giây rồi dừng tiến trình chủ động; client gốc không tự thoát với -quit trên CI. Phép kiểm tra này không xác nhận hình ảnh, điều khiển hoặc đánh quái bằng giao diện. Xem `docs/STATUS.md` để biết trạng thái đã xác minh.
+Kiểm thử tự động và kiểm thử giao diện là hai việc riêng: CI sẽ kiểm tra đăng nhập, tải dữ liệu, tạo nhân vật, nhận bản đồ, di chuyển cùng map, lưu vị trí và đăng nhập lại. CI còn mở cửa sổ client thật khi server đang chạy, bấm chọn server và chụp ảnh, chặn đóng gói khi log báo exception khởi động. Chế độ Unity batch chỉ kiểm tra engine và scene đầu; chưa xác nhận toàn bộ điều khiển hoặc đánh quái bằng giao diện. Xem `docs/STATUS.md` để biết trạng thái đã xác minh.
