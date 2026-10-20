@@ -18,6 +18,9 @@ def prepare(upstream, output):
     # Record the supplied executable identity; companion metadata/DLL are patched.
     import hashlib
     (output/'provenance.json').write_text(json.dumps({'upstream':'https://github.com/yanii7905/Nro_Yanii','commit':PIN,'client_sha256':hashlib.sha256((output/'client/NroYanii.exe').read_bytes()).hexdigest()},indent=2))
+    p=output/'server/src/main/java/nro/data/DataGame.java'
+    s=p.read_text(encoding='utf-8-sig').replace('writeUTF(LINK_IP_PORT + ",0,0")', 'writeUTF(LINK_IP_PORT)')
+    p.write_text(s,encoding='utf-8')
     p=output/'server/src/main/java/nro/server/Manager.java'
     s=p.read_text(encoding='utf-8-sig').replace('DataGame.LINK_IP_PORT = linkServer.substring(0, linkServer.length() - 1);', 'DataGame.LINK_IP_PORT = nro.LocalBootstrap.SERVER_LIST;')
     p.write_text(s,encoding='utf-8')
