@@ -1,0 +1,21 @@
+name: Source client integration checks
+on:
+  push:
+    branches: [main, integration/full-source]
+    paths: ['client-source/**', 'tests/ClientCore/**', '.github/workflows/source-client-checks.yml']
+  pull_request:
+    paths: ['client-source/**', 'tests/ClientCore/**']
+permissions:
+  contents: read
+jobs:
+  core:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - run: dotnet run --project tests/ClientCore/ClientCore.csproj --configuration Release
+      - run: python -m py_compile client-source/prepare.py
+      - name: Check scene and script references
+        run: python tests/check_client_project.py
