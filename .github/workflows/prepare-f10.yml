@@ -1,0 +1,31 @@
+name: Prepare F10 source package
+on:
+  push:
+    branches: [integration/full-source]
+    paths: ['client-source/**', '.github/workflows/prepare-f10.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - name: Check F10 core logic
+        run: dotnet run --project tests/ClientCore/ClientCore.csproj --configuration Release
+      - name: Check scene references
+        run: python tests/check_client_project.py
+      - name: Prepare source and resources
+        run: |
+          python client-source/prepare.py --cache cache/clone-client --output dist/F10/Project
+          cp client-source/package/* dist/F10/
+          cp client-source/README.md dist/F10/SOURCE-NOTES.md
+          printf '%s\n' 'SOURCE PROJECT - not a built or playtested game.' 'Install Unity Hub, sign in and activate an eligible license, then run BUILD-F10.cmd.' 'Editor: 2022.3.26f1. Server is distributed separately.' > dist/F10/READ-ME.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: NgocRongLive-F10-source-ready
+          path: dist/F10
+          retention-days: 14
