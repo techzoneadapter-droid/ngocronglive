@@ -127,10 +127,11 @@ public final class LiveAdmin {
             int id=(int)number(b,"item_id",0,32767);if(rows(c,"SELECT id FROM item_template WHERE id=?",id).isEmpty())throw new IllegalArgumentException("ID vật phẩm không tồn tại");
             long quantity=number(b,"quantity",1,9999);JSONArray opts=b.optJSONArray("options");if(opts==null)opts=new JSONArray();if(opts.length()>32)throw new IllegalArgumentException("Tối đa 32 chỉ số");
             for(int i=0;i<opts.length();i++){JSONArray o=opts.getJSONArray(i);if(o.length()!=2)throw new IllegalArgumentException("Chỉ số dạng [id,giá trị]");int oid=o.getInt(0),param=o.getInt(1);if(param<0||param>1000000||rows(c,"SELECT id FROM item_option_template WHERE id=?",oid).isEmpty())throw new IllegalArgumentException("Chỉ số vật phẩm không hợp lệ");}
-            return new JSONObject().put("kind",kind).put("item_id",id).put("quantity",quantity).put("options",opts);
+            return new JSONObject().put("kind",kind).put("item_id",id).put("quantity",quantity).put("options",opts).put("match_gender",b.optBoolean("match_gender"));
         }
         if(kind.equals("COMPANION")) {
             String species=nro.companion.CompanionService.valid(b.getString("species")),mode=b.getString("mode");
+            if(mode.equals("EGG")&&species.equals("MABU"))return reward(c,new JSONObject().put("kind","ITEM").put("item_id",568).put("quantity",1).put("options",new JSONArray()));
             if(species.startsWith("VIP_"))throw new IllegalArgumentException("Đệ VIP chỉ mua bằng hồng ngọc, không phát qua mã quà");
             if(!Set.of("PET","EGG").contains(mode)||mode.equals("EGG")&&species.equals("NORMAL"))throw new IllegalArgumentException("Loại phần thưởng đệ tử không hợp lệ");
             return new JSONObject().put("kind",kind).put("species",species).put("mode",mode).put("replace",b.optBoolean("replace"));
@@ -210,15 +211,18 @@ public final class LiveAdmin {
         case "/api/event":{
             String id=requestId(b),title=text(b,"title",120);long start=number(b,"start_ms",0,9999999999999L),end=number(b,"end_ms",1,9999999999999L);int multiplier=(int)number(b,"multiplier",1,10);if(end<=start)throw new IllegalArgumentException("Giờ kết thúc phải sau giờ bắt đầu");
             exec(c,"INSERT INTO live_admin_events(id,title,start_ms,end_ms,multiplier,enabled) VALUES(?,?,?,?,?,?) ON DUPLICATE KEY UPDATE title=VALUES(title),start_ms=VALUES(start_ms),end_ms=VALUES(end_ms),multiplier=VALUES(multiplier),enabled=VALUES(enabled)",id,title,start,end,multiplier,b.getBoolean("enabled"));audit(c,"EVENT",id,b.toString());return new JSONObject().put("id",id);}
-        case "/api/gameplay/settings":{JSONObject settings=nro.live.GrowthService.validate(b.getJSONObject("settings"));exec(c,"UPDATE live_gameplay_config SET payload=? WHERE id=1",settings.toString());audit(c,"GAMEPLAY_SETTINGS","1",settings.toString());return new JSONObject().put("ok",true);}
+        case "/api/gameplay/settings":{JSONObject settings=nro.live.GrowthService.validate(b.getJSONObject("settings"));Set<String> next=new HashSet<>();for(int i=0;i<settings.getJSONArray("vip").length();i++)next.add(settings.getJSONArray("vip").getJSONObject(i).getString("id"));JSONArray old=nro.live.GrowthService.settings().getJSONArray("vip");for(int i=0;i<old.length();i++)if(!next.contains(old.getJSONObject(i).getString("id")))throw new IllegalArgumentException("Không xóa ID mẫu VIP; hãy tắt mở bán để giữ hình và dữ liệu đệ đã mua");exec(c,"UPDATE live_gameplay_config SET payload=? WHERE id=1",settings.toString());audit(c,"GAMEPLAY_SETTINGS","1",settings.toString());return new JSONObject().put("ok",true);}
         case "/api/training/map":{JSONObject rule=nro.live.TrainingWorld.validate(b.getJSONObject("rule"));JSONArray old=rows(c,"SELECT payload FROM live_training_maps WHERE map_id=?",rule.getInt("map_id"));if(!old.isEmpty()){JSONObject before=new JSONObject(old.getJSONObject(0).getString("payload"));for(String key:List.of("source_map","mob_hp","name"))if(!before.get(key).equals(rule.get(key)))throw new IllegalArgumentException("Đổi tên/địa hình/HP cần tạo map ID mới; cấu hình khu cũ không bị mất");}exec(c,"INSERT INTO live_training_maps(map_id,payload) VALUES(?,?) ON DUPLICATE KEY UPDATE payload=VALUES(payload)",rule.getInt("map_id"),rule.toString());audit(c,"TRAINING_MAP",String.valueOf(rule.getInt("map_id")),rule.toString());return new JSONObject().put("ok",true);}
         case "/api/code/create":{
-            String code=text(b,"code",30).toUpperCase(Locale.ROOT);if(!code.matches("[A-Z0-9_-]{2,30}"))throw new IllegalArgumentException("Mã dài 2–30 ký tự, gồm chữ, số, _ hoặc -");int max=(int)number(b,"max_uses",1,100000);long expires=number(b,"expires_ms",System.currentTimeMillis()+1000,9999999999999L);JSONObject r=reward(c,b.getJSONObject("reward"));if(r.optLong("amount",1)<1)throw new IllegalArgumentException("Giftcode không được trừ tiền");JSONArray allowed=b.optJSONArray("allowed_accounts");
+            String code=text(b,"code",30).toUpperCase(Locale.ROOT);if(!code.matches("[A-Z0-9_-]{2,30}"))throw new IllegalArgumentException("Mã dài 2–30 ký tự, gồm chữ, số, _ hoặc -");int max=(int)number(b,"max_uses",1,Integer.MAX_VALUE);long expires=number(b,"expires_ms",System.currentTimeMillis()+1000,9999999999999L);JSONObject r=reward(c,b.getJSONObject("reward"));if(r.optLong("amount",1)<1)throw new IllegalArgumentException("Giftcode không được trừ tiền");JSONArray allowed=b.optJSONArray("allowed_accounts");
             if(allowed!=null&&allowed.length()>500)throw new IllegalArgumentException("Tối đa 500 tài khoản nhận mã riêng");
             Set<Integer> recipients=new HashSet<>();
             if(allowed!=null)for(int i=0;i<allowed.length();i++)recipients.add(account(c,new JSONObject().put("account_id",allowed.getInt(i))));
             if(b.optBoolean("restricted")&&recipients.isEmpty())throw new IllegalArgumentException("Mã riêng cần chọn ít nhất một tài khoản");
-            exec(c,"INSERT INTO live_admin_codes(code,max_uses,expires_ms,reward) VALUES(?,?,?,?)",code,max,expires,r.toString());
+            boolean exists=!rows(c,"SELECT code FROM live_admin_codes WHERE code=? FOR UPDATE",code).isEmpty();
+            if(exists&&!b.optBoolean("replace_existing"))throw new IllegalArgumentException("Mã đã tồn tại; chọn cập nhật mã cũ nếu muốn sửa, lịch sử nhận sẽ được giữ");
+            if(exists){exec(c,"UPDATE live_admin_codes SET max_uses=?,expires_ms=?,reward=? WHERE code=?",max,expires,r.toString(),code);exec(c,"DELETE FROM live_admin_code_accounts WHERE code=?",code);}
+            else exec(c,"INSERT INTO live_admin_codes(code,max_uses,expires_ms,reward) VALUES(?,?,?,?)",code,max,expires,r.toString());
             for(int recipient:recipients)exec(c,"INSERT INTO live_admin_code_accounts(code,account_id) VALUES(?,?)",code,recipient);audit(c,"CREATE_CODE",code,"max="+max);return new JSONObject().put("code",code);}
         case "/api/code/redeem":return redeem(c,account(c,b),text(b,"code",30));
         case "/api/server/stop":{
@@ -311,6 +315,7 @@ public final class LiveAdmin {
                 }
                 after=points.toString();exec(c,"UPDATE player SET data_point=?,power=? WHERE id=?",after,points.getLong(11),player.getLong("id"));
             }else{
+                if(reward.optBoolean("match_gender")){int gender=nro.services.ItemService.gI().getTemplate(reward.getInt("item_id")).gender;if(gender<=2&&gender!=player.getInt("gender")){exec(c,"UPDATE live_admin_actions SET status='APPLIED',details='Skipped: different planet',applied_at=CURRENT_TIMESTAMP WHERE id=?",id);c.commit();return;}}
                 before=player.getString("items_box");JSONArray box=new JSONArray(before);int slot=-1;for(int i=0;i<box.length();i++)if(box.getJSONObject(i).getInt("temp_id")==-1){slot=i;break;}
                 if(slot<0){c.rollback();return;}// Leave pending until the owner frees a box slot.
                 JSONObject item=new JSONObject().put("temp_id",reward.getInt("item_id")).put("quantity",reward.getInt("quantity")).put("option",reward.getJSONArray("options")).put("create_time",System.currentTimeMillis());box.put(slot,item);after=box.toString();exec(c,"UPDATE player SET items_box=? WHERE id=?",after,player.getLong("id"));

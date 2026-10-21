@@ -34,7 +34,7 @@ public class Charms {
                 if (tdTriTue < System.currentTimeMillis()) {
                     tdTriTue = System.currentTimeMillis();
                 }
-                tdTriTue += min * 60 * 1000L;
+                tdTriTue = Math.max(tdTriTue,player.liveBuffs.optLong("2155")) + min * 60 * 1000L;
                 break;
             case 214:
                 if (tdManhMe < System.currentTimeMillis()) {
@@ -82,13 +82,13 @@ public class Charms {
                 if (tdTriTue3 < System.currentTimeMillis()) {
                     tdTriTue3 = System.currentTimeMillis();
                 }
-                tdTriTue3 += min * 60 * 1000L;
+                tdTriTue3 = Math.max(tdTriTue3,player.liveBuffs.optLong("2156")) + min * 60 * 1000L;
                 break;
             case 672:
                 if (tdTriTue4 < System.currentTimeMillis()) {
                     tdTriTue4 = System.currentTimeMillis();
                 }
-                tdTriTue4 += min * 60 * 1000L;
+                tdTriTue4 = Math.max(tdTriTue4,player.liveBuffs.optLong("2157")) + min * 60 * 1000L;
                 break;
             case 2025:
                 if (tdDeTuMabu < System.currentTimeMillis()) {

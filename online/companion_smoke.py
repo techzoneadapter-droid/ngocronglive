@@ -35,8 +35,13 @@ def run(root,sql,protocol):
     settings=state['companion_settings'];original_settings=dict(settings)
     for index,species in enumerate(['MABU','JIREN','ZENO']):
         code='LIVEEGG'+species
-        api('/api/code/create',{'code':code,'max_uses':1,'expires_ms':int(time.time()*1000)+3600000,'reward':{'kind':'COMPANION','mode':'EGG','species':species}})
-        api('/api/code/redeem',{'account_id':user,'code':code})
+        if species=='MABU':
+            # Existing incubation JSON remains backwards compatible; new gifts use a tradable bag egg.
+            data={'species':'MABU','create_time':int(time.time()*1000),'time_done':settings['hatch_seconds']*1000}
+            sql("UPDATE player SET data_mabu_egg='"+json.dumps(data)+"' WHERE name='pcprobe'")
+        else:
+            api('/api/code/create',{'code':code,'max_uses':1,'expires_ms':int(time.time()*1000)+3600000,'reward':{'kind':'COMPANION','mode':'EGG','species':species}})
+            api('/api/code/redeem',{'account_id':user,'code':code})
         c=login();egg=row('data_mabu_egg');assert egg['species']==species
         c.send(44,protocol.utf('santrung'));c.until(lambda code,p:'Săn Broly'.encode() in p)
         assert egg['time_done']==settings['hatch_seconds']*1000*{'MABU':1,'JIREN':6,'ZENO':24}[species]
