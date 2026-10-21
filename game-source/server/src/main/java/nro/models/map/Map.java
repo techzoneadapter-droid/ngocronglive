@@ -146,7 +146,7 @@ public class Map implements Runnable {
                     zone.update();
                 }
                 long timeDo = System.currentTimeMillis() - st;
-                Thread.sleep(1000 - timeDo);
+                Thread.sleep(Math.max(10, 1000 - timeDo));
             } catch (Exception e) {
                 // Logger.logException(Map.class, e, "Lỗi update map " + this.mapName);
             }

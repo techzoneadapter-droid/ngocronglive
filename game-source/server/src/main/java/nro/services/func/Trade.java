@@ -46,6 +46,7 @@ public class Trade {
     private int goldTrade2;
 
     public byte accept;
+    private boolean locked1,locked2,accepted1,accepted2;
 
     private long lastTimeStart;
     private boolean start;
@@ -87,7 +88,10 @@ public class Trade {
         }
     }
 
-    public void addItemTrade(Player pl, byte index, int quantity) {
+    public synchronized void addItemTrade(Player pl, byte index, int quantity) {
+        if(locked1||locked2||player1==null||player2==null||(!pl.equals(player1)&&!pl.equals(player2))||quantity<=0)return;
+        if(index < -1 || index >= (pl.equals(player1)?itemsBag1:itemsBag2).size())return;
+        if(index>=0 && !(pl.equals(player1)?itemsBag1:itemsBag2).get(index).isNotNullItem())return;
         // System.out.println("quantity: " + quantity);
         if (pl.getSession().actived) {
             // if (pl.nPoint.power >= 40_000_000_000L) {
@@ -169,6 +173,7 @@ public class Trade {
     }
 
     private boolean isItemCannotTran(Item item) {
+        if(item.template.id==2154)return true;
         for (ItemOption io : item.itemOptions) {
             if (io.optionTemplate.id == 30) {
                 return true;
@@ -263,7 +268,9 @@ public class Trade {
         this.itemsTrade2 = null;
     }
 
-    public void lockTran(Player pl) {
+    public synchronized void lockTran(Player pl) {
+        if(player1==null||player2==null)return;
+        if(pl.equals(player1))locked1=true;else if(pl.equals(player2))locked2=true;else return;
         Message msg;
         try {
             msg = new Message(-86);
@@ -314,11 +321,11 @@ public class Trade {
         }
     }
 
-    public void acceptTrade() {
-        this.accept++;
-        if (this.accept == 2) {
-            this.startTrade();
-        }
+    public synchronized void acceptTrade(Player p) {
+        if(player1==null||player2==null||!locked1||!locked2)return;
+        if(p.equals(player1)){if(accepted1)return;accepted1=true;}else if(p.equals(player2)){if(accepted2)return;accepted2=true;}else return;
+        this.accept=(byte)((accepted1?1:0)+(accepted2?1:0));
+        if(this.accept==2)this.startTrade();
     }
 
     private void startTrade() {
@@ -347,12 +354,8 @@ public class Trade {
                     }
                 }
                 if (tradeStatus == SUCCESS) {
-                    player1.inventory.gold += goldTrade2;
-                    player2.inventory.gold += goldTrade1;
-                    player1.inventory.gold -= goldTrade1;
-                    player2.inventory.gold -= goldTrade2;
-                    player1.inventory.itemsBag = itemsBag1;
-                    player2.inventory.itemsBag = itemsBag2;
+                    try {nro.admin.TradeCommit.commit(player1,player2,bag1Before,bag2Before,itemsBag1,itemsBag2,gold1Before,gold2Before,goldTrade1,goldTrade2);}
+                    catch(Exception e){Service.gI().sendThongBao(player1,e instanceof IllegalArgumentException?e.getMessage():"Chưa lưu được giao dịch; chưa chuyển vật phẩm");Service.gI().sendThongBao(player2,"Giao dịch chưa hoàn tất; hãy mở lại");return;}
 
                     InventoryService.gI().sendItemBags(player1);
                     InventoryService.gI().sendItemBags(player2);
@@ -362,23 +365,6 @@ public class Trade {
                     HistoryTransactionDAO.insert(player1, player2, goldTrade1, goldTrade2, itemsTrade1, itemsTrade2,
                             bag1Before, bag2Before, this.player1.inventory.itemsBag, this.player2.inventory.itemsBag,
                             gold1Before, gold2Before, this.player1.inventory.gold, this.player2.inventory.gold);
-                    PreparedStatement ps = null;
-                    ResultSet rs = null;
-                    try (Connection con = DBService.gI().getConnectionForSaveHistory();) {
-                        PlayerDAO.saveBag(con, player1);
-                        PlayerDAO.saveBag(con, player2);
-                    } catch (Exception e) {
-                    } finally {
-                        try {
-                            if (rs != null) {
-                                rs.close();
-                            }
-                            if (ps != null) {
-                                ps.close();
-                            }
-                        } catch (SQLException ex) {
-                        }
-                    }
                 }
                 sendNotifyTrade(tradeStatus);
             }

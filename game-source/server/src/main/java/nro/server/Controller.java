@@ -444,6 +444,7 @@ public class Controller {
 //                            Logger.log(Logger.PURPLE, "done load map nhà!\n");
                         }
                         EffectMapService.gI().sendEffEvent(player);
+                        nro.live.GrowthService.guide(player);
                     }
                     break;
                 case 11:

@@ -36,6 +36,8 @@ public class Pet extends Player {
     public Player master;
     public byte status = 0;
 
+    public String liveSpecies = "NORMAL";
+
     public boolean isMabu;
 
     public boolean isBulo;
@@ -75,6 +77,7 @@ public class Pet extends Player {
     }
 
     public void changeStatus(byte status) {
+        if(status < 0 || status > FUSION)return;
         if (goingHome || master.fusion.typeFusion != 0 || (this.isDie() && status == FUSION)) {
             Service.getInstance().sendThongBao(master, "Không thể thực hiện");
             return;
@@ -584,6 +587,7 @@ public class Pet extends Player {
     }
 
     public short getAvatar() {
+        if(liveSpecies.equals("JIREN")||liveSpecies.equals("ZENO")||liveSpecies.startsWith("VIP_"))return nro.companion.CompanionAssets.outfit(liveSpecies)[0];
         if (this.isMabu) {
             return 297;
         }
@@ -606,6 +610,7 @@ public class Pet extends Player {
 
     @Override
     public short getHead() {
+        if ((liveSpecies.equals("JIREN") || liveSpecies.equals("ZENO") || liveSpecies.startsWith("VIP_")) && !effectSkill.isMonkey && !effectSkill.isSocola && !effectSkin.isSocola && !effectSkin.isHoaDa) return nro.companion.CompanionAssets.outfit(liveSpecies)[0];
         if (effectSkill.isMonkey) {
             return (short) ConstPlayer.HEADMONKEY[effectSkill.levelMonkey - 1];
         } else if (effectSkill.isSocola || effectSkin.isSocola) {
@@ -637,6 +642,7 @@ public class Pet extends Player {
 
     @Override
     public short getBody() {
+        if ((liveSpecies.equals("JIREN") || liveSpecies.equals("ZENO") || liveSpecies.startsWith("VIP_")) && !effectSkill.isMonkey && !effectSkill.isSocola && !effectSkin.isSocola && !effectSkin.isHoaDa) return nro.companion.CompanionAssets.outfit(liveSpecies)[1];
         if (effectSkill.isMonkey) {
             return 193;
         } else if (effectSkill.isSocola || effectSkin.isSocola) {
@@ -671,6 +677,7 @@ public class Pet extends Player {
 
     @Override
     public short getLeg() {
+        if ((liveSpecies.equals("JIREN") || liveSpecies.equals("ZENO") || liveSpecies.startsWith("VIP_")) && !effectSkill.isMonkey && !effectSkill.isSocola && !effectSkin.isSocola && !effectSkin.isHoaDa) return nro.companion.CompanionAssets.outfit(liveSpecies)[2];
         if (effectSkill.isMonkey) {
             return 194;
         } else if (effectSkill.isSocola || effectSkin.isSocola) {

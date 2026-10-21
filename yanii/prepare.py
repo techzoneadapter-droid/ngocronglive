@@ -20,7 +20,9 @@ def prepare(upstream, output):
     from client_patch import patch_client
     patch_client(output/'client')
     for java in output.rglob('*.java'):
-        java.write_text(java.read_text(encoding='utf-8-sig'), encoding='utf-8')
+        # Linux paths are case-sensitive; upstream assets use KhanhDTK.
+        text = java.read_text(encoding='utf-8-sig').replace('resources/khanhdtk/', 'resources/KhanhDTK/')
+        java.write_text(text, encoding='utf-8')
     shutil.copy2(upstream/'LICENSE',output/'UPSTREAM-LICENSE')
     # Record the supplied executable identity; companion metadata/DLL are patched.
     import hashlib
@@ -32,7 +34,7 @@ def prepare(upstream, output):
     s=p.read_text(encoding='utf-8-sig').replace('DataGame.LINK_IP_PORT = linkServer.substring(0, linkServer.length() - 1);', 'DataGame.LINK_IP_PORT = nro.LocalBootstrap.SERVER_LIST;')
     p.write_text(s,encoding='utf-8')
     p=output/'server/src/main/java/nro/server/ServerManager.java'
-    s=p.read_text(encoding='utf-8-sig').replace('ServerBroadcaster.startBroadcasting', 'nro.ServerBroadcaster.startBroadcasting').replace('new ServerSocket(PORT)','new ServerSocket(PORT, 50, java.net.InetAddress.getLoopbackAddress())')
+    s=p.read_text(encoding='utf-8-sig').replace('ServerBroadcaster.startBroadcasting', 'nro.ServerBroadcaster.startBroadcasting').replace('new ServerSocket(PORT)','new ServerSocket(PORT, 50, nro.LocalBootstrap.gameBindAddress())')
     s=s.replace('new Thread(AutoMaintenance.gI(), "Thread Bảo Trì Định Kỳ").start();','// Local package has no scheduled maintenance or idle busy loop.')
     s=s.replace('while (true) {\n                String line = sc.nextLine();','while (sc.hasNextLine()) {\n                String line = sc.nextLine();')
     # LAN broadcaster kept for supplied client's discovery; game TCP stays loopback.
@@ -48,6 +50,12 @@ def prepare(upstream, output):
     p=output/'server/src/main/java/nro/noti/NotiManager.java'
     s=p.read_text(encoding='utf-8-sig').replace('Service.getInstance().sendThongBaoFromAdmin(player, alert.content);', 'if (alert != null) Service.getInstance().sendThongBaoFromAdmin(player, alert.content);')
     p.write_text(s,encoding='utf-8')
+    # This upstream shortcut was outside the admin guard; testers must not skip quests by chat.
+    p=output/'server/src/main/java/nro/services/Service.java'
+    s=p.read_text(encoding='utf-8-sig')
+    old='if (text.equals("nnvquanct") && player.playerTask.taskMain.id <= 31)'
+    if s.count(old) != 1: raise ValueError('Quest shortcut integration point changed')
+    p.write_text(s.replace(old, 'if (player.isAdmin() && text.equals("nnvquanct") && player.playerTask.taskMain.id <= 31)'), encoding='utf-8')
     # Ship static content only; do not redistribute upstream accounts/history/player saves.
     sql=(upstream/'Tutorial/Database/ngocrong.sql').read_text(encoding='utf-8-sig')
     keep={'attribute_server','attribute_template','cai_trang','caption','collection_book','event','flag_bag','head_avatar','img_by_name','intrinsic','item_option_template','item_shop','item_shop_option','item_template','map_template','mini_pet','mob_template','nclass','npc_template','skill','skill_template','shop','shop_tab','task_main_template','task_sub_template','side_task_template','radar_template','mount','pet','pet_template','task_template','achivements','global_data','part','pet_follow','power_limit','small_version','tab_shop','type_map'}

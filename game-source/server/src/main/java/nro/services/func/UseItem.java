@@ -271,6 +271,7 @@ public class UseItem {
     }
 
     private void useItem(Player pl, Item item, int indexBag) {
+        if(nro.live.GrowthService.use(pl,item))return;
         if (pl.isUseMaBaoVe) {
             Service.getInstance().sendThongBao(pl, "Chức năng bảo vệ đã được bật. Bạn vui lòng kiểm tra lại");
             return;
@@ -1721,7 +1722,7 @@ public class UseItem {
                     Service.getInstance().sendThongBao(pl, "Chỉ có thể sự dụng cùng lúc 1 vật phẩm bổ trợ cùng loại");
                     return;
                 }
-                pl.itemTime.lastTimeBoHuyet = System.currentTimeMillis();
+                pl.itemTime.lastTimeBoHuyet = pl.itemTime.isUseBoHuyet ? Math.max(System.currentTimeMillis(),pl.itemTime.lastTimeBoHuyet + nro.models.item.ItemTime.TIME_ITEM) : System.currentTimeMillis();
                 pl.itemTime.isUseBoHuyet = true;
                 updatePoint = true;
                 break;
@@ -1730,7 +1731,7 @@ public class UseItem {
                     Service.getInstance().sendThongBao(pl, "Chỉ có thể sự dụng cùng lúc 1 vật phẩm bổ trợ cùng loại");
                     return;
                 }
-                pl.itemTime.lastTimeBoKhi = System.currentTimeMillis();
+                pl.itemTime.lastTimeBoKhi = pl.itemTime.isUseBoKhi ? Math.max(System.currentTimeMillis(),pl.itemTime.lastTimeBoKhi + nro.models.item.ItemTime.TIME_ITEM) : System.currentTimeMillis();
                 pl.itemTime.isUseBoKhi = true;
                 updatePoint = true;
                 break;
@@ -1739,7 +1740,7 @@ public class UseItem {
                     Service.getInstance().sendThongBao(pl, "Chỉ có thể sự dụng cùng lúc 1 vật phẩm bổ trợ cùng loại");
                     return;
                 }
-                pl.itemTime.lastTimeGiapXen = System.currentTimeMillis();
+                pl.itemTime.lastTimeGiapXen = pl.itemTime.isUseGiapXen ? Math.max(System.currentTimeMillis(),pl.itemTime.lastTimeGiapXen + nro.models.item.ItemTime.TIME_ITEM) : System.currentTimeMillis();
                 pl.itemTime.isUseGiapXen = true;
                 updatePoint = true;
                 break;
@@ -1748,12 +1749,12 @@ public class UseItem {
                     Service.getInstance().sendThongBao(pl, "Chỉ có thể sự dụng cùng lúc 1 vật phẩm bổ trợ cùng loại");
                     return;
                 }
-                pl.itemTime.lastTimeCuongNo = System.currentTimeMillis();
+                pl.itemTime.lastTimeCuongNo = pl.itemTime.isUseCuongNo ? Math.max(System.currentTimeMillis(),pl.itemTime.lastTimeCuongNo + nro.models.item.ItemTime.TIME_ITEM) : System.currentTimeMillis();
                 pl.itemTime.isUseCuongNo = true;
                 updatePoint = true;
                 break;
             case 385: // ẩn danh
-                pl.itemTime.lastTimeAnDanh = System.currentTimeMillis();
+                pl.itemTime.lastTimeAnDanh = pl.itemTime.isUseAnDanh ? Math.max(System.currentTimeMillis(),pl.itemTime.lastTimeAnDanh + nro.models.item.ItemTime.TIME_ITEM) : System.currentTimeMillis();
                 pl.itemTime.isUseAnDanh = true;
                 break;
             case ConstItem.BO_HUYET_2: // bổ huyết 2
@@ -1761,7 +1762,7 @@ public class UseItem {
                     Service.getInstance().sendThongBao(pl, "Chỉ có thể sự dụng cùng lúc 1 vật phẩm bổ trợ cùng loại");
                     return;
                 }
-                pl.itemTime.lastTimeBoHuyet2 = System.currentTimeMillis();
+                pl.itemTime.lastTimeBoHuyet2 = pl.itemTime.isUseBoHuyet2 ? Math.max(System.currentTimeMillis(),pl.itemTime.lastTimeBoHuyet2 + nro.models.item.ItemTime.TIME_ITEM) : System.currentTimeMillis();
                 pl.itemTime.isUseBoHuyet2 = true;
                 updatePoint = true;
                 break;
@@ -1770,7 +1771,7 @@ public class UseItem {
                     Service.getInstance().sendThongBao(pl, "Chỉ có thể sự dụng cùng lúc 1 vật phẩm bổ trợ cùng loại");
                     return;
                 }
-                pl.itemTime.lastTimeBoKhi2 = System.currentTimeMillis();
+                pl.itemTime.lastTimeBoKhi2 = pl.itemTime.isUseBoKhi2 ? Math.max(System.currentTimeMillis(),pl.itemTime.lastTimeBoKhi2 + nro.models.item.ItemTime.TIME_ITEM) : System.currentTimeMillis();
                 pl.itemTime.isUseBoKhi2 = true;
                 updatePoint = true;
                 break;
@@ -1779,7 +1780,7 @@ public class UseItem {
                     Service.getInstance().sendThongBao(pl, "Chỉ có thể sự dụng cùng lúc 1 vật phẩm bổ trợ cùng loại");
                     return;
                 }
-                pl.itemTime.lastTimeGiapXen2 = System.currentTimeMillis();
+                pl.itemTime.lastTimeGiapXen2 = pl.itemTime.isUseGiapXen2 ? Math.max(System.currentTimeMillis(),pl.itemTime.lastTimeGiapXen2 + nro.models.item.ItemTime.TIME_ITEM) : System.currentTimeMillis();
                 pl.itemTime.isUseGiapXen2 = true;
                 updatePoint = true;
                 break;
@@ -1788,7 +1789,7 @@ public class UseItem {
                     Service.getInstance().sendThongBao(pl, "Chỉ có thể sự dụng cùng lúc 1 vật phẩm bổ trợ cùng loại");
                     return;
                 }
-                pl.itemTime.lastTimeCuongNo2 = System.currentTimeMillis();
+                pl.itemTime.lastTimeCuongNo2 = pl.itemTime.isUseCuongNo2 ? Math.max(System.currentTimeMillis(),pl.itemTime.lastTimeCuongNo2 + nro.models.item.ItemTime.TIME_ITEM) : System.currentTimeMillis();
                 pl.itemTime.isUseCuongNo2 = true;
                 updatePoint = true;
                 break;

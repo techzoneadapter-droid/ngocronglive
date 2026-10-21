@@ -121,8 +121,8 @@ public class Manager {
 
     public static final List<String> TOP_PLAYERS = new ArrayList<>();
 
-    public static MapTemplate[] MAP_TEMPLATES;
-    public static final List<nro.models.map.Map> MAPS = new ArrayList<>();
+    public static volatile MapTemplate[] MAP_TEMPLATES;
+    public static final List<nro.models.map.Map> MAPS = new java.util.concurrent.CopyOnWriteArrayList<>();
     public static final List<ItemOptionTemplate> ITEM_OPTION_TEMPLATES = new ArrayList<>();
     public static final List<MobReward> MOB_REWARDS = new ArrayList<>();
     public static final RandomCollection<ItemLuckyRound> LUCKY_ROUND_REWARDS = new RandomCollection<>();

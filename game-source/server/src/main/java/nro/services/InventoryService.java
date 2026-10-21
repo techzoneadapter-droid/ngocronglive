@@ -76,12 +76,7 @@ public class InventoryService {
         }
 
         // quả trứng
-        if (item.template.id == 568) {
-            if (player.mabuEgg == null) {
-                MabuEgg.createMabuEgg(player);
-            }
-            return true;
-        }
+        // Ma Bư eggs remain inventory items until explicitly used, so intact eggs can be traded.
 
         // tennis spaceship
         if (item.template.id == 453) {

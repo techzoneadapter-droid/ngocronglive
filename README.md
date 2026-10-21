@@ -1,5 +1,7 @@
 # Ngọc Rồng Live — bản PC thay thế từ Yanii
 
+Nhánh `deploy/beta-online` triển khai VPS và chứa [quy tắc tester 21/10/2026](docs/TESTER-RULES-2026-10-21.md): code nhận ngay, hợp thể trên tổng chỉ số, trứng Broly giao dịch, VIP hồng ngọc, bùa cộng phần tăng và khu luyện/sự kiện riêng. VPS đã cài dùng artifact `NgocRongLive-admin-update` trong workflow Online beta thành công mới nhất; không dùng gói cập nhật Windows local bên dưới để thay server Linux.
+
 Nền tảng mặc định đã chuyển từ `nvt25/Online_nro` sang [yanii7905/Nro_Yanii](https://github.com/yanii7905/Nro_Yanii), cố định tại `a443509f203eb21b7f39bb5a5234df4b1ddcfbea`.
 
 Repo này chứa mã đóng gói, chỉnh sửa server và kiểm thử. Script tải nguyên bộ upstream cố định, biên dịch mã Java của game/login bằng Maven và ghép client Windows **có sẵn** của upstream. Chưa có mã nguồn Unity client trong bộ Yanii; không tuyên bố đã build lại client. Giữ giấy phép upstream trong gói.

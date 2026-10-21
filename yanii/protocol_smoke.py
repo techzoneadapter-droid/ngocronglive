@@ -5,7 +5,8 @@ from pathlib import Path
 def utf(s):
     b=s.encode('utf-8');return struct.pack('>H',len(b))+b
 class Client:
-    def __init__(self):
+    def __init__(self, username='tester', character='pcprobe'):
+        self.username=username;self.character=character
         self.sock=socket.create_connection(('127.0.0.1',14445),timeout=20);self.sock.settimeout(20)
         self.sock.sendall(bytes([229,0,0]));h=self.read(3);assert h[0]==229
         p=self.read(int.from_bytes(h[1:],'big'));self.key=list(p[1:1+p[0]])
@@ -34,14 +35,22 @@ class Client:
         assert n<16000000
         return c,bytes(byte() for _ in range(n))
     def until(self,predicate):
-        for _ in range(180):
-            c,p=self.recv()
-            if c in (-26,-25): print('Server notice:',p,flush=True)
-            if predicate(c,p):return c,p
-        raise AssertionError('Expected protocol response missing')
+        deadline=time.monotonic()+40;recent=[]
+        try:
+            for _ in range(180):
+                left=deadline-time.monotonic()
+                if left<=0:break
+                self.sock.settimeout(min(20,left))
+                c,p=self.recv();recent.append((c,p[:180] if c in (-26,-25,32) else len(p)));recent=recent[-12:]
+                if c in (-26,-25): print('Server notice:',p,flush=True)
+                if predicate(c,p):return c,p
+        except TimeoutError as e:
+            raise AssertionError(('Expected response timed out; recent packets',recent)) from e
+        finally:self.sock.settimeout(20)
+        raise AssertionError(('Expected protocol response missing',recent))
     def login(self,password):
         self.send(-29,bytes([2,4,1,0])+struct.pack('>ii',1024,600)+bytes([1,1])+utf('PC|2.4.0'))
-        self.send(-29,bytes([0])+utf('tester')+utf(password)+utf('2.4.0')+bytes([0]))
+        self.send(-29,bytes([0])+utf(self.username)+utf(password)+utf('2.4.0')+bytes([0]))
         self.until(lambda c,p:c==-28 and p and p[0]==4)
         self.send(-87)
         for k in (6,7,8):self.send(-28,bytes([k]))
@@ -61,7 +70,7 @@ class Client:
         for _ in range(180):
             c,p=self.recv()
             if c==-30 and p and p[0]==0:
-                size=int.from_bytes(p[9:11],'big');assert p[11:11+size]==b'pcprobe'
+                size=int.from_bytes(p[9:11],'big');assert p[11:11+size]==self.character.encode('utf-8')
                 state=True
             if c==-24:
                 name_size=int.from_bytes(p[5:7],'big');o=7+name_size

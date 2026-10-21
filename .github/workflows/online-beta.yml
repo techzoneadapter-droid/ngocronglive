@@ -1,0 +1,99 @@
+name: Online beta Linux and PC packages
+on:
+  push:
+    branches: [deploy/beta-online]
+  workflow_dispatch:
+concurrency:
+  group: online-beta-${{ github.ref }}
+  cancel-in-progress: true
+permissions:
+  contents: read
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    services:
+      database:
+        image: mariadb:10.11
+        env:
+          MARIADB_ROOT_PASSWORD: ci-root-fixture-only
+        ports: ['13307:3306']
+        options: >-
+          --health-cmd="healthcheck.sh --connect --innodb_initialized"
+          --health-interval=5s --health-timeout=5s --health-retries=20
+    env:
+      NRO_DB_PASSWORD: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+      NRO_ADMIN_PASSWORD: ci-owner-fixture-password-not-for-deployment
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Prepare pinned baseline
+        run: |
+          git clone --filter=blob:none --sparse https://github.com/yanii7905/Nro_Yanii.git upstream-yanii
+          git -C upstream-yanii sparse-checkout set Server Login AppLocal Tutorial/Database
+          git -C upstream-yanii checkout a443509f203eb21b7f39bb5a5234df4b1ddcfbea
+          python yanii/prepare.py upstream-yanii build/base
+      - name: Build JVM packages on Linux
+        run: |
+          for component in server login; do
+            (cd "build/base/$component" && mvn -B -q package -DskipTests)
+            cp build/base/$component/target/*jar-with-dependencies.jar build/base/$component/app.jar
+          done
+      - name: Combat arithmetic and point-spend regression checks
+        run: |
+          mkdir -p build/balance-tests
+          javac -cp build/base/server/app.jar -d build/balance-tests online/BalanceProbe.java
+          java -cp build/balance-tests:build/base/server/app.jar BalanceProbe
+      - name: Check installer syntax and create clean distribution before test credentials
+        run: |
+          for script in online/*.sh; do bash -n "$script"; done
+          python -m py_compile online/*.py
+          python online/package.py build/base build/online 160.250.180.107 "$GITHUB_SHA"
+      - name: Package owner console update without database reset
+        run: |
+          mkdir -p build/admin-update
+          cp build/base/server/app.jar build/admin-update/app.jar
+          cp online/update-admin.sh build/admin-update/UPDATE.sh
+          (cd build/admin-update && sha256sum app.jar > SHA256SUMS)
+          tar -czf build/NgocRongLive-admin-update.tar.gz -C build/admin-update .
+      - name: Import isolated CI database
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y mariadb-client
+          export MYSQL_PWD=ci-root-fixture-only
+          mariadb -h127.0.0.1 -P13307 -uroot -e "CREATE DATABASE nrolive_beta CHARACTER SET utf8mb4; CREATE USER 'nrolive'@'%' IDENTIFIED BY '$NRO_DB_PASSWORD'; GRANT ALL ON nrolive_beta.* TO 'nrolive'@'%';"
+          mariadb -h127.0.0.1 -P13307 -uroot --default-character-set=utf8mb4 nrolive_beta < build/base/server/seed.sql
+      - name: Install browser test dependencies
+        run: |
+          pip install playwright
+          playwright install --with-deps chromium
+      - name: Real Linux protocol, public bind and persistence checks
+        run: python online/smoke_linux.py build/base
+      - name: Diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: online-beta-diagnostics
+          path: build/base/logs/
+      - uses: actions/upload-artifact@v4
+        with:
+          name: NgocRongLive-Linux-beta
+          path: build/online/NgocRongLive-Linux-beta.tar.gz
+          retention-days: 14
+      - uses: actions/upload-artifact@v4
+        with:
+          name: NgocRongLive-PC-online
+          path: build/online/NgocRongLive-PC-online.zip
+          retention-days: 14
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: NgocRongLive-admin-update
+          path: build/NgocRongLive-admin-update.tar.gz
+          retention-days: 14

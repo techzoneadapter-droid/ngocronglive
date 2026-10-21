@@ -168,6 +168,7 @@ public abstract class AbsResources {
         } catch (IOException ex) {
             ex.printStackTrace();
         }
+        nro.companion.CompanionAssets.versions(smallVersion);
     }
 
     protected void setFolder(String folder) {
@@ -201,6 +202,8 @@ public abstract class AbsResources {
     }
 
     public byte[] getRawIconData(int zoomLevel, int iconID) {
+        byte[] companion = nro.companion.CompanionAssets.icon(zoomLevel, iconID);
+        if (companion != null) return companion;
         return readAllBytes("/image/" + zoomLevel + "/icon/" + iconID + ".png");
     }
 

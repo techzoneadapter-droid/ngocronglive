@@ -42,6 +42,16 @@ public class NPoint {
     /*-----------------------Chỉ số cơ bản------------------------------------*/
     public byte numAttack;
     public short stamina, maxStamina;
+    private short unfusedStaminaMax;
+    private boolean fusedStamina;
+    public short persistedStaminaMax(){return fusedStamina?unfusedStaminaMax:maxStamina;}
+    public short persistedStamina(){return fusedStamina?(short)Math.min(unfusedStaminaMax,(long)Math.max(0,stamina)*unfusedStaminaMax/Math.max(1,maxStamina)):stamina;}
+    public void mergeStamina(NPoint pet,int bonus){
+        if(pet==null){if(fusedStamina){stamina=persistedStamina();maxStamina=unfusedStaminaMax;fusedStamina=false;}return;}
+        if(!fusedStamina){unfusedStaminaMax=maxStamina;fusedStamina=true;}
+        short next=(short)nro.live.Balance.fused(unfusedStaminaMax,pet.maxStamina,bonus,Short.MAX_VALUE);
+        stamina=(short)Math.min(next,(long)Math.max(0,stamina)*next/Math.max(1,maxStamina));maxStamina=next;
+    }
 
     public byte limitPower;
     public long power;
@@ -582,57 +592,15 @@ public class NPoint {
             }
         }
         /// bông tai cấp 2
-        if (this.player.isPet && ((Pet) this.player).isMabu
-                && ((Pet) this.player).master.fusion.typeFusion == ConstPlayer.HOP_THE_PORATA2) {
-            this.hpMax += calPercent(this.hpMax, 10);
-        }
         /// Đệ vip
-        if (this.player.isPet && ((Pet) this.player).isBulo
-                && ((Pet) this.player).master.fusion.typeFusion == ConstPlayer.HOP_THE_PORATA2) {
-            this.hpMax += calPercent(this.hpMax, 20);
-        }
-        if (this.player.isPet && ((Pet) this.player).isCellBao
-                && ((Pet) this.player).master.fusion.typeFusion == ConstPlayer.HOP_THE_PORATA2) {
-            this.hpMax += calPercent(this.hpMax, 40);
-        }
-        if (this.player.isPet && ((Pet) this.player).isBillNhi
-                && ((Pet) this.player).master.fusion.typeFusion == ConstPlayer.HOP_THE_PORATA2) {
-            this.hpMax += calPercent(this.hpMax, 30);
-        }
-        if (this.player.isPet && ((Pet) this.player).isFideTrau
-                && ((Pet) this.player).master.fusion.typeFusion == ConstPlayer.HOP_THE_PORATA2) {
-            this.hpMax += calPercent(this.hpMax, 30);
-        }
         /// end
         // bông tai cấp 1
-        if (this.player.isPet && ((Pet) this.player).isMabu
-                && ((Pet) this.player).master.fusion.typeFusion == ConstPlayer.HOP_THE_PORATA) {
-            this.hpMax += calPercent(this.hpMax, 10);
-        }
-        if (this.player.isPet && ((Pet) this.player).isBulo
-                && ((Pet) this.player).master.fusion.typeFusion == ConstPlayer.HOP_THE_PORATA) {
-            this.hpMax += calPercent(this.hpMax, 20);
-        }
-        if (this.player.isPet && ((Pet) this.player).isCellBao
-                && ((Pet) this.player).master.fusion.typeFusion == ConstPlayer.HOP_THE_PORATA) {
-            this.hpMax += calPercent(this.hpMax, 40);
-        }
-        if (this.player.isPet && ((Pet) this.player).isBillNhi
-                && ((Pet) this.player).master.fusion.typeFusion == ConstPlayer.HOP_THE_PORATA) {
-            this.hpMax += calPercent(this.hpMax, 30);
-        }
-        if (this.player.isPet && ((Pet) this.player).isFideTrau
-                && ((Pet) this.player).master.fusion.typeFusion == ConstPlayer.HOP_THE_PORATA) {
-            this.hpMax += calPercent(this.hpMax, 30);
-        }
         // phù
         if (this.player.zone != null && MapService.gI().isMapBlackBallWar(this.player.zone.map.mapId)) {
             this.hpMax *= this.player.effectSkin.xHPKI;
         }
         // +hp đệ
-        if (this.player.fusion.typeFusion != ConstPlayer.NON_FUSION) {
-            this.hpMax += this.player.pet.nPoint.hpMax;
-        }
+
         // huýt sáo
         if (!this.player.isPet
                 || (this.player.isPet
@@ -716,52 +684,10 @@ public class NPoint {
             this.mpMax += calPercent(this.mpMax, player.ChiSoKI_5);
         }
         // pet mabư
-        if (this.player.isPet && ((Pet) this.player).isMabu
-                && ((Pet) this.player).master.fusion.typeFusion == ConstPlayer.HOP_THE_PORATA2) {
-            this.mpMax += calPercent(this.mpMax, 10);
-        }
         /// đệ vip
-        if (this.player.isPet && ((Pet) this.player).isBulo
-                && ((Pet) this.player).master.fusion.typeFusion == ConstPlayer.HOP_THE_PORATA2) {
-            this.mpMax += calPercent(this.mpMax, 20);
-        }
-        if (this.player.isPet && ((Pet) this.player).isCellBao
-                && ((Pet) this.player).master.fusion.typeFusion == ConstPlayer.HOP_THE_PORATA2) {
-            this.mpMax += calPercent(this.mpMax, 40);
-        }
-        if (this.player.isPet && ((Pet) this.player).isBillNhi
-                && ((Pet) this.player).master.fusion.typeFusion == ConstPlayer.HOP_THE_PORATA2) {
-            this.mpMax += calPercent(this.mpMax, 30);
-        }
-        if (this.player.isPet && ((Pet) this.player).isFideTrau
-                && ((Pet) this.player).master.fusion.typeFusion == ConstPlayer.HOP_THE_PORATA2) {
-            this.mpMax += calPercent(this.mpMax, 30);
-        }
         /// end
-        if (this.player.isPet && ((Pet) this.player).isMabu
-                && ((Pet) this.player).master.fusion.typeFusion == ConstPlayer.HOP_THE_PORATA) {
-            this.mpMax += calPercent(this.mpMax, 10);
-        }
-        if (this.player.isPet && ((Pet) this.player).isBulo
-                && ((Pet) this.player).master.fusion.typeFusion == ConstPlayer.HOP_THE_PORATA) {
-            this.mpMax += calPercent(this.mpMax, 20);
-        }
-        if (this.player.isPet && ((Pet) this.player).isCellBao
-                && ((Pet) this.player).master.fusion.typeFusion == ConstPlayer.HOP_THE_PORATA) {
-            this.mpMax += calPercent(this.mpMax, 40);
-        }
-        if (this.player.isPet && ((Pet) this.player).isBillNhi
-                && ((Pet) this.player).master.fusion.typeFusion == ConstPlayer.HOP_THE_PORATA) {
-            this.mpMax += calPercent(this.mpMax, 30);
-        }
-        if (this.player.isPet && ((Pet) this.player).isFideTrau
-                && ((Pet) this.player).master.fusion.typeFusion == ConstPlayer.HOP_THE_PORATA) {
-            this.mpMax += calPercent(this.mpMax, 30);
-        }
         // hợp thể
-        if (this.player.fusion.typeFusion != 0) {
-            this.mpMax += this.player.pet.nPoint.mpMax;
-        }
+
         // bổ khí
         if (this.player.itemTime != null && this.player.itemTime.isUseBoKhi) {
             this.mpMax *= 2;
@@ -844,57 +770,15 @@ public class NPoint {
             }
         }
         // pet mabư
-        if (this.player.isPet && ((Pet) this.player).isMabu
-                && ((Pet) this.player).master.fusion.typeFusion == ConstPlayer.HOP_THE_PORATA2) {
-            this.dame += calPercent(this.dame, 10);
-        }
-        if (this.player.isPet && ((Pet) this.player).isBulo
-                && ((Pet) this.player).master.fusion.typeFusion == ConstPlayer.HOP_THE_PORATA2) {
-            this.dame += calPercent(this.dame, 20);
-        }
-        if (this.player.isPet && ((Pet) this.player).isCellBao
-                && ((Pet) this.player).master.fusion.typeFusion == ConstPlayer.HOP_THE_PORATA2) {
-            this.dame += calPercent(this.dame, 40);
-        }
-        if (this.player.isPet && ((Pet) this.player).isBillNhi
-                && ((Pet) this.player).master.fusion.typeFusion == ConstPlayer.HOP_THE_PORATA2) {
-            this.dame += calPercent(this.dame, 30);
-        }
-        if (this.player.isPet && ((Pet) this.player).isFideTrau
-                && ((Pet) this.player).master.fusion.typeFusion == ConstPlayer.HOP_THE_PORATA2) {
-            this.dame += calPercent(this.dame, 30);
-        }
         // end
         /// bong tai 1
-        if (this.player.isPet && ((Pet) this.player).isMabu
-                && ((Pet) this.player).master.fusion.typeFusion == ConstPlayer.HOP_THE_PORATA) {
-            this.dame += calPercent(this.dame, 10);
-        }
-        if (this.player.isPet && ((Pet) this.player).isBulo
-                && ((Pet) this.player).master.fusion.typeFusion == ConstPlayer.HOP_THE_PORATA) {
-            this.dame += calPercent(this.dame, 20);
-        }
-        if (this.player.isPet && ((Pet) this.player).isCellBao
-                && ((Pet) this.player).master.fusion.typeFusion == ConstPlayer.HOP_THE_PORATA) {
-            this.dame += calPercent(this.dame, 40);
-        }
-        if (this.player.isPet && ((Pet) this.player).isBillNhi
-                && ((Pet) this.player).master.fusion.typeFusion == ConstPlayer.HOP_THE_PORATA) {
-            this.dame += calPercent(this.dame, 30);
-        }
-        if (this.player.isPet && ((Pet) this.player).isFideTrau
-                && ((Pet) this.player).master.fusion.typeFusion == ConstPlayer.HOP_THE_PORATA) {
-            this.dame += calPercent(this.dame, 30);
-        }
         // thức ăn
         if (!this.player.isPet && this.player.itemTime.isEatMeal
                 || this.player.isPet && ((Pet) this.player).master.itemTime.isEatMeal) {
             this.dame += calPercent(this.dame, 10);
         }
         // hợp thể
-        if (this.player.fusion.typeFusion != 0) {
-            this.dame += this.player.pet.nPoint.dame;
-        }
+
         // cuồng nộ
         if (this.player.itemTime != null && this.player.itemTime.isUseCuongNo) {
             this.dame *= 2;
@@ -1287,54 +1171,14 @@ public class NPoint {
 
     public long calSucManhTiemNang(long tiemNang) {
         if (power < getPowerLimit()) {
-            for (Integer tl : this.tlTNSM) {
-                tiemNang += calPercent(tiemNang, tl);
-            }
-            if (this.player.cFlag != 0) {
-                if (this.player.cFlag == 8) {
-                    tiemNang += calPercent(tiemNang, 10);
-                } else {
-                    tiemNang += calPercent(tiemNang, 5);
-                }
-            }
-            if (buffExpSatellite) {
-                tiemNang += calPercent(tiemNang, 20);
-            }
-            if (player.isPet) {
-                Attribute at = ServerManager.gI().getAttributeManager().find(ConstAttribute.TNSM);
-                if (at != null && !at.isExpired()) {
-                    tiemNang += calPercent(tiemNang, at.getValue());
-                }
-            }
-            if (this.player.isPet) {
-                int tltnsm = ((Pet) this.player).master.nPoint.tlTNSMPet;
-                if (tltnsm > 0) {
-                    tiemNang += calPercent(tiemNang, tltnsm);
-                }
-            }
-            long tn = tiemNang;
-            if (this.player.charms.tdTriTue > System.currentTimeMillis()) {
-                tiemNang += tn;
-            }
-            if (this.player.charms.tdTriTue3 > System.currentTimeMillis()) {
-                tiemNang += tn * 2;
-            }
-            if (this.player.charms.tdTriTue4 > System.currentTimeMillis()) {
-                tiemNang += tn * 3;
-            }
             if (this.intrinsic != null && this.intrinsic.id == 24) {
                 tiemNang += calPercent(tiemNang, this.intrinsic.param1);
             }
             if (this.power >= 40000000000L) {
                 tiemNang -= calPercent(tiemNang, 90);
             }
-            if (this.player.isPet) {
-                if (((Pet) this.player).master.charms.tdDeTu > System.currentTimeMillis()) {
-                    tiemNang += tn * 2;
-                }
-            }
             tiemNang *= Manager.RATE_EXP_SERVER;
-            tiemNang /= 2;
+
             tiemNang = calSubTNSM(tiemNang);
             if (tiemNang <= 0) {
                 tiemNang = 1;
@@ -1416,87 +1260,17 @@ public class NPoint {
         this.tiemNang += tiemNang;
     }
 
-    public void increasePoint(byte type, short point) {
-        if (powerLimit == null) {
-            return;
-        }
-        if (point <= 0) {
-            return;
-        }
-        boolean updatePoint = false;
-        long tiemNangUse = 0;
-        if (type == 0) {
-            int pointHp = point * 20;
-            tiemNangUse = point * (2 * (this.hpg + 1000) + pointHp - 20) / 2;
-            if ((this.hpg + pointHp) <= powerLimit.getHp()) {
-                if (doUseTiemNang(tiemNangUse)) {
-                    hpg += pointHp;
-                    updatePoint = true;
-                }
-            } else {
-                Service.getInstance().sendThongBao(player, "HP của bạn đã đạt mức tối đa");
-                Service.getInstance().sendMoney(player);
-                return;
-            }
-        }
-        if (type == 1) {
-            int pointMp = point * 20;
-            tiemNangUse = point * (2 * (this.mpg + 1000) + pointMp - 20) / 2;
-            if ((this.mpg + pointMp) <= powerLimit.getMp()) {
-                if (doUseTiemNang(tiemNangUse)) {
-                    mpg += pointMp;
-                    updatePoint = true;
-                }
-            } else {
-                Service.getInstance().sendThongBao(player, "KI của bạn đã đạt mức tối đa");
-                Service.getInstance().sendMoney(player);
-                return;
-            }
-        }
-        if (type == 2) {
-            tiemNangUse = point * (2 * this.dameg + point - 1) / 2 * 100;
-            if ((this.dameg + point) <= powerLimit.getDamage()) {
-                if (doUseTiemNang(tiemNangUse)) {
-                    dameg += point;
-                    updatePoint = true;
-                }
-            } else {
-                Service.getInstance().sendThongBao(player, "Sức đánh của bạn đã đạt mức tối đa");
-                Service.getInstance().sendMoney(player);
-                return;
-            }
-        }
-        if (type == 3) {
-            tiemNangUse = 2 * (this.defg + 5) / 2 * 100000;
-            if ((this.defg + point) <= powerLimit.getDefense()) {
-                if (doUseTiemNang(tiemNangUse)) {
-                    defg += point;
-                    updatePoint = true;
-                }
-            } else {
-                Service.getInstance().sendThongBao(player, "Giáp của bạn đã đạt mức tối đa");
-                Service.getInstance().sendMoney(player);
-                return;
-            }
-        }
-        if (type == 4) {
-            tiemNangUse = 50000000L;
-            for (int i = 0; i < this.critg; i++) {
-                tiemNangUse *= 5L;
-            }
-            if ((this.critg + point) <= powerLimit.getCritical()) {
-                if (doUseTiemNang(tiemNangUse)) {
-                    critg += point;
-                    updatePoint = true;
-                }
-            } else {
-                Service.getInstance().sendThongBao(player, "Chí mạng của bạn đã đạt mức tối đa");
-                Service.getInstance().sendMoney(player);
-                return;
-            }
-        }
-        if (updatePoint) {
-            Service.getInstance().point(player);
+    public void increasePoint(byte type, short count) {
+        synchronized(player){
+            if(powerLimit==null||count<=0||type<0||type>4)return;
+            int base=switch(type){case 0->hpg;case 1->mpg;case 2->dameg;case 3->defg;default->critg;};
+            int cap=switch(type){case 0->powerLimit.getHp();case 1->powerLimit.getMp();case 2->powerLimit.getDamage();case 3->powerLimit.getDefense();default->powerLimit.getCritical();};
+            long next=(long)base+count*(type<2?20L:1L);
+            if(next>cap){Service.gI().sendThongBao(player,"Chỉ số đã chạm giới hạn; hãy giảm số điểm hoặc mở giới hạn");return;}
+            long cost;try{cost=nro.live.Balance.cost(type,base,count);}catch(ArithmeticException|IllegalArgumentException e){Service.gI().sendThongBao(player,"Chi phí vượt giới hạn cho phép");return;}
+            if(cost<1||!doUseTiemNang(cost))return;
+            switch(type){case 0->hpg=(int)next;case 1->mpg=(int)next;case 2->dameg=(int)next;case 3->defg=(int)next;case 4->critg=(int)next;}
+            Service.gI().point(player);
         }
     }
 
@@ -1562,6 +1336,7 @@ public class NPoint {
         setNeDon();
         setCritDame();
         setSpeed();
+        nro.live.FusionStats.apply(this.player);
         setAttributeOverLimit();
     }
 

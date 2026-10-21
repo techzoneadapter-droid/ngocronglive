@@ -55,6 +55,7 @@ public class SuperBroly extends Boss {
 
     @Override
     public void rewards(Player pl) {
+        nro.live.GrowthService.brolyDrop(this,pl);
         if (pl.pet == null) {
             PetService.gI().createNormalPet(pl);
         }

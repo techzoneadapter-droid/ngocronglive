@@ -8,9 +8,11 @@ def replace(path, old, new):
 
 def integrate(output):
     root=Path(__file__).parent
+    import runpy
+    runpy.run_path(str(root.parent/'companion/prepare_assets.py'))['prepare'](output)
     java=output/'server/src/main/java/nro/admin'
     java.mkdir(parents=True,exist_ok=True)
-    shutil.copy2(root/'LiveAdmin.java',java/'LiveAdmin.java')
+    for name in ('LiveAdmin.java','RewardCatalog.java','OnlineRewards.java','StarterCodes.java','TradeCommit.java'):shutil.copy2(root/name,java/name)
     resources=output/'server/src/main/resources/live-admin'
     resources.mkdir(parents=True,exist_ok=True)
     for name in ['index.html','admin.js','admin.css','schema.sql']:shutil.copy2(root/name,resources/name)
@@ -24,8 +26,8 @@ def integrate(output):
             e.printStackTrace();
         }''','// Owner stop never restarts the server automatically.')
     replace(output/'server/src/main/java/nro/jdbc/daos/GodGK.java','    public static Player loadPlayer(Session session) {\n        try {','    public static Player loadPlayer(Session session) {\n        try {\n            nro.admin.LiveAdmin.beforeLogin(session.userId);')
-    replace(output/'server/src/main/java/nro/models/player/NPoint.java','tiemNang *= Manager.RATE_EXP_SERVER;','tiemNang *= Manager.RATE_EXP_SERVER * nro.admin.LiveAdmin.expMultiplier();')
-    replace(output/'server/src/main/java/nro/services/GiftService.java','    public void use(Player player, String code) {','    public void use(Player player, String code) {\n        if (code != null && code.toUpperCase(java.util.Locale.ROOT).startsWith("LIVE")) {\n            Service.getInstance().sendThongBaoOK(player, nro.admin.LiveAdmin.redeem(player.getSession().userId, code));\n            return;\n        }')
+    replace(output/'server/src/main/java/nro/models/player/NPoint.java','tiemNang *= Manager.RATE_EXP_SERVER;','tiemNang = nro.live.GrowthService.calculate(this.player, tiemNang);')
+    replace(output/'server/src/main/java/nro/services/GiftService.java','    public void use(Player player, String code) {','    public void use(Player player, String code) {\n        if (code != null && nro.admin.LiveAdmin.hasCode(code)) {\n            Service.getInstance().sendThongBaoOK(player, nro.admin.LiveAdmin.redeemOnline(player, code));\n            return;\n        }')
     # Do not tell login service the old character is gone until its final save is finished.
     p=output/'server/src/main/java/nro/server/Client.java'
     old='''            if (login != null && login.isConnected()) {

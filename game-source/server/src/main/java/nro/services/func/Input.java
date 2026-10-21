@@ -419,9 +419,9 @@ public class Input {
 
     public void createFormGiftCode(Player pl) {
         if (pl.zone.map.mapId == 5 || pl.zone.map.mapId == 20 || pl.zone.map.mapId == 13) {
-            createForm(pl, GIFT_CODE, "Mã quà tặng gồm 12 ký tự", new SubInput("Gift Code", ANY));
+            createForm(pl, GIFT_CODE, "Nhận quà — mã 2–30 ký tự", new SubInput("Gift Code", ANY));
         } else {
-            createForm(pl, GIFT_CODE, "Mã quà tặng", new SubInput("Nhập mã quà tặng", ANY));
+            createForm(pl, GIFT_CODE, "Nhận quà — mã 2–30 ký tự", new SubInput("Nhập mã quà tặng", ANY));
         }
     }
 

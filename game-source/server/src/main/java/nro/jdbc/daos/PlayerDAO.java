@@ -111,25 +111,8 @@ public class PlayerDAO {
             String itemsBody = dataBody.toJSONString();
 
             JSONArray dataBag = new JSONArray();
-            for (int i = 0; i < 20; i++) {
-                JSONObject item = new JSONObject();
-                JSONArray options = new JSONArray();
-                JSONArray option = new JSONArray();
-                if (i == 0) {
-                    option.add(73);
-                    option.add(1);
-                    options.add(option);
-                    item.put("temp_id", 457);
-                    item.put("create_time", System.currentTimeMillis());
-                    item.put("quantity", 10);
-                } else {
-                    item.put("temp_id", -1);
-                    item.put("create_time", 0);
-                    item.put("quantity", 1);
-                }
-                item.put("option", options);
-                dataBag.add(item);
-            }
+            // Starter gold bars are claimed through the editable code, not an extra hidden grant.
+            for(int i=0;i<20;i++){JSONObject item=new JSONObject();item.put("temp_id",-1);item.put("create_time",0);item.put("quantity",0);item.put("option",new JSONArray());dataBag.add(item);}
             String itemsBag = dataBag.toJSONString();
 
             JSONArray dataBox = new JSONArray();
@@ -346,6 +329,7 @@ public class PlayerDAO {
     }
 
     public static void updatePlayer(Player player, Connection connection) {
+        synchronized(player) {
         if (player.isDisposed() || player.isSaving()) {
             return;
         }
@@ -403,11 +387,11 @@ public class PlayerDAO {
                     dataPoint.add(player.nPoint.mpg);
                     dataPoint.add(player.nPoint.critg);
                     dataPoint.add(player.nPoint.limitPower);
-                    dataPoint.add(player.nPoint.stamina);
+                    dataPoint.add(player.nPoint.persistedStamina());
                     dataPoint.add(hp);
                     dataPoint.add(player.nPoint.defg);
                     dataPoint.add(player.nPoint.tiemNang);
-                    dataPoint.add(player.nPoint.maxStamina);
+                    dataPoint.add(player.nPoint.persistedStaminaMax());
                     dataPoint.add(player.nPoint.dameg);
                     dataPoint.add(player.nPoint.power);
                     dataPoint.add(player.nPoint.hpg);
@@ -690,6 +674,7 @@ public class PlayerDAO {
                     if (player.mabuEgg != null) {
                         dataMaBu.put("create_time", player.mabuEgg.lastTimeCreate);
                         dataMaBu.put("time_done", player.mabuEgg.timeDone);
+                        dataMaBu.put("species", player.mabuEgg.species);
                     }
                     String mabuEgg = dataMaBu.toJSONString();
 
@@ -835,6 +820,7 @@ public class PlayerDAO {
                     // data pet
                     if (player.pet != null) {
                         jPetInfo.put("name", player.pet.name);
+                        jPetInfo.put("live_species", player.pet.liveSpecies);
                         jPetInfo.put("gender", player.pet.gender);
                         jPetInfo.put("is_mabu", player.pet.isMabu ? 1 : 0);
 
@@ -1001,6 +987,7 @@ public class PlayerDAO {
             }
         } finally {
             player.setSaving(false);
+        }
         }
     }
 
