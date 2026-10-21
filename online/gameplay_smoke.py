@@ -30,7 +30,7 @@ def run(root,sql,protocol):
         c.send(-39);return p
     c=create('rulesuser','rulespc')
     code('TEST',[item(76,10000000000),currency('ruby',5000),{'kind':'POINTS','limit_index':0,'power':1500000,'potential':1000000000,'max_base':False},item(568,2),item(2154),item(2155,2),item(2156)])
-    before=row('data_inventory')[0];chat(c,'code TEST','Đã nhận quà ngay')
+    before=row('data_inventory')[0];chat(c,'nhapcode');c.until(lambda code,p:code==-125 and '2–30'.encode() in p);c.send(-125,bytes([1])+protocol.utf('TEST'));c.until(lambda code,p:'Đã nhận quà ngay'.encode() in p)
     assert row('data_inventory')[0]==before+10000000000,'Gold above 9999 or int cap was lost'
     assert row('data_inventory')[2]==5000
     chat(c,'code TEST','đã dùng mã');assert sql("SELECT COUNT(*) FROM live_admin_redemptions WHERE code='TEST'")=='1'
