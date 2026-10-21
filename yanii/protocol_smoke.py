@@ -35,11 +35,19 @@ class Client:
         assert n<16000000
         return c,bytes(byte() for _ in range(n))
     def until(self,predicate):
-        for _ in range(180):
-            c,p=self.recv()
-            if c in (-26,-25): print('Server notice:',p,flush=True)
-            if predicate(c,p):return c,p
-        raise AssertionError('Expected protocol response missing')
+        deadline=time.monotonic()+40;recent=[]
+        try:
+            for _ in range(180):
+                left=deadline-time.monotonic()
+                if left<=0:break
+                self.sock.settimeout(min(20,left))
+                c,p=self.recv();recent.append((c,p[:180] if c in (-26,-25,32) else len(p)));recent=recent[-12:]
+                if c in (-26,-25): print('Server notice:',p,flush=True)
+                if predicate(c,p):return c,p
+        except TimeoutError as e:
+            raise AssertionError(('Expected response timed out; recent packets',recent)) from e
+        finally:self.sock.settimeout(20)
+        raise AssertionError(('Expected protocol response missing',recent))
     def login(self,password):
         self.send(-29,bytes([2,4,1,0])+struct.pack('>ii',1024,600)+bytes([1,1])+utf('PC|2.4.0'))
         self.send(-29,bytes([0])+utf(self.username)+utf(password)+utf('2.4.0')+bytes([0]))

@@ -1,21 +1,14 @@
-# Đệ tử, trứng và boss hộ vệ — beta
+# Đệ tử và trứng — quy tắc hiện tại
 
-## Luồng hoạt động
+Quy tắc mới do chủ server chốt ngày 21/10/2026 thay bản hộ vệ trứng ban đầu. Xem [toàn bộ cấu hình, giftcode, VIP và kiểm thử](TESTER-RULES-2026-10-21.md).
 
-- Khi đăng nhập, nhân vật chưa có đệ được tặng một đệ thường nếu bật auto_normal. Vàng chào mừng mặc định 1 triệu, ghi nhận một lần theo tài khoản. Không thay đệ cũ bằng đệ thường.
-- Trong Soạn gói quà: chọn NORMAL / MABU / JIREN / ZENO, nhận đệ trực tiếp hoặc trứng cần ấp. Quà có thể vào giftcode công khai/riêng, phát trực tiếp hoặc gói đã lưu. NORMAL không có trứng riêng.
-- Nếu tặng trực tiếp mà đã có đệ, phải chọn nâng loại. Nâng loại/hatch giữ trang bị, kỹ năng, hành tinh, chỉ số đã luyện; nâng sức mạnh đệ đặc biệt ít nhất 1,5 triệu. Không giữ trạng thái đang hợp thể khi nâng loại qua lệnh quà trước đăng nhập.
-- Một trứng đang ấp cho mỗi nhân vật. Quà trứng khác tiếp tục chờ tới khi ô ấp trống. Boss không thay trứng đang có. Thời điểm tạo, thời gian ấp và loài lưu trong data_mabu_egg (JSON bổ sung, không thay bảng player).
-- Thời gian gốc mặc định 3600 giây: Ma Bư ×1, Jiren ×6, Zeno ×24. NPC Quả trứng dùng gói tin cũ; thân trứng chung để tương thích client. Tên loài ở thông báo/menu/đệ sau nở.
-- Chat `santrung` để xem tên map/khu hiện tại và tỉ lệ trứng của ba boss; `detu`, `aptrung`, `notrung`; `apnhanh` trả phí vàng theo cấu hình hiện tại. Ấp nhanh kiểm tra số dư, ghi vàng + timer cùng một UPDATE, không trừ lại khi đã sẵn sàng. NPC ở nhà dùng cùng service. Hủy trứng có xác nhận tại NPC.
-- Không cho nở khi chưa hết giờ hoặc đang hợp thể. Ghi đệ + xóa trứng cùng một UPDATE; thất bại giữ trứng. Bỏ thread/sleep 4 giây khi nở. Khóa cùng đối tượng Player với save định kỳ để không bị save cũ ghi đè.
-- Theo/bảo vệ/tấn công/về nhà/hợp thể dùng cơ chế Pet có sẵn. Jiren thêm 40%, Zeno thêm 70% **phần HP/KI/sức đánh đóng góp của đệ** khi hợp thể; không cộng 70% toàn bộ chỉ số sư phụ. Đây là cân bằng riêng beta, không phải công thức chính thức Teamobi.
-
-## Boss
-
-Ba boss "Hộ vệ trứng Ma Bư / Jiren / Zeno", ID -91001..-91003, xuất hiện ở một trong các map 5, 13, 20, xuất hiện sớm sau khi khởi động, nghỉ hồi sinh 300 giây sau mỗi đời. HP 5/20/50 triệu; sát thương gốc 2/5/10 nghìn. Tỉ lệ trứng mặc định 25/10/5%, thay trong Vận hành. Trứng ghi thẳng vào ô ấp của người hạ boss; nếu đệ đánh hạ thì quy về sư phụ. Không có vật phẩm trứng rơi tự do để người khác lấy hoặc mất vì rương đầy. Mỗi đời boss thưởng tối đa một lần.
-
-Cơ chế Super Broly/đệ cũ vẫn giữ. Nếu đổi bật/tắt bộ boss, khởi động lại nrolive-game để áp dụng; tỉ lệ rơi và thời gian/giá ấp đọc cấu hình mới ngay.
+- Tặng đệ thường nếu chưa có và vàng chào mừng một lần; giữ đệ đang luyện.
+- Hợp thể thường/Ma Bư/VIP tăng 30/50/70% trên tổng chỉ số chiến đấu, có trần; không cộng lại bonus phần đóng góp đệ cũ.
+- Broly rơi trứng Ma Bư có tỉ lệ hỏng cấu hình riêng. ID568 nguyên vẹn nằm trong túi và giao dịch được trước khi dùng; ID2154 hỏng không ấp/giao dịch. Dùng trứng mới bắt đầu ấp ở nhà.
+- Không tạo ba boss hộ vệ trứng cũ. Loài Jiren/Zeno và JSON ấp cũ vẫn đọc được để giữ dữ liệu, không phát chúng như đệ VIP mới.
+- Chủ server tạo mẫu VIP và giá hồng ngọc trong Vận hành. VIP chỉ mua, không săn boss hoặc nhận giftcode. Gợi ý Bill Nhí dùng hình có sẵn, không tự nhận đã có sprite Beerus hoàn toàn mới.
+- Nâng loại giữ đồ/kỹ năng/chỉ số; nở, ấp nhanh và mua VIP lưu trạng thái cùng chi phí trong transaction. Chặn thiếu tiền, nở sớm, stale menu và trừ hai lần.
+- `santrung`, `aptrung`, `notrung`, `apnhanh`, `detu`, `vip`: các lệnh trong game. `khuup`, `buff`, `tanthu`: khu luyện, hiệu lực bùa, mã người mới.
 
 ## Nguồn đối chiếu và sprite
 
@@ -27,10 +20,8 @@ Không sao chép nguyên hệ player/DB từ repo khác:
 - Icon ánh xạ vào số chưa xuất hiện trong SQL baseline; phục vụ từ JAR, không ghi đè file ảnh cũ. Part nối cuối bảng runtime, không sửa row part của database. DataGame.vsData 7 buộc client nhận lại mô tả part; small-image versions cập nhật cho icon mới. Rollback JAR cũ không mất dữ liệu gốc/sprite gốc.
 - Đã xem mảnh đầu Zeno, không giả dùng một hình khác rồi đổi tên. Chưa tuyên bố có giấy phép mới cho tài sản đồ họa từ upstream; giữ nguồn gốc.
 
-## Ngọc đỏ trả phí
-
-Bản này chưa có tiền tệ ngọc đỏ riêng hay xác nhận thanh toán thật; không đổi tên ruby/hồng ngọc thành tiền trả phí. Zeno nhận từ boss/giftcode để kiểm thử. Bán bằng tiền tệ trả phí là công việc riêng, cần ledger và quy tắc cấp tiền từ giao dịch đã xác nhận. Không coi thao tác nạp mô phỏng là doanh thu/thanh toán thật.
-
 ## Cập nhật
 
-Dùng artifact admin-update của workflow mới đã đạt kiểm tra, không dùng lại artifact 513bf57 trước phần đệ tử. UPDATE.sh vẫn sao lưu SQL/JAR, thay app.jar chứa code/sprite và tạo bảng cấu hình/welcome IF NOT EXISTS khi khởi động; không nhập lại seed, không reset tài khoản/đệ/trang bị. Giữ bản sao lưu trước khi kiểm thử trên VPS. Phải kiểm tra hiển thị, chiến đấu boss và hành vi AI trên bản Windows thực tế trước khi khẳng định toàn bộ gameplay hoàn chỉnh.
+Dùng admin-update của workflow Online beta mới đã thành công. Không nhập lại seed. Script sao lưu SQL/JAR trước khi cập nhật. Nạp tiền thật chưa được tích hợp; hồng ngọc là ruby hiện có theo yêu cầu chủ server.
+
+Kiểm tra hiển thị và chiến đấu trên Unity Windows thực tế trước khi mở đông người; giao thức và phép tính tự động không chứng minh toàn bộ AI/đồ họa đã được chơi thử.
