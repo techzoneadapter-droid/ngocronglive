@@ -31,9 +31,9 @@ import java.util.Map;
  */
 public class DataGame {
     public static byte vsData = 7;
-    public static byte vsMap = 5;
+    public static byte vsMap = 6;
     public static byte vsSkill = 5;
-    public static byte vsItem = 6;
+    public static byte vsItem = 7;
 
     public static String LINK_IP_PORT = "Yanii:localhost:14445:0,0,0";
     private static final String MOUNT_NUM = "733:1,734:2,735:3,743:4,744:5,746:6,795:7,849:8,897:9,920:10,1092:11,1135:12,1148:13,1176:14";
@@ -107,10 +107,9 @@ public class DataGame {
         try {
             msg = Service.getInstance().messageNotMap((byte) 6);
             msg.writer().writeByte(vsMap);
-            msg.writer().writeByte(Manager.MAP_TEMPLATES.length);
-            for (MapTemplate temp : Manager.MAP_TEMPLATES) {
-                msg.writer().writeUTF(temp.name);
-            }
+            int count=0;for(MapTemplate t:Manager.MAP_TEMPLATES)count=Math.max(count,t.id+1);
+            msg.writer().writeByte(count);
+            for(int id=0;id<count;id++){String name="";for(MapTemplate t:Manager.MAP_TEMPLATES)if(t.id==id){name=t.name;break;}msg.writer().writeUTF(name);}
             msg.writer().writeByte(Manager.NPC_TEMPLATES.size());
             for (NpcTemplate temp : Manager.NPC_TEMPLATES) {
                 msg.writer().writeUTF(temp.name);

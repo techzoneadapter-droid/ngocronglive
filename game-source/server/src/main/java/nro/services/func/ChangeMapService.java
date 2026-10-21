@@ -198,6 +198,8 @@ public class ChangeMapService {
                 }
             }
         }
+        if(zoneJoin==null)return;
+        if(!nro.live.TrainingWorld.allowed(pl,zoneJoin.map.mapId)){Service.gI().sendThongBao(pl,"Chưa có quyền vào khu này. Chat khuup để mua lượt hoặc chọn khu miễn phí.");return;}
         if (pl.isHoldNamecBall) {
             int plX = pl.location.x;
             if (pl.location.x >= pl.zone.map.mapWidth - 60) {

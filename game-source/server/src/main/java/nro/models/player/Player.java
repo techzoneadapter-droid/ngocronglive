@@ -79,6 +79,7 @@ import java.util.concurrent.ScheduledExecutorService;
  *
  */
 public class Player {
+    public volatile org.json.JSONObject liveBuffs=new org.json.JSONObject(), liveLeases=new org.json.JSONObject();
 
     private static final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
     public int server;
@@ -474,6 +475,7 @@ public class Player {
     }
 
     public void update() {
+        nro.live.TrainingWorld.check(this);
         if (!this.beforeDispose) {
             try {
                 if (!isBan) {

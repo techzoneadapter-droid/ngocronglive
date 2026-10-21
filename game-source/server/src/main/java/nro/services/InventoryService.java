@@ -76,9 +76,7 @@ public class InventoryService {
         }
 
         // quả trứng
-        if (item.template.id == 568) {
-            return nro.companion.CompanionService.awardEgg(player,"MABU");
-        }
+        // Ma Bư eggs remain inventory items until explicitly used, so intact eggs can be traded.
 
         // tennis spaceship
         if (item.template.id == 453) {

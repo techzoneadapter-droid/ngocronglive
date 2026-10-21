@@ -834,6 +834,7 @@ public class SkillService {
     }
 
     private boolean canAttackPlayer(Player pl1, Player pl2) {
+        if(nro.live.TrainingWorld.safe(pl1.zone) && pl2!=null && !pl1.isBoss && !pl2.isBoss)return false;
         if (pl2 != null && !pl1.isDie() && !pl2.isDie()) {
             if (pl1.typePk > 0 || pl2.typePk > 0) {
                 return true;

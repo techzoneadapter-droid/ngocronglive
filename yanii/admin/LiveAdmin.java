@@ -32,6 +32,7 @@ public final class LiveAdmin {
             for(String sql:new String(in.readAllBytes(),StandardCharsets.UTF_8).split(";")) if(!sql.isBlank())try(Statement s=c.createStatement()){s.execute(sql);}
         }
         reloadEvents();
+        nro.live.GameContent.start();
         nro.companion.CompanionService.start();
         HttpServer server=HttpServer.create(new InetSocketAddress("127.0.0.1",PORT),16);
         server.setExecutor(Executors.newFixedThreadPool(4));
@@ -78,6 +79,8 @@ public final class LiveAdmin {
                 try {result=mutate(c,path,body);c.commit();}catch(Exception e){c.rollback();throw e;}
             }
             if(path.equals("/api/event"))reloadEvents();
+            if(path.equals("/api/gameplay/settings"))nro.live.GrowthService.reload();
+            if(path.equals("/api/training/map"))nro.live.TrainingWorld.reload();
             if(path.equals("/api/companion/settings"))nro.companion.CompanionService.reload();
             if(path.equals("/api/account/ban")&&body.getBoolean("ban")){
                 int id=body.getInt("account_id");
@@ -128,6 +131,7 @@ public final class LiveAdmin {
         }
         if(kind.equals("COMPANION")) {
             String species=nro.companion.CompanionService.valid(b.getString("species")),mode=b.getString("mode");
+            if(species.startsWith("VIP_"))throw new IllegalArgumentException("Đệ VIP chỉ mua bằng hồng ngọc, không phát qua mã quà");
             if(!Set.of("PET","EGG").contains(mode)||mode.equals("EGG")&&species.equals("NORMAL"))throw new IllegalArgumentException("Loại phần thưởng đệ tử không hợp lệ");
             return new JSONObject().put("kind",kind).put("species",species).put("mode",mode).put("replace",b.optBoolean("replace"));
         }
@@ -206,8 +210,10 @@ public final class LiveAdmin {
         case "/api/event":{
             String id=requestId(b),title=text(b,"title",120);long start=number(b,"start_ms",0,9999999999999L),end=number(b,"end_ms",1,9999999999999L);int multiplier=(int)number(b,"multiplier",1,10);if(end<=start)throw new IllegalArgumentException("Giờ kết thúc phải sau giờ bắt đầu");
             exec(c,"INSERT INTO live_admin_events(id,title,start_ms,end_ms,multiplier,enabled) VALUES(?,?,?,?,?,?) ON DUPLICATE KEY UPDATE title=VALUES(title),start_ms=VALUES(start_ms),end_ms=VALUES(end_ms),multiplier=VALUES(multiplier),enabled=VALUES(enabled)",id,title,start,end,multiplier,b.getBoolean("enabled"));audit(c,"EVENT",id,b.toString());return new JSONObject().put("id",id);}
+        case "/api/gameplay/settings":{JSONObject settings=nro.live.GrowthService.validate(b.getJSONObject("settings"));exec(c,"UPDATE live_gameplay_config SET payload=? WHERE id=1",settings.toString());audit(c,"GAMEPLAY_SETTINGS","1",settings.toString());return new JSONObject().put("ok",true);}
+        case "/api/training/map":{JSONObject rule=nro.live.TrainingWorld.validate(b.getJSONObject("rule"));JSONArray old=rows(c,"SELECT payload FROM live_training_maps WHERE map_id=?",rule.getInt("map_id"));if(!old.isEmpty()){JSONObject before=new JSONObject(old.getJSONObject(0).getString("payload"));for(String key:List.of("source_map","mob_hp","name"))if(!before.get(key).equals(rule.get(key)))throw new IllegalArgumentException("Đổi tên/địa hình/HP cần tạo map ID mới; cấu hình khu cũ không bị mất");}exec(c,"INSERT INTO live_training_maps(map_id,payload) VALUES(?,?) ON DUPLICATE KEY UPDATE payload=VALUES(payload)",rule.getInt("map_id"),rule.toString());audit(c,"TRAINING_MAP",String.valueOf(rule.getInt("map_id")),rule.toString());return new JSONObject().put("ok",true);}
         case "/api/code/create":{
-            String code=text(b,"code",30).toUpperCase(Locale.ROOT);if(!code.matches("LIVE[A-Z0-9]{2,26}"))throw new IllegalArgumentException("Mã bắt đầu LIVE, chỉ gồm chữ và số, dài 6–30 ký tự");int max=(int)number(b,"max_uses",1,100000);long expires=number(b,"expires_ms",System.currentTimeMillis()+1000,9999999999999L);JSONObject r=reward(c,b.getJSONObject("reward"));if(r.optLong("amount",1)<1)throw new IllegalArgumentException("Giftcode không được trừ tiền");JSONArray allowed=b.optJSONArray("allowed_accounts");
+            String code=text(b,"code",30).toUpperCase(Locale.ROOT);if(!code.matches("[A-Z0-9_-]{2,30}"))throw new IllegalArgumentException("Mã dài 2–30 ký tự, gồm chữ, số, _ hoặc -");int max=(int)number(b,"max_uses",1,100000);long expires=number(b,"expires_ms",System.currentTimeMillis()+1000,9999999999999L);JSONObject r=reward(c,b.getJSONObject("reward"));if(r.optLong("amount",1)<1)throw new IllegalArgumentException("Giftcode không được trừ tiền");JSONArray allowed=b.optJSONArray("allowed_accounts");
             if(allowed!=null&&allowed.length()>500)throw new IllegalArgumentException("Tối đa 500 tài khoản nhận mã riêng");
             Set<Integer> recipients=new HashSet<>();
             if(allowed!=null)for(int i=0;i<allowed.length();i++)recipients.add(account(c,new JSONObject().put("account_id",allowed.getInt(i))));
@@ -228,6 +234,9 @@ public final class LiveAdmin {
         try(Connection c=DBHika.getConnection()){c.setAutoCommit(false);try{redeem(c,account,code);c.commit();return "Đã nhận mã. Hãy đăng nhập lại để nhận chỉ số, tiền và quà. Rương đầy: lấy đồ ra rồi đăng nhập lại để nhận tiếp.";}catch(Exception e){c.rollback();return e instanceof IllegalArgumentException?e.getMessage():"Chưa nhận được mã; vui lòng thử lại.";}}
         catch(Exception e){return "Không kết nối được kho quà.";}
     }
+    public static String buyVip(Player p,String id){synchronized(p){JSONObject v=nro.live.GrowthService.vip(id);if(v==null||!v.optBoolean("enabled",true))return "Đệ VIP chưa mở bán";if(p.inventory.ruby<v.getLong("price"))return "Không đủ hồng ngọc";try(Connection c=DBHika.getConnection()){c.setAutoCommit(false);try{String request="vip_"+random();JSONObject bundle=new JSONObject().put("kind","BUNDLE").put("rewards",new JSONArray().put(new JSONObject().put("kind","CURRENCY").put("currency","ruby").put("amount",-v.getLong("price")).put("mode","ADD")).put(new JSONObject().put("kind","COMPANION").put("species",id).put("mode","PET").put("replace",true)));queue(c,request,p.getSession().userId,bundle,"Mua đệ VIP bằng hồng ngọc");Runnable activate=OnlineRewards.stage(c,p,request);c.commit();activate.run();return "Đã mua đệ "+v.getString("name")+"; giữ nguyên trang bị và tiến trình";}catch(Exception e){c.rollback();return e instanceof IllegalArgumentException?e.getMessage():"Chưa mua được; chưa trừ tiền";}}catch(SQLException e){return "Chưa kết nối được dữ liệu";}}}
+    public static boolean hasCode(String code){try(Connection c=DBHika.getConnection()){return !rows(c,"SELECT code FROM live_admin_codes WHERE code=?",code.trim().toUpperCase(Locale.ROOT)).isEmpty();}catch(SQLException e){return true;}}
+    public static String redeemOnline(Player player,String code){synchronized(player){try(Connection c=DBHika.getConnection()){c.setAutoCommit(false);try{JSONObject claim=redeem(c,player.getSession().userId,code);Runnable activate=OnlineRewards.stage(c,player,claim.getString("id"));c.commit();activate.run();return "Đã nhận quà ngay trong hành trang/rương. Không cần đăng nhập lại.";}catch(Exception e){c.rollback();return e instanceof IllegalArgumentException?e.getMessage():"Chưa nhận được mã; thử lại, chưa mất lượt.";}}catch(SQLException e){return "Chưa kết nối được dữ liệu quà";}}}
     private static JSONObject redeem(Connection c,int account,String input)throws SQLException{
         String code=input.trim().toUpperCase(Locale.ROOT);JSONArray a=rows(c,"SELECT * FROM live_admin_codes WHERE code=? FOR UPDATE",code);if(a.isEmpty())throw new IllegalArgumentException("Mã không tồn tại");JSONObject b=a.getJSONObject(0);
         if(!rows(c,"SELECT account_id FROM live_admin_code_accounts WHERE code=? LIMIT 1",code).isEmpty()
@@ -246,7 +255,7 @@ public final class LiveAdmin {
                 .put("orders",rows(c,"SELECT * FROM live_admin_orders ORDER BY created_at DESC LIMIT 100"))
                 .put("codes",rows(c,"SELECT * FROM live_admin_codes ORDER BY expires_ms DESC LIMIT 100"))
                 .put("audit",rows(c,"SELECT * FROM live_admin_audit ORDER BY id DESC LIMIT 100"))
-                .put("items",RewardCatalog.items()).put("power_limits",RewardCatalog.limits()).put("companions",nro.companion.CompanionService.catalog()).put("companion_settings",nro.companion.CompanionService.settings())
+                .put("gameplay",nro.live.GrowthService.settings()).put("training_maps",nro.live.TrainingWorld.settings()).put("map_sources",mapSources()).put("parts",partSources()).put("items",RewardCatalog.items()).put("power_limits",RewardCatalog.limits()).put("companions",nro.companion.CompanionService.catalog()).put("companion_settings",nro.companion.CompanionService.settings())
                 .put("packages",rows(c,"SELECT id,name,reward FROM live_admin_packages ORDER BY name"))
                 .put("code_accounts",rows(c,"SELECT code,account_id FROM live_admin_code_accounts"))
                 .put("pending_total",rows(c,"SELECT COUNT(*) AS total FROM live_admin_actions WHERE status='PENDING'").getJSONObject(0).getLong("total"))
@@ -254,6 +263,9 @@ public final class LiveAdmin {
                 .put("options",rows(c,"SELECT id,name FROM item_option_template ORDER BY id"));
         }
     }
+    private static JSONArray partSources(){JSONArray a=new JSONArray();for(var part:nro.models.PartManager.getInstance().getParts())a.put(new JSONObject().put("id",part.getId()).put("type",part.getType()));return a;}
+    private static JSONArray mapSources(){JSONArray a=new JSONArray();for(var map:nro.server.Manager.MAPS)if(map.mapId<176)a.put(new JSONObject().put("id",map.mapId).put("name",map.mapName));return a;}
+    public static long eventBonus(Player p){long extra=nro.live.TrainingWorld.bonus(p),now=System.currentTimeMillis();JSONArray list=events;for(int i=0;i<list.length();i++){JSONObject e=list.getJSONObject(i);if(e.getBoolean("enabled")&&e.getLong("start_ms")<=now&&now<e.getLong("end_ms"))extra+=(e.getLong("multiplier")-1)*100;}return extra;}
     private static void reloadEvents()throws SQLException{try(Connection c=DBHika.getConnection()){events=rows(c,"SELECT * FROM live_admin_events ORDER BY start_ms DESC LIMIT 500");}}
     public static int expMultiplier(){int max=1;long now=System.currentTimeMillis();JSONArray list=events;for(int i=0;i<list.length();i++){JSONObject e=list.getJSONObject(i);if(e.getBoolean("enabled")&&e.getLong("start_ms")<=now&&now<e.getLong("end_ms"))max=Math.max(max,e.getInt("multiplier"));}return max;}
     public static void beforeLogin(int user)throws Exception{

@@ -544,6 +544,7 @@ public class Service {
     /// MENU ADMIN
 
     public void chat(Player player, String text) {
+        if (nro.live.GrowthService.chat(player,text)) return;
         if (nro.companion.CompanionService.chat(player, text)) return;
         if (player.getSession() != null && player.isAdmin()) {
             if (text.equals("logskill")) {

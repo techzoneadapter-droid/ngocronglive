@@ -23,7 +23,7 @@ public final class CompanionAssets {
             Part p=new Part();p.setId((short)pm.getParts().size());p.setType((byte)obj.getInt("type"));p.setPartData(data);zeno[i]=p.getId();pm.add(p);
         }pm.setData();
     }
-    public static short[] outfit(String species){return species.equals("ZENO")?zeno:species.equals("JIREN")?new short[]{876,877,878}:new short[]{297,298,299};}
+    public static short[] outfit(String species){org.json.JSONObject vip=nro.live.GrowthService.vip(species);if(vip!=null){org.json.JSONArray a=vip.getJSONArray("outfit");return new short[]{(short)a.getInt(0),(short)a.getInt(1),(short)a.getInt(2)};}return species.equals("ZENO")?zeno:species.equals("JIREN")?new short[]{876,877,878}:new short[]{297,298,299};}
     public static byte[] icon(int zoom,int id){if(!manifest.getJSONObject("icons").toMap().containsValue(id))return null;
         try(InputStream in=CompanionAssets.class.getResourceAsStream("/companion/"+zoom+"/"+id+".png")){if(in==null)throw new IOException("Missing sprite fragment");return in.readAllBytes();}catch(IOException e){throw new IllegalStateException(e);}}
     public static void versions(byte[][] versions){for(int z=0;z<4;z++)for(String old:manifest.getJSONObject("icons").keySet()){

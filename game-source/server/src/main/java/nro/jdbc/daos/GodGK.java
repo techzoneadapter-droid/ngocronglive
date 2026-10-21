@@ -841,6 +841,7 @@ public class GodGK {
                     ps4.setInt(2, session.userId);
                     ps4.executeUpdate();
                     ps4.close();
+                    nro.live.GrowthService.load(player);
                     return player;
                 }
             } finally {
