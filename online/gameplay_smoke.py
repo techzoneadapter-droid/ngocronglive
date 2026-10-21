@@ -25,7 +25,7 @@ def run(root,sql,protocol):
         chat(c,'khuup');c.until(lambda code,p:code==32 and 'Chọn khu luyện'.encode() in p)
         c.send(32,struct.pack('>hB',5,index));_,p=c.until(lambda code,p:code==-24 and p[0]==map_id);c.send(-39);return p
     c=create('rulesuser','rulespc')
-    code('TEST',[currency('gold',10000000000),currency('ruby',5000),{'kind':'POINTS','limit_index':0,'power':1500000,'potential':1000000000,'max_base':False},item(568,2),item(2154),item(2155,2),item(2156)])
+    code('TEST',[item(76,10000000000),currency('ruby',5000),{'kind':'POINTS','limit_index':0,'power':1500000,'potential':1000000000,'max_base':False},item(568,2),item(2154),item(2155,2),item(2156)])
     before=row('data_inventory')[0];chat(c,'code TEST','Đã nhận quà ngay')
     assert row('data_inventory')[0]==before+10000000000,'Gold above 9999 or int cap was lost'
     assert row('data_inventory')[2]==5000
@@ -73,6 +73,21 @@ def run(root,sql,protocol):
     c.send(-30,bytes([16,4])+struct.pack('>h',32767));c.until(lambda code,p:'giới hạn'.encode() in p)
     c.sock.close();peer.sock.close();time.sleep(5)
     c=protocol.Client(username='rulesuser',character='rulespc');c.login('beta-fixture-password');c.world();assert row('pet_info')['live_species']=='VIP_CI';chat(c,'buff','Tổng hiện tại x5.0');c.sock.close();time.sleep(5)
+    queue_client=create('queueuser','queuepc')
+    code('LARGEGIFT',[item(2155) for _ in range(60)])
+    chat(queue_client,'code LARGEGIFT','Đã nhận quà ngay')
+    queue_user=sql("SELECT account_id FROM player WHERE name='queuepc'")
+    pending=lambda:int(sql("SELECT COUNT(*) FROM live_admin_actions WHERE account_id="+queue_user+" AND status='PENDING'"))
+    assert pending()>0 and sql("SELECT COUNT(*) FROM live_admin_redemptions WHERE code='LARGEGIFT'")=='1'
+    for _ in range(3):
+        if pending()==0:break
+        count=sum(1 for v in row('items_bag','queuepc') if v['temp_id']==2155)
+        for _ in range(count):
+            slot=next(i for i,v in enumerate(row('items_bag','queuepc'))if v['temp_id']==2155);queue_client.send(-43,bytes([0,1,slot]));queue_client.until(lambda code,p:'Đã dùng'.encode() in p)
+        previous=pending();chat(queue_client,'nhanqua','Đã nhận quà đang chờ');assert pending()<previous
+    assert pending()==0
+    assert sql("SELECT COUNT(*) FROM live_admin_actions WHERE account_id="+queue_user+" AND status='APPLIED'")=='60'
+    chat(queue_client,'nhanqua','Không còn quà');queue_client.sock.close();time.sleep(5)
     # An event training map can be created with existing terrain and a live schedule.
     rule={'map_id':178,'source_map':122,'name':'CI event training','fee_ruby':0,'lease_seconds':3600,'min_power':0,'mob_hp':200000,'exp_extra':100,'pk':False,'enabled':True,'start_ms':0,'end_ms':4102444800000}
     api('/api/training/map',{'rule':rule});assert any(r['map_id']==178 for r in api('/api/state')['training_maps'])
@@ -81,9 +96,9 @@ def run(root,sql,protocol):
     errors=[]
     with sync_playwright() as pw:
         browser=pw.chromium.launch(headless=True);page=browser.new_page(viewport={'width':1440,'height':1000});page.on('pageerror',lambda e:errors.append(str(e)));page.goto('http://127.0.0.1:14447/')
-        page.locator('#login-form input').fill(os.environ['NRO_ADMIN_PASSWORD']);page.locator('#login-form button').click();expect(page.locator('#stat-accounts')).not_to_have_text('—');page.locator('nav [data-tab=operations]').click()
+        page.locator('#login-form input').fill(os.environ['NRO_ADMIN_PASSWORD']);page.locator('#login-form button').click();expect(page.locator('#stat-accounts')).not_to_have_text('—');page.locator('nav [data-tab=resources]').click();page.select_option('#item-select','76');expect(page.locator('#item-form [name=quantity]')).to_have_attribute('max','50000000000');page.locator('nav [data-tab=operations]').click()
         expect(page.locator('#gameplay-form [name=mabu_broken]')).to_have_value('30');page.select_option('#vip-existing','VIP_CI');expect(page.locator('#vip-form [name=head]')).to_have_value('1378');page.screenshot(path=str(root/'logs/gameplay-operations.png'),full_page=True)
-        page.locator('nav [data-tab=events]').click();page.select_option('#training-existing','178');expect(page.locator('#training-form [name=name]')).to_have_value('CI event training');page.screenshot(path=str(root/'logs/training-events.png'),full_page=True)
+        page.locator('nav [data-tab=events]').click();page.locator('#codes-table tr').filter(has_text='TEST').locator('button').first.click();expect(page.locator('#code-form [name=code]')).to_have_value('TEST');expect(page.locator('#code-form [name=replace_existing]')).to_be_checked();expect(page.locator('#bundle-preset')).to_have_value('code:TEST');page.select_option('#training-existing','178');expect(page.locator('#training-form [name=name]')).to_have_value('CI event training');page.screenshot(path=str(root/'logs/training-events.png'),full_page=True)
         page.set_viewport_size({'width':390,'height':844});assert page.evaluate('() => document.documentElement.scrollWidth <= window.innerWidth');assert not errors,errors;browser.close()
     print('PASS: owner gameplay/VIP/training forms in real desktop/mobile browser; no JavaScript errors')
-    print('PASS: arbitrary short code; immediate 10-billion gold, items and points; single redemption; same-type timer extension and additive different buffs; intact egg inventory and two-party atomic trade; broken egg refusal; incubation; paid entry lease/re-entry; custom VIP ruby purchase/fusion/relogin; bounded stat spend; event map creation and seven starter codes')
+    print('PASS: arbitrary short code; immediate 10-billion gold, items and points; single redemption; same-type timer extension and additive different buffs; intact egg inventory and two-party atomic trade; broken egg refusal; incubation; paid entry lease/re-entry; custom VIP ruby purchase/fusion/relogin; bounded stat spend; event map creation, seven starter codes and resumable 60-item online collection without duplicate delivery')

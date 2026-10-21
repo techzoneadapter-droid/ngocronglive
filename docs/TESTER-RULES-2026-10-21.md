@@ -34,9 +34,13 @@ Hồng ngọc là currency ruby hiện có, đúng yêu cầu mới; không có 
 
 ## Giftcode
 
-Mã 2–30 ký tự chữ/số/_/-, không cần tiền tố LIVE. Nhập ở Nhận quà sẵn có hoặc chat `code TEST`. Quà được chuẩn bị trên bản sao, ghi DB + lượt nhận trong cùng transaction rồi cập nhật nhân vật đang chơi. Túi và rương đều đầy hoặc số dư sẽ vượt trần thì chưa mất lượt; người chơi dọn chỗ rồi nhập lại. Lệnh hỗ trợ quản trị offline cũ vẫn xếp hàng, không ghi đè nhân vật đang online.
+Mã 2–30 ký tự chữ/số/_/-, không cần tiền tố LIVE. Nhập ở Nhận quà sẵn có hoặc chat `code TEST`. Quà được chuẩn bị trên bản sao, ghi DB + lượt nhận trong cùng transaction rồi cập nhật nhân vật đang chơi. Gói lớn xử lý tối đa 50 phần thưởng mỗi lần. Nếu nhận được một phần thì lượt mã đã dùng, phần còn lại vẫn PENDING; dọn túi/rương rồi chat `nhanqua` để nhận tiếp ngay, không cần đăng nhập lại. Nếu chưa nhận được phần nào hoặc số dư sẽ vượt trần thì transaction bị hủy và chưa mất lượt. Không xóa quà vì rương đầy. Lệnh hỗ trợ quản trị offline cũ vẫn xếp hàng, không ghi đè nhân vật đang online.
+
+Vàng/ngọc ở cả form tiền tệ và danh sách vật phẩm đều đi vào số dư thật. ID76/77/861 được chuẩn hóa sang tiền tệ, không còn bị giới hạn 9.999 vật phẩm hoặc tạo đồng tiền vô dụng trong túi. Vàng dùng long tới trần server; ngọc giữ trần int.
 
 Có trình soạn/lưu bộ quà dùng chung. Chỉnh mã cũ bằng nút Chỉnh mã và tích Cập nhật mã đã có: giữ used/lịch sử nhận, không cho người cũ nhận lần nữa. Chỉ tạo mã mới khi không chọn cập nhật.
+
+Bỏ phần tạo nhân vật tự tặng 10 thỏi vàng của upstream; chỉ áp dụng nhân vật tạo mới, không thu hồi đồ người chơi cũ.
 
 Bảy mã dùng chung, mỗi tài khoản một lần; chat `tanthu` xem danh sách. Seed INSERT IGNORE một lần, không thay quà chủ server đã chỉnh:
 

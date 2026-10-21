@@ -111,25 +111,8 @@ public class PlayerDAO {
             String itemsBody = dataBody.toJSONString();
 
             JSONArray dataBag = new JSONArray();
-            for (int i = 0; i < 20; i++) {
-                JSONObject item = new JSONObject();
-                JSONArray options = new JSONArray();
-                JSONArray option = new JSONArray();
-                if (i == 0) {
-                    option.add(73);
-                    option.add(1);
-                    options.add(option);
-                    item.put("temp_id", 457);
-                    item.put("create_time", System.currentTimeMillis());
-                    item.put("quantity", 10);
-                } else {
-                    item.put("temp_id", -1);
-                    item.put("create_time", 0);
-                    item.put("quantity", 1);
-                }
-                item.put("option", options);
-                dataBag.add(item);
-            }
+            // Starter gold bars are claimed through the editable code, not an extra hidden grant.
+            for(int i=0;i<20;i++){JSONObject item=new JSONObject();item.put("temp_id",-1);item.put("create_time",0);item.put("quantity",0);item.put("option",new JSONArray());dataBag.add(item);}
             String itemsBag = dataBag.toJSONString();
 
             JSONArray dataBox = new JSONArray();

@@ -77,6 +77,7 @@ public final class RewardCatalog {
                     if(level>0&&!plain(t.name).matches(".*cap\\s+"+level+"(?:\\D.*|$)"))continue;
                 }
                 found++;
+                if(t.id==76||t.id==77||t.id==861){out.put(new JSONObject().put("kind","CURRENCY").put("currency",t.id==76?"gold":t.id==77?"gem":"ruby").put("amount",quantity).put("mode",mode.equals("all")?"AT_LEAST":"ADD"));continue;}
                 JSONArray opts=defaults(t.id);
                 if(t.type>=0&&t.type<=4){
                     if(upgrade>0&&opts.isEmpty())throw new IllegalArgumentException("#"+t.id+" chưa có chỉ số gốc trong shop; chọn +0 hoặc phát riêng với chỉ số tùy chọn");
