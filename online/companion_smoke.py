@@ -50,7 +50,8 @@ def run(root,sql,protocol):
         assert pet_hp>=1000 and pet_damage>0
         assert avatar==({'MABU':297,'JIREN':876}.get(species,avatar))
         if species=='ZENO':assert avatar>=2042
-        assert row('pet_body')==original_body and row('pet_skill')==original_skills
+        assert row('pet_body')==original_body, (original_body,row('pet_body'))
+        assert row('pet_skill')==original_skills, (original_skills,row('pet_skill'))
         assert row('pet_point')['hpg']==original_points['hpg'],'Hatch reset trained HP'
         # Status commands run through the real controller; fusion emits authoritative points.
         c.send(-108,bytes([0]));time.sleep(.2);info(c)
