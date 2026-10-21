@@ -33,6 +33,8 @@ def run(root, sql, protocol):
     all_preview = call('/api/reward/preview', {'reward':all_reward})
     assert all_preview['count']==len(state['items'])
     assert len({r['item_id'] for r in all_preview['reward']['rewards']})==len(state['items'])
+    floor=call('/api/reward/preview',{'reward':{'kind':'BUNDLE','gem':state['reward_caps']['gem'],'currency_mode':'AT_LEAST'}})
+    assert floor['reward']['rewards'][0]['mode']=='AT_LEAST'
     call('/api/reward/preview', {'reward':{'kind':'BUNDLE','gem':-1}},400)
     call('/api/reward/preview', {'reward':{'kind':'BUNDLE','selection':{'mode':'selected','ids':[32767]}}},400)
     call('/api/reward/preview', {'reward':{'kind':'BUNDLE','selection':{'mode':'selected','ids':[0],'upgrade':8}}},400)

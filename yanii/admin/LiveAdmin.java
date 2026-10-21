@@ -117,7 +117,7 @@ public final class LiveAdmin {
     private static int account(Connection c,JSONObject b)throws SQLException{int id=(int)number(b,"account_id",1,Integer.MAX_VALUE);if(rows(c,"SELECT id FROM account WHERE id=?",id).isEmpty())throw new IllegalArgumentException("Không tìm thấy tài khoản");return id;}
     private static JSONObject reward(Connection c,JSONObject input)throws SQLException{
         JSONObject b=new JSONObject(input.toString());String kind=b.getString("kind");
-        if(kind.equals("CURRENCY")){String currency=b.getString("currency");if(!Set.of("gold","gem","ruby").contains(currency))throw new IllegalArgumentException("Loại tiền không hợp lệ");long n=number(b,"amount",currency.equals("gold")?-nro.models.player.Inventory.LIMIT_GOLD:-Integer.MAX_VALUE,currency.equals("gold")?nro.models.player.Inventory.LIMIT_GOLD:Integer.MAX_VALUE);if(n==0)throw new IllegalArgumentException("Số lượng phải khác 0");return new JSONObject().put("kind",kind).put("currency",currency).put("amount",n);}
+        if(kind.equals("CURRENCY")){String currency=b.getString("currency");if(!Set.of("gold","gem","ruby").contains(currency))throw new IllegalArgumentException("Loại tiền không hợp lệ");long n=number(b,"amount",currency.equals("gold")?-nro.models.player.Inventory.LIMIT_GOLD:-Integer.MAX_VALUE,currency.equals("gold")?nro.models.player.Inventory.LIMIT_GOLD:Integer.MAX_VALUE);if(n==0)throw new IllegalArgumentException("Số lượng phải khác 0");String mode=b.optString("mode","ADD");if(!Set.of("ADD","AT_LEAST").contains(mode)||(mode.equals("AT_LEAST")&&n<1))throw new IllegalArgumentException("Chế độ số dư không hợp lệ");return new JSONObject().put("kind",kind).put("currency",currency).put("amount",n).put("mode",mode);}
         if(kind.equals("ITEM")){
             int id=(int)number(b,"item_id",0,32767);if(rows(c,"SELECT id FROM item_template WHERE id=?",id).isEmpty())throw new IllegalArgumentException("ID vật phẩm không tồn tại");
             long quantity=number(b,"quantity",1,9999);JSONArray opts=b.optJSONArray("options");if(opts==null)opts=new JSONArray();if(opts.length()>32)throw new IllegalArgumentException("Tối đa 32 chỉ số");
@@ -221,7 +221,7 @@ public final class LiveAdmin {
         String code=input.trim().toUpperCase(Locale.ROOT);JSONArray a=rows(c,"SELECT * FROM live_admin_codes WHERE code=? FOR UPDATE",code);if(a.isEmpty())throw new IllegalArgumentException("Mã không tồn tại");JSONObject b=a.getJSONObject(0);
         if(!rows(c,"SELECT account_id FROM live_admin_code_accounts WHERE code=? LIMIT 1",code).isEmpty()
             &&rows(c,"SELECT account_id FROM live_admin_code_accounts WHERE code=? AND account_id=?",code,account).isEmpty())throw new IllegalArgumentException("Mã này không dành cho tài khoản của bạn");
-        if(!rows(c,"SELECT action_id FROM live_admin_redemptions WHERE code=? AND account_id=?",code,account).isEmpty())throw new IllegalArgumentException("Tài khoản đã dùng mã này");
+        if(!rows(c,"SELECT action_id FROM live_admin_redemptions WHERE code=? AND account_id=? FOR UPDATE",code,account).isEmpty())throw new IllegalArgumentException("Tài khoản đã dùng mã này");
         if(b.getLong("expires_ms")<=System.currentTimeMillis()||b.getInt("used")>=b.getInt("max_uses"))throw new IllegalArgumentException("Mã hết hạn hoặc hết lượt");
         String id="code_"+random();queue(c,id,account,new JSONObject(b.getString("reward")),"Giftcode "+code);exec(c,"INSERT INTO live_admin_redemptions(code,account_id,action_id) VALUES(?,?,?)",code,account,id);exec(c,"UPDATE live_admin_codes SET used=used+1 WHERE code=?",code);return new JSONObject().put("id",id).put("status","PENDING");
     }
@@ -266,7 +266,7 @@ public final class LiveAdmin {
             JSONObject player=players.getJSONObject(0),reward=new JSONObject(action.getString("payload"));String before,after;
             if(reward.getString("kind").equals("CURRENCY")){
                 before=player.getString("data_inventory");JSONArray money=new JSONArray(before);int slot=switch(reward.getString("currency")){case "gold"->0;case "gem"->1;case "ruby"->2;default->throw new IllegalArgumentException("Unknown currency");};
-                long value=Math.addExact(money.getLong(slot),reward.getLong("amount"));long max=slot==0?nro.models.player.Inventory.LIMIT_GOLD:Integer.MAX_VALUE;
+                long value=reward.optString("mode","ADD").equals("AT_LEAST")?Math.max(money.getLong(slot),reward.getLong("amount")):Math.addExact(money.getLong(slot),reward.getLong("amount"));long max=slot==0?nro.models.player.Inventory.LIMIT_GOLD:Integer.MAX_VALUE;
                 if(value<0||value>max)throw new IllegalArgumentException("Số dư sau thay đổi vượt giới hạn; chưa cộng/trừ");money.put(slot,value);after=money.toString();exec(c,"UPDATE player SET data_inventory=? WHERE id=?",after,player.getLong("id"));
             }else if(reward.getString("kind").equals("POINTS")) {
                 before=player.getString("data_point");JSONArray points=new JSONArray(before);

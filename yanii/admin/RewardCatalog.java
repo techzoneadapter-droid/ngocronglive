@@ -56,7 +56,7 @@ public final class RewardCatalog {
     static JSONArray expand(JSONObject b) {
         JSONArray out=new JSONArray();
         for(String key:List.of("gold","gem","ruby","power","potential"))if(b.has(key)&&!b.get(key).toString().matches("[0-9]{1,16}"))throw new IllegalArgumentException("Giá trị "+key+" phải là số nguyên không âm");
-        for(String currency:List.of("gold","gem","ruby"))if(b.optLong(currency)>0)out.put(new JSONObject().put("kind","CURRENCY").put("currency",currency).put("amount",b.getLong(currency)));
+        for(String currency:List.of("gold","gem","ruby"))if(b.optLong(currency)>0)out.put(new JSONObject().put("kind","CURRENCY").put("currency",currency).put("amount",b.getLong(currency)).put("mode",b.optString("currency_mode","ADD")));
         if(b.optLong("power")>0||b.optLong("potential")>0||b.optBoolean("max_base"))out.put(new JSONObject().put("kind","POINTS").put("power",b.optLong("power")).put("potential",b.optLong("potential")).put("limit_index",b.optInt("limit_index",0)).put("max_base",b.optBoolean("max_base")));
         JSONArray explicit=b.optJSONArray("rewards");if(explicit!=null){if(explicit.length()>2500)throw new IllegalArgumentException("Tối đa 2500 phần thưởng");for(int i=0;i<explicit.length();i++){JSONObject r=explicit.getJSONObject(i);if(r.optString("kind").equals("BUNDLE"))throw new IllegalArgumentException("Không lồng gói quà");out.put(r);}}
         JSONObject filter=b.optJSONObject("selection");

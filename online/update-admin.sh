@@ -10,7 +10,7 @@ stamp=$(date -u +%Y%m%dT%H%M%SZ)-$$
 backup="$target/backups/admin-$stamp.jar"
 # Stop gracefully before the consistent database snapshot. No seed/config/credential replacement.
 systemctl stop nrolive-game
-if ! sudo -u nrolive bash "$target/backup.sh"; then systemctl start nrolive-game; echo 'Backup failed; update cancelled.'; exit 1; fi
+if ! runuser -u nrolive -- bash "$target/backup.sh"; then systemctl start nrolive-game; echo 'Backup failed; update cancelled.'; exit 1; fi
 cp -p "$target/server/app.jar" "$backup"
 install -o nrolive -g nrolive -m 640 "$source_dir/app.jar" "$target/server/app.jar"
 systemctl start nrolive-game

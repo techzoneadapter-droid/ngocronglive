@@ -3,7 +3,7 @@
 Trong **Sự kiện & giftcode**, trình soạn gói dùng chung cho phát trực tiếp, lưu gói và tạo mã:
 
 - Tân thủ, chào mừng, tester nâng cao và bá chủ là **mẫu của server thử nghiệm**, không phải gói quà chính thức Teamobi.
-- Chọn vàng/ngọc xanh/hồng ngọc; chọn toàn bộ tiền để điền trần số dư server (không phải vô hạn). Nếu cộng làm vượt trần thì lệnh bị từ chối, không tự tràn số.
+- Chọn vàng/ngọc xanh/hồng ngọc; chọn toàn bộ tiền để nâng số dư tới trần server (không phải vô hạn). Nếu cộng làm vượt trần thì lệnh bị từ chối, không tự tràn số.
 - SM/TN là **nâng lên ít nhất mức yêu cầu**, không cộng lặp mỗi lần đăng nhập. Chọn giới hạn trong bảng power_limit đã nạp của chính server. Nâng chỉ số gốc dùng trần HP/KI/sức đánh/giáp/chí mạng của giới hạn đó.
 - Chọn từng ID, mọi kết quả lọc hoặc mọi mẫu vật phẩm trong server. Danh mục lấy trực tiếp từ Manager.ITEM_TEMPLATES; nhóm theo tên/type là bộ lọc tiện dụng, không là phân loại chính thức tuyệt đối.
 - Dòng thường/thần linh/hủy diệt/thiên sứ theo tên mẫu có trong server. Cấp ghi trong tên (đậu thần, sách...) khác mức nâng trang bị và số lỗ sao. Schema item_template của server này không có trường cấp trang bị 1–14 đáng tin cậy, không lấy ID từ repo khác để gán cấp.
