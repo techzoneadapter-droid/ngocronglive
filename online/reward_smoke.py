@@ -89,7 +89,7 @@ def run(root, sql, protocol):
     assert sql("SELECT is_admin FROM account WHERE id="+str(user))=='0'
     assert sql("SELECT COUNT(*) FROM live_admin_redemptions WHERE code='LIVECIBUNDLE'")=='1'
     print('PASS: full catalog, package save/load, real levels, upgrade/stars, private codes, concurrent redemption, idempotency, power/potential/base caps, full-box resume, no duplicate currency and no admin escalation')
-    from playwright.sync_api import sync_playwright
+    from playwright.sync_api import sync_playwright, expect
     errors=[]
     with sync_playwright() as p:
         browser=p.chromium.launch(headless=True)
@@ -97,11 +97,11 @@ def run(root, sql, protocol):
         page.on('pageerror',lambda e: errors.append(str(e)))
         page.goto('http://127.0.0.1:14447/')
         page.locator('#login-form input').fill(os.environ['NRO_ADMIN_PASSWORD']);page.locator('#login-form button').click()
-        page.locator('#app').wait_for(state='visible');page.wait_for_function("document.querySelector('#stat-accounts').textContent !== '—'")
+        page.locator('#app').wait_for(state='visible');expect(page.locator('#stat-accounts')).not_to_have_text('—')
         page.locator('nav [data-tab=events]').click()
         page.select_option('#bundle-preset','starter')
         page.locator('#bundle-preview').click()
-        page.wait_for_function("document.querySelector('#bundle-preview-result').textContent.includes('phần thưởng')")
+        expect(page.locator('#bundle-preview-result')).to_contain_text('phần thưởng')
         page.select_option('#bundle-preset','admin')
         assert page.locator('#code-form [name=scope]').input_value()=='restricted'
         page.select_option('#bundle-preset','custom');page.select_option('#bundle-group','healing')
@@ -109,7 +109,7 @@ def run(root, sql, protocol):
         assert page.locator('#bundle-items input:checked').count()>0
         page.screenshot(path=str(root/'logs/reward-builder.png'),full_page=True)
         page.set_viewport_size({'width':390,'height':844})
-        assert page.evaluate('document.documentElement.scrollWidth <= window.innerWidth')
+        assert page.evaluate('() => document.documentElement.scrollWidth <= window.innerWidth')
         assert not errors,errors
         browser.close()
     print('PASS: real browser presets, scope, item selection, preview and mobile layout; no JavaScript errors')
