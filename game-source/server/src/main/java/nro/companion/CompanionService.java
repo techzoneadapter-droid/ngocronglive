@@ -31,7 +31,7 @@ public final class CompanionService {
     public static int bonus(String s){return switch(s){case "NORMAL"->30;case "MABU"->50;default->s.startsWith("VIP_")?70:30;};}
     public static long incubation(String s){return config.getLong("hatch_seconds")*1000L*(s.equals("JIREN")?6:s.equals("ZENO")?24:1);}
     public static JSONArray catalog(){JSONArray a=new JSONArray();for(String s:List.of("NORMAL","MABU","JIREN","ZENO"))a.put(new JSONObject().put("species",s).put("name",name(s)).put("fusion_bonus",bonus(s)).put("incubation_seconds",incubation(s)/1000));return a;}
-    public static void start()throws Exception{reload();CompanionAssets.install();// New eggs come from Broly; paid VIP profiles are purchased separately.}
+    public static void start()throws Exception{reload();CompanionAssets.install();}
     public static JSONObject info(String species,int gender){JSONObject b=new JSONObject().put("name","$"+name(species)).put("gender",gender).put("live_species",species).put("status",0).put("type_fusion",0).put("left_fusion",0);
         for(String k:List.of("is_mabu","is_Bulo","is_CellBao","is_BillNhi","is_FideTrau","is_SuperPicolo"))b.put(k,k.equals("is_mabu")&&species.equals("MABU")?1:0);return b;}
     public static JSONObject points(String species){return new JSONObject().put("power",species.equals("NORMAL")?2000:1500000).put("tiem_nang",2000).put("stamina",1000).put("max_stamina",1000).put("hpg",2000).put("mpg",2000).put("damg",species.equals("NORMAL")?30:80).put("defg",20).put("critg",1).put("limit_power",0).put("hp",2000).put("mp",2000);}

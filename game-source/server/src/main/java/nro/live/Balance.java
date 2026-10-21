@@ -3,7 +3,7 @@ package nro.live;
 /** Shared integer arithmetic; no intermediate int overflow or repeated-percent compounding. */
 public final class Balance {
     private Balance(){}
-    public static int fused(long master,long disciple,int bonus,int cap){return (int)Math.min(cap,Math.max(0,(master+disciple)*(100L+bonus)/100));}
+    public static int fused(long master,long disciple,int bonus,int cap){if(master<0)master=Integer.MAX_VALUE;if(disciple<0)disciple=Integer.MAX_VALUE;return (int)Math.min(cap,Math.max(0,(master+disciple)*(100L+bonus)/100));}
     public static long cost(int type,int base,int count){
         if(count<1||count>32767)throw new IllegalArgumentException("Số điểm không hợp lệ");
         return switch(type){

@@ -12,7 +12,7 @@ def integrate(output):
     runpy.run_path(str(root.parent/'companion/prepare_assets.py'))['prepare'](output)
     java=output/'server/src/main/java/nro/admin'
     java.mkdir(parents=True,exist_ok=True)
-    for name in ('LiveAdmin.java','RewardCatalog.java','OnlineRewards.java','StarterCodes.java'):shutil.copy2(root/name,java/name)
+    for name in ('LiveAdmin.java','RewardCatalog.java','OnlineRewards.java','StarterCodes.java','TradeCommit.java'):shutil.copy2(root/name,java/name)
     resources=output/'server/src/main/resources/live-admin'
     resources.mkdir(parents=True,exist_ok=True)
     for name in ['index.html','admin.js','admin.css','schema.sql']:shutil.copy2(root/name,resources/name)

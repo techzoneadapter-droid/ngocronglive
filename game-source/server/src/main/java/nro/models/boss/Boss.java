@@ -85,6 +85,7 @@ public abstract class Boss extends Player implements BossInterface {
     protected boolean doneTalkBefore;
     protected boolean doneTalkAffter;
 
+    public boolean liveEggRewarded;
     public long lastTimeRest;
     // thời gian nghỉ chuẩn bị đợt xuất hiện sau
     protected int secondTimeRestToNextTimeAppear = 1800;
@@ -594,6 +595,7 @@ public abstract class Boss extends Player implements BossInterface {
 
     @Override
     public void respawn() {
+        this.liveEggRewarded=false;
         this.init();
         this.indexTalkBefore = 0;
         this.indexTalkAfter = 0;

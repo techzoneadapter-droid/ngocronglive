@@ -113,7 +113,7 @@ public class TransactionService implements Runnable {
                     break;
                 case ACCEPT:
                     if (trade != null) {
-                        trade.acceptTrade();
+                        trade.acceptTrade(pl);
                         if (trade.accept == 2) {
                             trade.dispose();
                         }

@@ -45,6 +45,11 @@ jobs:
             (cd "build/base/$component" && mvn -B -q package -DskipTests)
             cp build/base/$component/target/*jar-with-dependencies.jar build/base/$component/app.jar
           done
+      - name: Combat arithmetic and point-spend regression checks
+        run: |
+          mkdir -p build/balance-tests
+          javac -cp build/base/server/app.jar -d build/balance-tests online/BalanceProbe.java
+          java -cp build/balance-tests:build/base/server/app.jar BalanceProbe
       - name: Check installer syntax and create clean distribution before test credentials
         run: |
           for script in online/*.sh; do bash -n "$script"; done

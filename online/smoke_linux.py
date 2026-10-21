@@ -84,6 +84,8 @@ try:
     reward_checks(root, sql, protocol)
     from companion_smoke import run as companion_checks
     companion_checks(root, sql, protocol)
+    from gameplay_smoke import run as gameplay_checks
+    gameplay_checks(root, sql, protocol)
     for proc in processes:
         status = Path(f'/proc/{proc.pid}/status').read_text()
         print('JVM memory:', next(line for line in status.splitlines() if line.startswith('VmRSS:')))

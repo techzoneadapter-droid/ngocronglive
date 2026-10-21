@@ -42,6 +42,16 @@ public class NPoint {
     /*-----------------------Chỉ số cơ bản------------------------------------*/
     public byte numAttack;
     public short stamina, maxStamina;
+    private short unfusedStaminaMax;
+    private boolean fusedStamina;
+    public short persistedStaminaMax(){return fusedStamina?unfusedStaminaMax:maxStamina;}
+    public short persistedStamina(){return fusedStamina?(short)Math.min(unfusedStaminaMax,(long)Math.max(0,stamina)*unfusedStaminaMax/Math.max(1,maxStamina)):stamina;}
+    public void mergeStamina(NPoint pet,int bonus){
+        if(pet==null){if(fusedStamina){stamina=persistedStamina();maxStamina=unfusedStaminaMax;fusedStamina=false;}return;}
+        if(!fusedStamina){unfusedStaminaMax=maxStamina;fusedStamina=true;}
+        short next=(short)nro.live.Balance.fused(unfusedStaminaMax,pet.maxStamina,bonus,Short.MAX_VALUE);
+        stamina=(short)Math.min(next,(long)Math.max(0,stamina)*next/Math.max(1,maxStamina));maxStamina=next;
+    }
 
     public byte limitPower;
     public long power;

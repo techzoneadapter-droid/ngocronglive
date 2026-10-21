@@ -404,11 +404,11 @@ public class PlayerDAO {
                     dataPoint.add(player.nPoint.mpg);
                     dataPoint.add(player.nPoint.critg);
                     dataPoint.add(player.nPoint.limitPower);
-                    dataPoint.add(player.nPoint.stamina);
+                    dataPoint.add(player.nPoint.persistedStamina());
                     dataPoint.add(hp);
                     dataPoint.add(player.nPoint.defg);
                     dataPoint.add(player.nPoint.tiemNang);
-                    dataPoint.add(player.nPoint.maxStamina);
+                    dataPoint.add(player.nPoint.persistedStaminaMax());
                     dataPoint.add(player.nPoint.dameg);
                     dataPoint.add(player.nPoint.power);
                     dataPoint.add(player.nPoint.hpg);
