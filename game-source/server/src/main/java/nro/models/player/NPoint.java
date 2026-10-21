@@ -632,6 +632,7 @@ public class NPoint {
         // +hp đệ
         if (this.player.fusion.typeFusion != ConstPlayer.NON_FUSION) {
             this.hpMax += this.player.pet.nPoint.hpMax;
+            if(this.player.pet.liveSpecies.equals("JIREN")||this.player.pet.liveSpecies.equals("ZENO")) this.hpMax += calPercent(this.player.pet.nPoint.hpMax,nro.companion.CompanionService.bonus(this.player.pet.liveSpecies));
         }
         // huýt sáo
         if (!this.player.isPet
@@ -761,6 +762,7 @@ public class NPoint {
         // hợp thể
         if (this.player.fusion.typeFusion != 0) {
             this.mpMax += this.player.pet.nPoint.mpMax;
+            if(this.player.pet.liveSpecies.equals("JIREN")||this.player.pet.liveSpecies.equals("ZENO")) this.mpMax += calPercent(this.player.pet.nPoint.mpMax,nro.companion.CompanionService.bonus(this.player.pet.liveSpecies));
         }
         // bổ khí
         if (this.player.itemTime != null && this.player.itemTime.isUseBoKhi) {
@@ -894,6 +896,7 @@ public class NPoint {
         // hợp thể
         if (this.player.fusion.typeFusion != 0) {
             this.dame += this.player.pet.nPoint.dame;
+            if(this.player.pet.liveSpecies.equals("JIREN")||this.player.pet.liveSpecies.equals("ZENO")) this.dame += calPercent(this.player.pet.nPoint.dame,nro.companion.CompanionService.bonus(this.player.pet.liveSpecies));
         }
         // cuồng nộ
         if (this.player.itemTime != null && this.player.itemTime.isUseCuongNo) {

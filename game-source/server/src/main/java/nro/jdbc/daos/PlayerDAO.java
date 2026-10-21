@@ -346,6 +346,7 @@ public class PlayerDAO {
     }
 
     public static void updatePlayer(Player player, Connection connection) {
+        synchronized(player) {
         if (player.isDisposed() || player.isSaving()) {
             return;
         }
@@ -690,6 +691,7 @@ public class PlayerDAO {
                     if (player.mabuEgg != null) {
                         dataMaBu.put("create_time", player.mabuEgg.lastTimeCreate);
                         dataMaBu.put("time_done", player.mabuEgg.timeDone);
+                        dataMaBu.put("species", player.mabuEgg.species);
                     }
                     String mabuEgg = dataMaBu.toJSONString();
 
@@ -835,6 +837,7 @@ public class PlayerDAO {
                     // data pet
                     if (player.pet != null) {
                         jPetInfo.put("name", player.pet.name);
+                        jPetInfo.put("live_species", player.pet.liveSpecies);
                         jPetInfo.put("gender", player.pet.gender);
                         jPetInfo.put("is_mabu", player.pet.isMabu ? 1 : 0);
 
@@ -1001,6 +1004,7 @@ public class PlayerDAO {
             }
         } finally {
             player.setSaving(false);
+        }
         }
     }
 

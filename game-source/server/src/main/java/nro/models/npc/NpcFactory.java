@@ -3993,11 +3993,12 @@ public class NpcFactory {
                         @Override
                         public void openBaseMenu(Player player) {
                             if (canOpenNpc(player)) {
+                                if(player.mabuEgg==null){Service.gI().sendThongBao(player,"Bạn chưa có trứng");return;}
                                 player.mabuEgg.sendMabuEgg();
                                 if (player.mabuEgg.getSecondDone() != 0) {
                                     this.createOtherMenu(player, ConstNpc.CAN_NOT_OPEN_EGG,
                                             "Hãy thu thập năng lượng\nbằng cách làm nhiệm vụ hằng ngày\ntại Bò Mộng từ mức độ khó trở lên\nđể trứng mau nở nhé.",
-                                            "Nở trứng\nnhanh\n1 tỷ vàng", "Hủy bỏ\ntrứng", "Đóng");
+                                            "Ấp nhanh\n"+nro.companion.CompanionService.settings().getLong("fast_gold")+" vàng", "Hủy bỏ\ntrứng", "Đóng");
                                 } else {
                                     this.createOtherMenu(player, ConstNpc.CAN_OPEN_EGG,
                                             "Hãy thu thập năng lượng\nbằng cách làm nhiệm vụ hằng ngày\ntại Bò Mộng từ mức độ khó trở lên\nđể trứng mau nở nhé.",
@@ -4014,11 +4015,8 @@ public class NpcFactory {
                                     case ConstNpc.CAN_NOT_OPEN_EGG:
                                         switch (select) {
                                             case 0:
-                                                player.mabuEgg.timeDone = 0;
-                                                player.inventory.gold -= 1000000000;
-                                                Service.getInstance().sendMoney(player);
-                                                Service.getInstance().sendThongBao(player,
-                                                        "Đã nở trứng nhanh thành công");
+                                                try {nro.companion.CompanionService.fast(player,player.mabuEgg);}
+                                                catch(IllegalArgumentException e){Service.gI().sendThongBao(player,e.getMessage());}
                                                 break;
                                             case 1:
                                                 this.createOtherMenu(player, ConstNpc.CONFIRM_DESTROY_EGG,
@@ -4031,7 +4029,7 @@ public class NpcFactory {
                                         switch (select) {
                                             case 0:
                                                 this.createOtherMenu(player, ConstNpc.CONFIRM_OPEN_EGG,
-                                                        "Bạn có chắc thay thế đệ tử hiện tại bằng Đệ tử Mabư",
+                                                        "Nở trứng "+nro.companion.CompanionService.name(player.mabuEgg.species)+"? Giữ nguyên đồ, kỹ năng và chỉ số đã luyện.",
                                                         "Thay thế", "Từ chối");
                                                 break;
                                             case 1:
@@ -4044,12 +4042,7 @@ public class NpcFactory {
                                     case ConstNpc.CONFIRM_OPEN_EGG:
                                         switch (select) {
                                             case 0:
-                                                if (player.pet.nPoint.power >= 10000) {
-                                                    player.mabuEgg.openEgg(player.pet.gender);
-                                                } else {
-                                                    Service.gI().sendThongBao(player,
-                                                            "Yêu cầu đệ tử đạt 10k sức mạnh");
-                                                }
+                                                if(player.mabuEgg!=null)player.mabuEgg.openEgg(player.pet==null?player.gender:player.pet.gender);
                                                 break;
                                             default:
                                                 break;

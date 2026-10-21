@@ -7,3 +7,7 @@ CREATE TABLE IF NOT EXISTS live_admin_redemptions (code VARCHAR(30) NOT NULL, ac
 
 CREATE TABLE IF NOT EXISTS live_admin_packages (id VARCHAR(64) PRIMARY KEY, name VARCHAR(80) NOT NULL, reward LONGTEXT NOT NULL) ENGINE=InnoDB;
 CREATE TABLE IF NOT EXISTS live_admin_code_accounts (code VARCHAR(30) NOT NULL, account_id INT NOT NULL, PRIMARY KEY(code,account_id)) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS live_companion_welcome (account_id INT PRIMARY KEY, claimed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP) ENGINE=InnoDB;
+CREATE TABLE IF NOT EXISTS live_companion_config (id INT PRIMARY KEY, payload TEXT NOT NULL) ENGINE=InnoDB;
+INSERT IGNORE INTO live_companion_config(id,payload) VALUES(1,'{"auto_normal":true,"welcome_gold":1000000,"hatch_seconds":3600,"fast_gold":100000000,"mabu_drop":25,"jiren_drop":10,"zeno_drop":5,"bosses":true}');

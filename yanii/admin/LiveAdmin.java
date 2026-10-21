@@ -32,6 +32,7 @@ public final class LiveAdmin {
             for(String sql:new String(in.readAllBytes(),StandardCharsets.UTF_8).split(";")) if(!sql.isBlank())try(Statement s=c.createStatement()){s.execute(sql);}
         }
         reloadEvents();
+        nro.companion.CompanionService.start();
         HttpServer server=HttpServer.create(new InetSocketAddress("127.0.0.1",PORT),16);
         server.setExecutor(Executors.newFixedThreadPool(4));
         server.createContext("/",LiveAdmin::handle);server.start();
@@ -77,6 +78,7 @@ public final class LiveAdmin {
                 try {result=mutate(c,path,body);c.commit();}catch(Exception e){c.rollback();throw e;}
             }
             if(path.equals("/api/event"))reloadEvents();
+            if(path.equals("/api/companion/settings"))nro.companion.CompanionService.reload();
             if(path.equals("/api/account/ban")&&body.getBoolean("ban")){
                 int id=body.getInt("account_id");
                 for(Player p:Client.gI().getPlayers())if(p.getSession().userId==id)Client.gI().kickSession(p.getSession());
@@ -123,6 +125,11 @@ public final class LiveAdmin {
             long quantity=number(b,"quantity",1,9999);JSONArray opts=b.optJSONArray("options");if(opts==null)opts=new JSONArray();if(opts.length()>32)throw new IllegalArgumentException("Tối đa 32 chỉ số");
             for(int i=0;i<opts.length();i++){JSONArray o=opts.getJSONArray(i);if(o.length()!=2)throw new IllegalArgumentException("Chỉ số dạng [id,giá trị]");int oid=o.getInt(0),param=o.getInt(1);if(param<0||param>1000000||rows(c,"SELECT id FROM item_option_template WHERE id=?",oid).isEmpty())throw new IllegalArgumentException("Chỉ số vật phẩm không hợp lệ");}
             return new JSONObject().put("kind",kind).put("item_id",id).put("quantity",quantity).put("options",opts);
+        }
+        if(kind.equals("COMPANION")) {
+            String species=nro.companion.CompanionService.valid(b.getString("species")),mode=b.getString("mode");
+            if(!Set.of("PET","EGG").contains(mode)||mode.equals("EGG")&&species.equals("NORMAL"))throw new IllegalArgumentException("Loại phần thưởng đệ tử không hợp lệ");
+            return new JSONObject().put("kind",kind).put("species",species).put("mode",mode).put("replace",b.optBoolean("replace"));
         }
         if(kind.equals("POINTS")) {
             int limit=(int)number(b,"limit_index",0,nro.power.PowerLimitManager.getInstance().getPowers().size()-1);
@@ -172,6 +179,10 @@ public final class LiveAdmin {
             int id=account(c,b);boolean ban=b.getBoolean("ban");String reason=text(b,"reason",500);exec(c,"UPDATE account SET ban=? WHERE id=?",ban,id);audit(c,ban?"BAN":"UNBAN",String.valueOf(id),reason);return new JSONObject().put("ok",true);}
         case "/api/account/password":{
             int id=account(c,b);String pass=text(b,"password",64);if(pass.length()<8)throw new IllegalArgumentException("Mật khẩu từ 8 ký tự");exec(c,"UPDATE account SET password=? WHERE id=?",pass,id);audit(c,"RESET_PASSWORD",String.valueOf(id),text(b,"reason",500));return new JSONObject().put("ok",true);}
+        case "/api/companion/settings": {
+            JSONObject settings=nro.companion.CompanionService.validate(b.getJSONObject("settings"));
+            exec(c,"UPDATE live_companion_config SET payload=? WHERE id=1",settings.toString());audit(c,"COMPANION_SETTINGS","server",settings.toString());return new JSONObject().put("ok",true);
+        }
         case "/api/reward/preview": {
             JSONObject r=reward(c,b.getJSONObject("reward"));JSONArray parts=r.optJSONArray("rewards");
             return new JSONObject().put("reward",r).put("count",parts==null?1:parts.length());
@@ -227,7 +238,7 @@ public final class LiveAdmin {
     }
     private static JSONObject state()throws SQLException{
         try(Connection c=DBHika.getConnection()){
-            JSONArray accounts=rows(c,"SELECT a.id,a.username,a.ban,a.active,p.name,p.data_inventory FROM account a LEFT JOIN player p ON p.account_id=a.id ORDER BY a.id DESC LIMIT 500");
+            JSONArray accounts=rows(c,"SELECT a.id,a.username,a.ban,a.active,p.name,p.data_inventory,p.pet_info,p.data_mabu_egg FROM account a LEFT JOIN player p ON p.account_id=a.id ORDER BY a.id DESC LIMIT 500");
             Set<Integer> online=new HashSet<>();for(Player p:Client.gI().getPlayers())online.add(p.getSession().userId);
             for(int i=0;i<accounts.length();i++)accounts.getJSONObject(i).put("online",online.contains(accounts.getJSONObject(i).getInt("id")));
             return new JSONObject().put("accounts",accounts).put("online",online.size()).put("exp_multiplier",expMultiplier()).put("events",events)
@@ -235,7 +246,7 @@ public final class LiveAdmin {
                 .put("orders",rows(c,"SELECT * FROM live_admin_orders ORDER BY created_at DESC LIMIT 100"))
                 .put("codes",rows(c,"SELECT * FROM live_admin_codes ORDER BY expires_ms DESC LIMIT 100"))
                 .put("audit",rows(c,"SELECT * FROM live_admin_audit ORDER BY id DESC LIMIT 100"))
-                .put("items",RewardCatalog.items()).put("power_limits",RewardCatalog.limits())
+                .put("items",RewardCatalog.items()).put("power_limits",RewardCatalog.limits()).put("companions",nro.companion.CompanionService.catalog()).put("companion_settings",nro.companion.CompanionService.settings())
                 .put("packages",rows(c,"SELECT id,name,reward FROM live_admin_packages ORDER BY name"))
                 .put("code_accounts",rows(c,"SELECT code,account_id FROM live_admin_code_accounts"))
                 .put("pending_total",rows(c,"SELECT COUNT(*) AS total FROM live_admin_actions WHERE status='PENDING'").getJSONObject(0).getLong("total"))
@@ -253,6 +264,7 @@ public final class LiveAdmin {
                 JSONArray account=rows(c,"SELECT ban FROM account WHERE id=?",user);if(account.isEmpty()||account.getJSONObject(0).getBoolean("ban"))throw new IllegalStateException("Account blocked");
                 JSONArray pending=rows(c,"SELECT id FROM live_admin_actions WHERE account_id=? AND status='PENDING' ORDER BY CASE WHEN kind='ITEM' THEN 1 ELSE 0 END,created_at,id LIMIT 50",user);
                 for(int i=0;i<pending.length();i++)apply(c,pending.getJSONObject(i).getString("id"),user);
+                nro.companion.CompanionService.welcome(c,user);
             }
         }
     }
@@ -261,10 +273,15 @@ public final class LiveAdmin {
         try{
             JSONArray queue=rows(c,"SELECT * FROM live_admin_actions WHERE id=? FOR UPDATE",id);JSONObject action=queue.getJSONObject(0);
             if(!action.getString("status").equals("PENDING")){c.rollback();return;}
-            JSONArray players=rows(c,"SELECT id,data_inventory,data_point,items_box FROM player WHERE account_id=? LIMIT 1 FOR UPDATE",user);
+            JSONArray players=rows(c,"SELECT id,gender,data_inventory,data_point,items_box,pet_info,pet_point,pet_body,pet_skill,data_mabu_egg FROM player WHERE account_id=? LIMIT 1 FOR UPDATE",user);
             if(players.isEmpty()){c.rollback();return;}
             JSONObject player=players.getJSONObject(0),reward=new JSONObject(action.getString("payload"));String before,after;
-            if(reward.getString("kind").equals("CURRENCY")){
+            if(reward.getString("kind").equals("COMPANION")) {
+                before=player.getString("pet_info")+" / "+player.getString("data_mabu_egg");
+                if(reward.getString("mode").equals("EGG")&&new JSONObject(player.getString("data_mabu_egg")).has("create_time")){c.rollback();return;}
+                nro.companion.CompanionService.grant(c,player,reward.getString("species"),reward.getString("mode").equals("EGG"),reward.getBoolean("replace"));
+                after="species="+reward.getString("species")+"; mode="+reward.getString("mode");
+            }else if(reward.getString("kind").equals("CURRENCY")){
                 before=player.getString("data_inventory");JSONArray money=new JSONArray(before);int slot=switch(reward.getString("currency")){case "gold"->0;case "gem"->1;case "ruby"->2;default->throw new IllegalArgumentException("Unknown currency");};
                 long value=reward.optString("mode","ADD").equals("AT_LEAST")?Math.max(money.getLong(slot),reward.getLong("amount")):Math.addExact(money.getLong(slot),reward.getLong("amount"));long max=slot==0?nro.models.player.Inventory.LIMIT_GOLD:Integer.MAX_VALUE;
                 if(value<0||value>max)throw new IllegalArgumentException("Số dư sau thay đổi vượt giới hạn; chưa cộng/trừ");money.put(slot,value);after=money.toString();exec(c,"UPDATE player SET data_inventory=? WHERE id=?",after,player.getLong("id"));

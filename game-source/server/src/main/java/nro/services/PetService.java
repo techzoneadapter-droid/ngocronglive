@@ -375,6 +375,7 @@ public class PetService {
 
     public void createNewPet(Player player, boolean isMabu, boolean isBulo, boolean isCellBao, boolean isBillNhi,
             boolean isFideTrau, boolean isSuperPicolo, byte... gender) {
+        if(player.pet!=null)return;
         int[] data = isMabu ? getDataPetMabu()
                 : isBulo ? getDataPetSuper()
                         : isCellBao ? getDataPetSuper()

@@ -8,6 +8,8 @@ def replace(path, old, new):
 
 def integrate(output):
     root=Path(__file__).parent
+    import runpy
+    runpy.run_path(str(root.parent/'companion/prepare_assets.py'))['prepare'](output)
     java=output/'server/src/main/java/nro/admin'
     java.mkdir(parents=True,exist_ok=True)
     for name in ('LiveAdmin.java','RewardCatalog.java'):shutil.copy2(root/name,java/name)

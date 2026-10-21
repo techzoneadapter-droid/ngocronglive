@@ -77,10 +77,7 @@ public class InventoryService {
 
         // quả trứng
         if (item.template.id == 568) {
-            if (player.mabuEgg == null) {
-                MabuEgg.createMabuEgg(player);
-            }
-            return true;
+            return nro.companion.CompanionService.awardEgg(player,"MABU");
         }
 
         // tennis spaceship

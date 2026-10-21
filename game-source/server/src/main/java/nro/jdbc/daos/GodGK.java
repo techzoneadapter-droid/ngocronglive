@@ -619,6 +619,7 @@ public class GodGK {
                     if (createTime != null) {
                         player.mabuEgg = new MabuEgg(player, Long.parseLong(String.valueOf(createTime)),
                                 Long.parseLong(String.valueOf(dataObject.get("time_done"))));
+                        player.mabuEgg.species = dataObject.get("species") == null ? "MABU" : String.valueOf(dataObject.get("species"));
                     }
                     dataObject.clear();
 
@@ -738,6 +739,7 @@ public class GodGK {
                         pet.isFideTrau = Byte.parseByte(String.valueOf(dataObject.get("is_FideTrau"))) == 1;
                         pet.isSuperPicolo = Byte.parseByte(String.valueOf(dataObject.get("is_SuperPicolo"))) == 1;
                         pet.name = String.valueOf(dataObject.get("name"));
+                        pet.liveSpecies = dataObject.get("live_species") == null ? (pet.isMabu ? "MABU" : "NORMAL") : String.valueOf(dataObject.get("live_species"));
                         player.fusion.typeFusion = Byte.parseByte(String.valueOf(dataObject.get("type_fusion")));
                         player.fusion.lastTimeFusion = System.currentTimeMillis()
                                 - (Fusion.TIME_FUSION
