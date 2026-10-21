@@ -104,6 +104,7 @@ def run(root, sql, protocol):
         expect(page.locator('#bundle-preview-result')).to_contain_text('phần thưởng')
         page.select_option('#bundle-preset','admin')
         assert page.locator('#code-form [name=scope]').input_value()=='restricted'
+        assert page.locator('#bundle-companion').input_value()=='ZENO'
         page.select_option('#bundle-preset','custom');page.select_option('#bundle-group','healing')
         page.locator('#bundle-select-filtered').click()
         assert page.locator('#bundle-items input:checked').count()>0

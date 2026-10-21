@@ -100,6 +100,7 @@ public class Mabu_Tang6 extends BossMabuWar {
 
     @Override
     public void rewards(Player pl) {
+        if(pl!=null && pl.getSession()!=null && pl.mabuEgg==null && Util.isTrue(nro.companion.CompanionService.settings().getInt("mabu_drop"),100))nro.companion.CompanionService.awardEgg(pl,"MABU");
         if (Util.isTrue(80, 100)) {
             ItemMap itemMap = new ItemMap(this.zone, 861, 1, this.location.x, this.zone.map.yPhysicInTop(this.location.x, 100), -1);
             Service.getInstance().dropItemMap(this.zone, itemMap);

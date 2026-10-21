@@ -77,6 +77,7 @@ public class Pet extends Player {
     }
 
     public void changeStatus(byte status) {
+        if(status < 0 || status > FUSION)return;
         if (goingHome || master.fusion.typeFusion != 0 || (this.isDie() && status == FUSION)) {
             Service.getInstance().sendThongBao(master, "Không thể thực hiện");
             return;

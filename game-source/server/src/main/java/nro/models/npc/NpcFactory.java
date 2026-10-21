@@ -4010,6 +4010,7 @@ public class NpcFactory {
 
                         @Override
                         public void confirmMenu(Player player, int select) {
+                            if(player.mabuEgg==null){Service.gI().sendThongBao(player,"Không có trứng đang ấp");return;}
                             if (canOpenNpc(player)) {
                                 switch (player.iDMark.getIndexMenu()) {
                                     case ConstNpc.CAN_NOT_OPEN_EGG:

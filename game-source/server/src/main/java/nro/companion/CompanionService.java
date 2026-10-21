@@ -62,7 +62,7 @@ public final class CompanionService {
             }c.commit();
         }catch(SQLException|RuntimeException e){c.rollback();throw e;}finally{c.setAutoCommit(true);}
     }
-    private static void updateSpecies(Pet pet,String species){pet.liveSpecies=species;pet.isMabu=species.equals("MABU");pet.isBulo=pet.isCellBao=pet.isBillNhi=pet.isFideTrau=pet.isSuperPicolo=false;pet.name="$"+name(species);pet.nPoint.power=Math.max(pet.nPoint.power,species.equals("NORMAL")?2000:1500000);}
+    private static void updateSpecies(Pet pet,String species){pet.liveSpecies=species;pet.isMabu=species.equals("MABU");pet.isBulo=pet.isCellBao=pet.isBillNhi=pet.isFideTrau=pet.isSuperPicolo=false;pet.name="$"+name(species);pet.nPoint.power=Math.max(pet.nPoint.power,species.equals("NORMAL")?2000:1500000);pet.nPoint.initPowerLimit();}
     private static JSONObject petPoint(Pet p){return new JSONObject().put("power",p.nPoint.power).put("tiem_nang",p.nPoint.tiemNang).put("stamina",p.nPoint.stamina).put("max_stamina",p.nPoint.maxStamina).put("hpg",p.nPoint.hpg).put("mpg",p.nPoint.mpg).put("damg",p.nPoint.dameg).put("defg",p.nPoint.defg).put("critg",p.nPoint.critg).put("limit_power",p.nPoint.limitPower).put("hp",p.nPoint.hp).put("mp",p.nPoint.mp);}
     private static JSONArray petBody(Pet p){JSONArray b=new JSONArray();for(Item item:p.inventory.itemsBody){JSONObject o=new JSONObject().put("temp_id",item.isNotNullItem()?item.template.id:-1).put("quantity",item.quantity).put("create_time",item.createTime);JSONArray opts=new JSONArray();if(item.isNotNullItem())for(ItemOption io:item.itemOptions)opts.put(new JSONArray().put(io.optionTemplate.id).put(io.param));b.put(o.put("option",opts));}return b;}
     private static JSONArray petSkills(Pet p){JSONArray a=new JSONArray();for(Skill s:p.playerSkill.skills)a.put(new JSONArray().put(s.skillId==-1?-1:s.template.id).put(s.skillId==-1?0:s.point));return a;}
@@ -75,7 +75,7 @@ public final class CompanionService {
         }catch(Exception e){System.err.println("Companion egg save failed: "+e.getClass().getSimpleName());return false;}
     }}
     public static void hatch(Player player,MabuEgg egg){synchronized(player){
-        if(player.mabuEgg!=egg)throw new IllegalArgumentException("Trứng không còn tồn tại");
+        if(egg==null||player.mabuEgg!=egg)throw new IllegalArgumentException("Trứng không còn tồn tại");
         if(egg.getSecondDone()>0)throw new IllegalArgumentException("Trứng chưa đủ thời gian ấp");
         if(player.fusion.typeFusion!=0)throw new IllegalArgumentException("Hãy tách hợp thể trước khi nở trứng");
         String species=valid(egg.species);Pet old=player.pet;boolean created=old==null;
@@ -88,7 +88,7 @@ public final class CompanionService {
         Service.getInstance().sendHavePet(player);Service.getInstance().sendThongBao(player,"Nở thành công đệ tử "+name(species)+". Giữ nguyên trang bị, kỹ năng và chỉ số đã luyện. Mở Đệ tử để gọi theo.");
     }}
     public static void fast(Player player,MabuEgg egg){synchronized(player){
-        if(player.mabuEgg!=egg)throw new IllegalArgumentException("Không có trứng đang ấp");if(egg.getSecondDone()==0)return;
+        if(egg==null||player.mabuEgg!=egg)throw new IllegalArgumentException("Không có trứng đang ấp");if(egg.getSecondDone()==0)return;
         long cost=config.getLong("fast_gold");if(player.inventory.gold<cost)throw new IllegalArgumentException("Cần "+cost+" vàng để ấp nhanh");
         JSONArray money=new JSONArray().put(player.inventory.gold-cost).put(player.inventory.gem).put(player.inventory.ruby).put(player.inventory.goldLimit);
         JSONObject data=new JSONObject().put("create_time",egg.lastTimeCreate).put("time_done",0).put("species",egg.species);
@@ -97,11 +97,12 @@ public final class CompanionService {
         }catch(Exception e){throw new IllegalArgumentException("Chưa ấp nhanh được; chưa trừ vàng");}
         player.inventory.gold-=cost;egg.timeDone=0;Service.getInstance().sendMoney(player);egg.sendMabuEgg();
     }}
-    public static void cancel(Player player,MabuEgg egg){synchronized(player){if(player.mabuEgg!=egg)return;try(Connection c=DBHika.getConnection();PreparedStatement p=c.prepareStatement("UPDATE player SET data_mabu_egg='{}' WHERE id=?")){p.setLong(1,player.id);p.executeUpdate();player.mabuEgg=null;}catch(Exception e){throw new IllegalArgumentException("Chưa hủy được trứng");}}}
-    public static boolean chat(Player p,String text){String command=text.trim().toLowerCase(Locale.ROOT);if(!Set.of("detu","aptrung","notrung").contains(command))return false;
+    public static void cancel(Player player,MabuEgg egg){synchronized(player){if(egg==null||player.mabuEgg!=egg)return;try(Connection c=DBHika.getConnection();PreparedStatement p=c.prepareStatement("UPDATE player SET data_mabu_egg='{}' WHERE id=?")){p.setLong(1,player.id);p.executeUpdate();player.mabuEgg=null;}catch(Exception e){throw new IllegalArgumentException("Chưa hủy được trứng");}}}
+    public static boolean chat(Player p,String text){String command=text.trim().toLowerCase(Locale.ROOT);if(!Set.of("detu","aptrung","notrung","apnhanh").contains(command))return false;
         try{if(command.equals("detu")){Service.getInstance().sendThongBao(p,p.pet==null?"Chưa có đệ tử; đăng nhập lại để nhận quà tân thủ.":"Đệ tử: "+p.pet.name+". Mở menu Đệ tử để theo/bảo vệ/tấn công/về nhà/hợp thể.");}
             else if(p.mabuEgg==null)throw new IllegalArgumentException("Chưa có trứng. Săn boss Ma Bư/Jiren/Zeno hoặc nhận giftcode trứng.");
             else if(command.equals("notrung"))hatch(p,p.mabuEgg);
+            else if(command.equals("apnhanh"))fast(p,p.mabuEgg);
             else Service.getInstance().sendThongBao(p,"Trứng "+name(p.mabuEgg.species)+": còn "+p.mabuEgg.getSecondDone()+" giây. Về nhà gặp Quả trứng để ấp nhanh bằng vàng.");
         }catch(IllegalArgumentException e){Service.getInstance().sendThongBao(p,e.getMessage());}return true;}
 }
