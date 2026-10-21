@@ -80,6 +80,8 @@ try:
     assert json.loads(sql("SELECT data_location FROM player WHERE name='pcprobe'"))[:3] == [x+32, y, map_id]
     assert json.loads(sql("SELECT data_location FROM player WHERE name='pcprobe2'"))[:3] == [x2+16, y2, map2]
     print('PASS: two simultaneous accounts in one map, separate movement and persisted positions')
+    from reward_smoke import run as reward_checks
+    reward_checks(root, sql, protocol)
     for proc in processes:
         status = Path(f'/proc/{proc.pid}/status').read_text()
         print('JVM memory:', next(line for line in status.splitlines() if line.startswith('VmRSS:')))

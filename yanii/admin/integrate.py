@@ -10,7 +10,7 @@ def integrate(output):
     root=Path(__file__).parent
     java=output/'server/src/main/java/nro/admin'
     java.mkdir(parents=True,exist_ok=True)
-    shutil.copy2(root/'LiveAdmin.java',java/'LiveAdmin.java')
+    for name in ('LiveAdmin.java','RewardCatalog.java'):shutil.copy2(root/name,java/name)
     resources=output/'server/src/main/resources/live-admin'
     resources.mkdir(parents=True,exist_ok=True)
     for name in ['index.html','admin.js','admin.css','schema.sql']:shutil.copy2(root/name,resources/name)
