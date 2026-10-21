@@ -7,13 +7,13 @@
 - Nếu tặng trực tiếp mà đã có đệ, phải chọn nâng loại. Nâng loại/hatch giữ trang bị, kỹ năng, hành tinh, chỉ số đã luyện; nâng sức mạnh đệ đặc biệt ít nhất 1,5 triệu. Không giữ trạng thái đang hợp thể khi nâng loại qua lệnh quà trước đăng nhập.
 - Một trứng đang ấp cho mỗi nhân vật. Quà trứng khác tiếp tục chờ tới khi ô ấp trống. Boss không thay trứng đang có. Thời điểm tạo, thời gian ấp và loài lưu trong data_mabu_egg (JSON bổ sung, không thay bảng player).
 - Thời gian gốc mặc định 3600 giây: Ma Bư ×1, Jiren ×6, Zeno ×24. NPC Quả trứng dùng gói tin cũ; thân trứng chung để tương thích client. Tên loài ở thông báo/menu/đệ sau nở.
-- Chat `detu`, `aptrung`, `notrung`; `apnhanh` trả phí vàng theo cấu hình hiện tại. Ấp nhanh kiểm tra số dư, ghi vàng + timer cùng một UPDATE, không trừ lại khi đã sẵn sàng. NPC ở nhà dùng cùng service. Hủy trứng có xác nhận tại NPC.
+- Chat `santrung` để xem tên map/khu hiện tại và tỉ lệ trứng của ba boss; `detu`, `aptrung`, `notrung`; `apnhanh` trả phí vàng theo cấu hình hiện tại. Ấp nhanh kiểm tra số dư, ghi vàng + timer cùng một UPDATE, không trừ lại khi đã sẵn sàng. NPC ở nhà dùng cùng service. Hủy trứng có xác nhận tại NPC.
 - Không cho nở khi chưa hết giờ hoặc đang hợp thể. Ghi đệ + xóa trứng cùng một UPDATE; thất bại giữ trứng. Bỏ thread/sleep 4 giây khi nở. Khóa cùng đối tượng Player với save định kỳ để không bị save cũ ghi đè.
 - Theo/bảo vệ/tấn công/về nhà/hợp thể dùng cơ chế Pet có sẵn. Jiren thêm 40%, Zeno thêm 70% **phần HP/KI/sức đánh đóng góp của đệ** khi hợp thể; không cộng 70% toàn bộ chỉ số sư phụ. Đây là cân bằng riêng beta, không phải công thức chính thức Teamobi.
 
 ## Boss
 
-Ba boss "Hộ vệ trứng Ma Bư / Jiren / Zeno", ID -91001..-91003, xuất hiện ở một trong các map 5, 13, 20, nghỉ hồi sinh 300 giây. HP 5/20/50 triệu; sát thương gốc 2/5/10 nghìn. Tỉ lệ trứng mặc định 25/10/5%, thay trong Vận hành. Trứng ghi thẳng vào ô ấp của người hạ boss; nếu đệ đánh hạ thì quy về sư phụ. Không có vật phẩm trứng rơi tự do để người khác lấy hoặc mất vì rương đầy. Mỗi đời boss thưởng tối đa một lần.
+Ba boss "Hộ vệ trứng Ma Bư / Jiren / Zeno", ID -91001..-91003, xuất hiện ở một trong các map 5, 13, 20, xuất hiện sớm sau khi khởi động, nghỉ hồi sinh 300 giây sau mỗi đời. HP 5/20/50 triệu; sát thương gốc 2/5/10 nghìn. Tỉ lệ trứng mặc định 25/10/5%, thay trong Vận hành. Trứng ghi thẳng vào ô ấp của người hạ boss; nếu đệ đánh hạ thì quy về sư phụ. Không có vật phẩm trứng rơi tự do để người khác lấy hoặc mất vì rương đầy. Mỗi đời boss thưởng tối đa một lần.
 
 Cơ chế Super Broly/đệ cũ vẫn giữ. Nếu đổi bật/tắt bộ boss, khởi động lại nrolive-game để áp dụng; tỉ lệ rơi và thời gian/giá ấp đọc cấu hình mới ngay.
 

@@ -11,7 +11,7 @@ public final class CompanionBoss extends Boss {
     private boolean rewarded;
     private static BossData data(String s){return new BossData("Hộ vệ trứng "+CompanionService.name(s),(byte)0,CompanionAssets.outfit(s),s.equals("MABU")?2000:s.equals("JIREN")?5000:10000,
         new int[][]{{s.equals("MABU")?5000000:s.equals("JIREN")?20000000:50000000}},new short[]{5,13,20},new int[][]{{0,7,1000},{1,7,1200}},300);}
-    public CompanionBoss(String s){super(s.equals("MABU")?-91001:s.equals("JIREN")?-91002:-91003,data(s));species=s;}
+    public CompanionBoss(String s){super(s.equals("MABU")?-91001:s.equals("JIREN")?-91002:-91003,data(s));species=s;lastTimeRest=0;}
     @Override public void respawn(){rewarded=false;super.respawn();}
     @Override public void initTalk(){textTalkBefore=new String[]{"Hãy chứng minh sức mạnh để nhận trứng!"};textTalkMidle=new String[]{"Bảo vệ trứng!"};textTalkAfter=new String[]{"Hẹn gặp lại!"};}
     @Override public void rewards(Player p){if(rewarded||p==null)return;rewarded=true;if(p.isPet)p=((Pet)p).master;if(p==null||p.getSession()==null)return;

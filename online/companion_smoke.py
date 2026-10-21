@@ -11,6 +11,12 @@ def run(root,sql,protocol):
     initial_info=row('pet_info');assert initial_info['live_species']=='NORMAL'
     assert row('data_inventory')[0]>=1000000
     assert sql(f'SELECT COUNT(*) FROM live_companion_welcome WHERE account_id={user}')=='1'
+    # Exercise preservation with real equipped gear and trained values, not empty defaults.
+    trained_body=row('pet_body');trained_body[0]={'temp_id':0,'quantity':1,'option':[[47,10]],'create_time':int(time.time()*1000)}
+    trained_skills=row('pet_skill');trained_skills[0][1]=3
+    trained_points=row('pet_point');trained_points.update(hpg=4321,mpg=3456,damg=123,tiem_nang=12345)
+    for col,value in [('pet_body',trained_body),('pet_skill',trained_skills),('pet_point',trained_points)]:
+        sql("UPDATE player SET "+col+"='"+json.dumps(value,separators=(',',':'))+"' WHERE name='pcprobe'")
     original_body=row('pet_body');original_skills=row('pet_skill');original_points=row('pet_point')
     def login():
         c=protocol.Client();c.login('beta-fixture-password');c.world();return c
@@ -32,6 +38,9 @@ def run(root,sql,protocol):
         api('/api/code/create',{'code':code,'max_uses':1,'expires_ms':int(time.time()*1000)+3600000,'reward':{'kind':'COMPANION','mode':'EGG','species':species}})
         api('/api/code/redeem',{'account_id':user,'code':code})
         c=login();egg=row('data_mabu_egg');assert egg['species']==species
+        c.send(44,protocol.utf('santrung'));_,hunt=c.until(lambda code,p:'Săn trứng boss'.encode() in p)
+        assert all(name.encode() in hunt for name in ['Ma Bư','Jiren','Zeno'])
+        assert 'đang chờ xuất hiện'.encode() not in hunt, hunt
         assert egg['time_done']==settings['hatch_seconds']*1000*{'MABU':1,'JIREN':6,'ZENO':24}[species]
         c.send(44,protocol.utf('notrung'));c.until(lambda code,p:'chưa đủ'.encode() in p)
         assert row('data_mabu_egg')==egg,'Early hatch consumed egg'

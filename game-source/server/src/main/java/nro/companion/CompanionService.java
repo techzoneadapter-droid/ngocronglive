@@ -98,8 +98,9 @@ public final class CompanionService {
         player.inventory.gold-=cost;egg.timeDone=0;Service.getInstance().sendMoney(player);egg.sendMabuEgg();
     }}
     public static void cancel(Player player,MabuEgg egg){synchronized(player){if(egg==null||player.mabuEgg!=egg)return;try(Connection c=DBHika.getConnection();PreparedStatement p=c.prepareStatement("UPDATE player SET data_mabu_egg='{}' WHERE id=?")){p.setLong(1,player.id);p.executeUpdate();player.mabuEgg=null;}catch(Exception e){throw new IllegalArgumentException("Chưa hủy được trứng");}}}
-    public static boolean chat(Player p,String text){String command=text.trim().toLowerCase(Locale.ROOT);if(!Set.of("detu","aptrung","notrung","apnhanh").contains(command))return false;
-        try{if(command.equals("detu")){Service.getInstance().sendThongBao(p,p.pet==null?"Chưa có đệ tử; đăng nhập lại để nhận quà tân thủ.":"Đệ tử: "+p.pet.name+". Mở menu Đệ tử để theo/bảo vệ/tấn công/về nhà/hợp thể.");}
+    public static boolean chat(Player p,String text){String command=text.trim().toLowerCase(Locale.ROOT);if(!Set.of("detu","aptrung","notrung","apnhanh","santrung").contains(command))return false;
+        try{if(command.equals("santrung")){StringBuilder message=new StringBuilder("Săn trứng boss:\n");for(String species:List.of("MABU","JIREN","ZENO")){nro.models.boss.Boss boss=nro.models.boss.BossManager.gI().getBossById(species.equals("MABU")?-91001:species.equals("JIREN")?-91002:-91003);message.append(name(species)).append(": ");if(boss!=null&&boss.zone!=null&&!boss.isDie())message.append(boss.zone.map.mapName).append(" / khu ").append(boss.zone.zoneId);else message.append("đang chờ xuất hiện");message.append("; trứng ").append(config.getInt(species.toLowerCase(Locale.ROOT)+"_drop")).append("%\n");}Service.getInstance().sendThongBao(p,message.toString());}
+            else if(command.equals("detu")){Service.getInstance().sendThongBao(p,p.pet==null?"Chưa có đệ tử; đăng nhập lại để nhận quà tân thủ.":"Đệ tử: "+p.pet.name+". Mở menu Đệ tử để theo/bảo vệ/tấn công/về nhà/hợp thể.");}
             else if(p.mabuEgg==null)throw new IllegalArgumentException("Chưa có trứng. Săn boss Ma Bư/Jiren/Zeno hoặc nhận giftcode trứng.");
             else if(command.equals("notrung"))hatch(p,p.mabuEgg);
             else if(command.equals("apnhanh"))fast(p,p.mabuEgg);
