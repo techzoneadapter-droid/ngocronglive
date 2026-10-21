@@ -6,7 +6,7 @@ def run(root,sql,protocol):
     def api(path,body=None):
         req=urllib.request.Request('http://127.0.0.1:14447'+path,data=json.dumps(body).encode() if body is not None else None,headers={'Content-Type':'application/json','X-CSRF':csrf})
         with opener.open(req,timeout=90) as r:return json.load(r)
-    csrf=api('/api/login',{'password':os.environ['NRO_ADMIN_PASSWORD']})['csrf']
+    csrf=api('/api/login',{'password':os.environ['NRO_ADMIN_PASSWORD']})['csrf'];gold_cap=api('/api/state')['reward_caps']['gold']
     def row(col,name='rulespc'):return json.loads(sql("SELECT "+col+" FROM player WHERE name='"+name+"'"))
     def create(user,char):
         api('/api/account/create',{'username':user,'password':'beta-fixture-password'})
@@ -23,7 +23,11 @@ def run(root,sql,protocol):
         c.send(-43,bytes([0,1,index]))
     def enter(c,index,map_id):
         chat(c,'khuup');c.until(lambda code,p:code==32 and 'Chọn khu luyện'.encode() in p)
-        c.send(32,struct.pack('>hB',5,index));_,p=c.until(lambda code,p:code==-24 and p[0]==map_id);c.send(-39);return p
+        c.send(32,struct.pack('>hB',5,index));_,p=c.until(lambda code,p:code==-24 and p[0]==map_id)
+        c.send(-28,bytes([10,map_id]));_,tile=c.until(lambda code,p:code==-28 and p and p[0]==10)
+        assert tile[1:]==(root/'server/resources/map'/str(map_id)).read_bytes(), 'Training terrain was not served to the client'
+        assert len(tile[1:])>=tile[1]*tile[2]+2
+        c.send(-39);return p
     c=create('rulesuser','rulespc')
     code('TEST',[item(76,10000000000),currency('ruby',5000),{'kind':'POINTS','limit_index':0,'power':1500000,'potential':1000000000,'max_base':False},item(568,2),item(2154),item(2155,2),item(2156)])
     before=row('data_inventory')[0];chat(c,'code TEST','Đã nhận quà ngay')
@@ -72,7 +76,10 @@ def run(root,sql,protocol):
     # A malformed large spend is rejected promptly rather than overflowing into free stats.
     c.send(-30,bytes([16,4])+struct.pack('>h',32767));c.until(lambda code,p:'giới hạn'.encode() in p)
     c.sock.close();peer.sock.close();time.sleep(5)
-    c=protocol.Client(username='rulesuser',character='rulespc');c.login('beta-fixture-password');c.world();assert row('pet_info')['live_species']=='VIP_CI';chat(c,'buff','Tổng hiện tại x5.0');c.sock.close();time.sleep(5)
+    c=protocol.Client(username='rulesuser',character='rulespc');c.login('beta-fixture-password');c.world();assert row('pet_info')['live_species']=='VIP_CI';chat(c,'buff','Tổng hiện tại x5.0')
+    paid=next(r for r in api('/api/state')['training_maps'] if r['map_id']==177);paid['enabled']=False;api('/api/training/map',{'rule':paid})
+    c.until(lambda code,p:code==-24 and p[0]==21);c.send(-39)
+    paid['enabled']=True;api('/api/training/map',{'rule':paid});c.sock.close();time.sleep(5)
     queue_client=create('queueuser','queuepc')
     code('LARGEGIFT',[item(2155) for _ in range(60)])
     chat(queue_client,'code LARGEGIFT','Đã nhận quà ngay')
@@ -91,12 +98,13 @@ def run(root,sql,protocol):
     # An event training map can be created with existing terrain and a live schedule.
     rule={'map_id':178,'source_map':122,'name':'CI event training','fee_ruby':0,'lease_seconds':3600,'min_power':0,'mob_hp':200000,'exp_extra':100,'pk':False,'enabled':True,'start_ms':0,'end_ms':4102444800000}
     api('/api/training/map',{'rule':rule});assert any(r['map_id']==178 for r in api('/api/state')['training_maps'])
+    c=protocol.Client(username='rulesuser',character='rulespc');c.login('beta-fixture-password');c.world();enter(c,2,178);chat(c,'buff','Tổng hiện tại x6.0');c.sock.close();time.sleep(5)
     assert sql("SELECT COUNT(*) FROM live_admin_codes WHERE code IN ('TANTHUVANG','TANTHUNGOC','TANTHUTHOIVANG','TANTHUPHUKIEN','TANTHUBUFF','TANTHUTIEMNANG','TANTHU8SAO')")=='7'
     from playwright.sync_api import sync_playwright,expect
     errors=[]
     with sync_playwright() as pw:
         browser=pw.chromium.launch(headless=True);page=browser.new_page(viewport={'width':1440,'height':1000});page.on('pageerror',lambda e:errors.append(str(e)));page.goto('http://127.0.0.1:14447/')
-        page.locator('#login-form input').fill(os.environ['NRO_ADMIN_PASSWORD']);page.locator('#login-form button').click();expect(page.locator('#stat-accounts')).not_to_have_text('—');page.locator('nav [data-tab=resources]').click();page.select_option('#item-select','76');expect(page.locator('#item-form [name=quantity]')).to_have_attribute('max','50000000000');page.locator('nav [data-tab=operations]').click()
+        page.locator('#login-form input').fill(os.environ['NRO_ADMIN_PASSWORD']);page.locator('#login-form button').click();expect(page.locator('#stat-accounts')).not_to_have_text('—');page.locator('nav [data-tab=resources]').click();page.select_option('#item-select','76');expect(page.locator('#item-form [name=quantity]')).to_have_attribute('max',str(gold_cap));page.locator('nav [data-tab=operations]').click()
         expect(page.locator('#gameplay-form [name=mabu_broken]')).to_have_value('30');page.select_option('#vip-existing','VIP_CI');expect(page.locator('#vip-form [name=head]')).to_have_value('1378');page.screenshot(path=str(root/'logs/gameplay-operations.png'),full_page=True)
         page.locator('nav [data-tab=events]').click();page.locator('#codes-table tr').filter(has_text='TEST').locator('button').first.click();expect(page.locator('#code-form [name=code]')).to_have_value('TEST');expect(page.locator('#code-form [name=replace_existing]')).to_be_checked();expect(page.locator('#bundle-preset')).to_have_value('code:TEST');page.select_option('#training-existing','178');expect(page.locator('#training-form [name=name]')).to_have_value('CI event training');page.screenshot(path=str(root/'logs/training-events.png'),full_page=True)
         page.set_viewport_size({'width':390,'height':844});assert page.evaluate('() => document.documentElement.scrollWidth <= window.innerWidth');assert not errors,errors;browser.close()
