@@ -56,11 +56,11 @@ public final class KiGuiShop {
   boolean ruby = v.currency == ConsignmentStore.RUBY;
   out.writeInt(ruby ? -1 : price);out.writeInt(ruby ? price : -1);
   out.writeByte(listing==0?0:sold?2:1);
-  if(p.isVersionAbove(222))out.writeInt(item.quantity);else out.writeByte(Math.min(99,item.quantity));
+  if(!firstPage || p.isVersionAbove(222))out.writeInt(item.quantity);else out.writeByte(Math.min(99,item.quantity));
   List<ItemOption> options=item.getDisplayOptions();
   out.writeByte(owner==p.id?1:0);out.writeByte(options.size());
   for(ItemOption o:options){out.writeByte(o.optionTemplate.id);out.writeShort(Math.min(Short.MAX_VALUE,o.param));}
-  if(firstPage) out.writeByte(0); // The open-shop packet alone includes the new-item flag.
+  if(firstPage) out.writeByte(0); // Only initial shop response has a new-item flag.
   out.writeByte(0); // Optional costume parts.
  }
  private List<Listing> publicRows(List<Listing> all,int tab){return all.stream().filter(l->!l.sold()&&tab(l.item())==tab).toList();}

@@ -47,8 +47,8 @@ public final class ConsignmentStore {
  }
  static JSONObject encode(Item i){JSONArray opts=new JSONArray();for(ItemOption o:i.itemOptions)opts.put(new JSONArray().put(o.optionTemplate.id).put(o.param).put(o.activeCard));return new JSONObject().put("temp_id",i.template.id).put("quantity",i.quantity).put("create_time",i.createTime).put("option",opts);}
  private static Item decode(String raw){JSONObject j=new JSONObject(raw);Item i=ItemService.gI().createNewItem((short)j.getInt("temp_id"),j.getInt("quantity"));i.createTime=j.getLong("create_time");i.itemOptions.clear();JSONArray a=j.getJSONArray("option");for(int n=0;n<a.length();n++){JSONArray o=a.getJSONArray(n);ItemOption io=new ItemOption(o.getInt(0),o.getInt(1));io.activeCard=(byte)o.optInt(2,0);i.itemOptions.add(io);}return i;}
- private static List<Item> copyBag(Player p){List<Item>b=new ArrayList<>();for(Item i:p.inventory.itemsBag)b.add(ItemService.gI().copyItem(i));return b;}
- private static String bagJson(List<Item>b){JSONArray a=new JSONArray();for(Item i:b)a.put(i.isNotNullItem()?encode(i):new JSONObject().put("temp_id",-1).put("quantity",0).put("create_time",0).put("option",new JSONArray()));return a.toString();}
+ static List<Item> copyBag(Player p){List<Item>b=new ArrayList<>();for(Item i:p.inventory.itemsBag)b.add(ItemService.gI().copyItem(i));return b;}
+ static String bagJson(List<Item>b){JSONArray a=new JSONArray();for(Item i:b)a.put(i.isNotNullItem()?encode(i):new JSONObject().put("temp_id",-1).put("quantity",0).put("create_time",0).put("option",new JSONArray()));return a.toString();}
  private static void save(Connection c,Player p,List<Item>b,long gold,int ruby)throws SQLException{
   try(PreparedStatement q=c.prepareStatement("UPDATE player SET items_bag=?,data_inventory=? WHERE id=? AND account_id=?")){
    q.setString(1,bagJson(b));q.setString(2,new JSONArray().put(gold).put(p.inventory.gem).put(ruby).put(p.inventory.goldLimit).toString());q.setLong(3,p.id);q.setInt(4,p.getSession().userId);if(q.executeUpdate()!=1)throw new SQLException("Player not saved");
