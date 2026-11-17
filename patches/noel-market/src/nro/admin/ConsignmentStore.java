@@ -94,7 +94,7 @@ public final class ConsignmentStore {
     else if(mode==RUBY){if(ruby<l.price())throw new IllegalArgumentException("Không đủ hồng ngọc");ruby-=l.price();}
     else{long left=l.price();for(int n=0;n<b.size()&&left>0;n++){Item i=b.get(n);if(i.isNotNullItem()&&i.template.id==457){int take=(int)Math.min(left,i.quantity);i.quantity-=take;left-=take;if(i.quantity==0)b.set(n,ItemService.gI().createItemNull());}}if(left>0)throw new IllegalArgumentException("Không đủ thỏi vàng 25M");}
     if(!AdminGrantItems.insert(b,ItemService.gI().copyItem(l.item())))throw new IllegalArgumentException("Túi không đủ chỗ");
-    try(PreparedStatement q=c.prepareStatement(l.owner()==RubyStock.OWNER?"DELETE FROM nero_consignment WHERE id=? AND sold=0":"UPDATE nero_consignment SET sold=1 WHERE id=? AND sold=0")){q.setLong(1,id);if(q.executeUpdate()!=1)throw new SQLException("Already sold");}if(l.owner()==RubyStock.OWNER && mode==RUBY) {
+    try(PreparedStatement q=c.prepareStatement(l.owner()==RubyStock.OWNER?"DELETE FROM nero_consignment WHERE id=? AND sold=0":"UPDATE nero_consignment SET sold=1 WHERE id=? AND sold=0")){q.setLong(1,id);if(q.executeUpdate()!=1)throw new SQLException("Already sold");}if(l.owner()==RubyStock.OWNER && (mode==RUBY || mode==INGOT && l.stockCategory()>=12)) {
         if(l.stockCategory()>=8 && l.stockCategory()<=11) RubyRestock.insert(c,l.stockCategory());
         else RubyRestock.schedule(c,l.id(),System.currentTimeMillis(),l.stockCategory());
     }

@@ -57,7 +57,7 @@ final class RubyStock {
             case 7 -> CrystalStars.stock(rng, 2);
             default -> featured(rng, category);
         };
-        return new Stock(stock.item(), Math.max(1, stock.price()/2));
+        return new Stock(stock.item(), Math.max(1_000, ((stock.price()+1_000)/2_000)*1_000));
     }
 
     static int featuredId(int category) {
@@ -77,6 +77,29 @@ final class RubyStock {
             featured.itemOptions.add(new ItemOption(option.optionTemplate.id,
                 Math.min(Short.MAX_VALUE, Math.multiplyExact(option.param, 10))));
         return new Stock(featured, vip.price());
+    }
+
+    static Stock ingotStock(ThreadLocalRandom rng, int category) {
+        int[] ids = switch (category) {
+            case 12 -> new int[]{555,556,557,558,559,560,563,565,567,650,651,652,653,654,655,658,660,662};
+            case 13 -> new int[]{561,562,564,566,656,657,659,661};
+            case 14 -> new int[]{381,382,383,384};
+            case 15 -> new int[]{16,17,18,19,20};
+            default -> throw new IllegalArgumentException("Unknown ingot category");
+        };
+        int id = ids[rng.nextInt(ids.length)];
+        if (id >= 650 && id <= 662) {
+            Item template = item(id);
+            Item destruction = ItemService.gI().randomCS_DHD(id, template.template.gender);
+            return new Stock(destruction, rng.nextInt(8,13));
+        }
+        Item item = item(id);
+        var defaults = AdminGrantItems.defaults(id,null);
+        for(int i=0;i<defaults.length();i++) {
+            var option = defaults.getJSONArray(i);
+            item.itemOptions.add(new ItemOption(option.getInt(0),option.getInt(1)));
+        }
+        return new Stock(item,category < 14 ? rng.nextInt(5,9) : rng.nextInt(2,6));
     }
 
     private static Item item(int id) {

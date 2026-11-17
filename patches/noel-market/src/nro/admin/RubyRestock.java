@@ -25,6 +25,12 @@ final class RubyRestock {
                 """);
             statement.executeUpdate("ALTER TABLE nero_ruby_restock ADD COLUMN IF NOT EXISTS category INT NOT NULL DEFAULT -1");
         }
+        try (Connection c = DBHika.getConnection(); var statement = c.createStatement()) {
+            statement.executeUpdate("""
+                UPDATE nero_consignment SET price=GREATEST(1000,ROUND(price/1000)*1000)
+                WHERE currency=2 AND owner_id=-1 AND sold=0 AND MOD(price,1000)<>0
+                """);
+        }
         initializeStock();
         var timer = Executors.newSingleThreadScheduledExecutor(task -> {
             Thread thread = new Thread(task, "nero-ruby-restock");
@@ -57,10 +63,16 @@ final class RubyRestock {
                 if (!lock.next() || lock.getInt(1) != 1) return;
             }
             try {
-                for (int category = 0; category < 12; category++) {
-                    int target = category < RubyStock.CATEGORIES ? RubyStock.COUNT : 1;
+                statement.executeUpdate("""
+                    DELETE FROM nero_consignment
+                    WHERE owner_id=-1 AND currency=1 AND sold=0
+                      AND JSON_EXTRACT(item_json,'$.stock_category') IN (12,13)
+                      AND JSON_EXTRACT(item_json,'$.temp_id') IN (0,6,12,21,27)
+                    """);
+                for (int category = 0; category < 16; category++) {
+                    int target = category < RubyStock.CATEGORIES ? RubyStock.COUNT : category < 12 ? 1 : 50;
                     try (var count = c.prepareStatement("""
-                        SELECT (SELECT COUNT(*) FROM nero_consignment WHERE owner_id=-1 AND currency=2
+                        SELECT (SELECT COUNT(*) FROM nero_consignment WHERE owner_id=-1 AND currency IN (1,2)
                             AND sold=0 AND JSON_EXTRACT(item_json,'$.stock_category')=?)
                              + (SELECT COUNT(*) FROM nero_ruby_restock WHERE category=?)
                         """)) {
@@ -114,14 +126,16 @@ final class RubyRestock {
     private record Pending(long id, int category) {}
 
     static void insert(Connection c, int category) throws SQLException {
-        var stock = RubyStock.roll(ThreadLocalRandom.current(),category);
+        var rng = ThreadLocalRandom.current();
+        var stock = category>=12 ? RubyStock.ingotStock(rng,category) : RubyStock.roll(rng,category);
         try (var insert = c.prepareStatement("""
             INSERT INTO nero_consignment(owner_id,currency,price,item_json,seller,created_ms)
-            VALUES(-1,2,?,?,'Cửa hàng',?)
+            VALUES(-1,?,?,?,'Cửa hàng',?)
             """)) {
-            insert.setInt(1, stock.price());
-            insert.setString(2, ConsignmentStore.encode(stock.item()).put("stock_category",category).toString());
-            insert.setLong(3, System.currentTimeMillis());
+            insert.setInt(1, category>=12 ? ConsignmentStore.INGOT : ConsignmentStore.RUBY);
+            insert.setInt(2, stock.price());
+            insert.setString(3, ConsignmentStore.encode(stock.item()).put("stock_category",category).toString());
+            insert.setLong(4, System.currentTimeMillis());
             insert.executeUpdate();
         }
     }
