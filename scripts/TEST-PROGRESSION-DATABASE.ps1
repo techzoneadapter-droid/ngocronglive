@@ -39,7 +39,7 @@ try {
     & (Join-Path $bin 'mariadb.exe') --protocol=tcp --host=127.0.0.1 "--port=$Port" --user=root -e 'CREATE DATABASE nero_progression_test'
     if($LASTEXITCODE){throw 'Cannot create disposable test schema'}
     $src = Join-Path $root 'game-source/server/src/main/java/nro/progression'
-    & javac -encoding UTF-8 -cp $runtime -d $classes (Join-Path $src 'UnlimitedProgression.java') (Join-Path $src 'ProgressionRepository.java') (Join-Path $src 'BossProgression.java') (Join-Path $src 'BossProgressionRepository.java') (Join-Path $root 'tests/ProgressionRepositoryTest.java')
+    & javac -encoding UTF-8 -cp $runtime -d $classes (Join-Path $src 'UnlimitedProgression.java') (Join-Path $src 'ProgressionRepository.java') (Join-Path $src 'ProgressionCommands.java') (Join-Path $src 'BossProgression.java') (Join-Path $src 'BossProgressionRepository.java') (Join-Path $root 'tests/ProgressionRepositoryTest.java')
     if($LASTEXITCODE){throw 'Repository test compilation failed'}
     $jdbc = "jdbc:mysql://127.0.0.1:$Port/nero_progression_test?useSSL=false&allowPublicKeyRetrieval=true"
     & java -cp "$classes;$runtime" nro.progression.ProgressionRepositoryTest $jdbc seed

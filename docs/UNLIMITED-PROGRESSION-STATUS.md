@@ -14,6 +14,9 @@ Development branch: `codex/noel-market-kaizen`. Excluded from the Noel deploymen
 - JDBC progression repository with a versioned decimal snapshot, original `data_point` migration backup, caller-owned transactions and stale-write rejection. Inventory and original stats columns are not modified.
 - Durable per-boss state and spawn-key deduplication in the same transaction as strength advancement. Replaying a confirmed spawn does not increment again.
 - Tested both repositories on a disposable localhost MariaDB, including database shutdown/restart, huge exact values, rollback, unknown format refusal and concurrent duplicate defeat reports.
+- `ProgressionCommands` provides authenticated character open/reconnect, revision-checked budget allocation and internal power/potential reward operations. All work in caller-owned transactions; update live state only after commit.
+- Durable per-character request keys prevent recharging a retried allocation or duplicating an internal reward. Reusing a key with different inputs is refused. Replays return current state rather than rolling a client back to an old snapshot.
+- MariaDB tests cover simultaneous duplicate allocation requests, account ownership refusal, stale revision refusal, rollback and request/reward replay after database restart. These call the service directly, not the game login UI or Controller.
 
 Run `powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/TEST-PROGRESSION.ps1`.
 
@@ -29,7 +32,7 @@ Run `powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/TEST-PROGRE
 
 ## Next integration order
 
-1. Connect the tested durable state to login and progression transactions after capability negotiation; retain original inventory and legacy stats.
+1. Connect the tested command service to login and progression packets after capability negotiation; retain original inventory and legacy stats. Do not enable allocations while combat still uses a different legacy potential/stat balance.
 2. Server combat arithmetic and client protocol negotiation; include companions, mounts, mobs and boss HP.
 3. Actual boss types and exactly-once durable defeat advancement; apply new stats only at respawn.
 4. Seven equipment slots and Kaizen adapters to existing CombineServiceNew. Use original inventory/trade/currency rules and configured source-specific drops.
