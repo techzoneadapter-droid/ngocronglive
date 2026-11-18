@@ -65,6 +65,17 @@ public final class UnlimitedProgression {
         return new Allocation(new UnlimitedProgression(next), low, used);
     }
 
+    public Allocation purchase(Stat stat,BigInteger points) {
+        if(points.signum()<=0)throw new IllegalArgumentException("Số điểm phải lớn hơn 0");
+        BigInteger used=cost(stat,points);
+        if(used.compareTo(get(Stat.POTENTIAL))>0)throw new IllegalArgumentException("Bạn không đủ tiềm năng");
+        var next=new EnumMap<>(values);
+        next.put(Stat.POTENTIAL,get(Stat.POTENTIAL).subtract(used));
+        BigInteger increment=(stat==Stat.HP||stat==Stat.KI)?BigInteger.valueOf(20):BigInteger.ONE;
+        next.put(stat,get(stat).add(points.multiply(increment)));
+        return new Allocation(new UnlimitedProgression(next),points,used);
+    }
+
     public Map<String, String> snapshot() {
         var result = new java.util.LinkedHashMap<String, String>();
         for (Stat stat : Stat.values()) result.put(stat.name(), get(stat).toString());

@@ -39,6 +39,47 @@ import nro.server.io.Message;
  */
 public abstract class Boss extends Player implements BossInterface {
 
+    /** Exact dispatcher is restricted to known base injury semantics, not scripted encounters. */
+    public boolean acceptsExactSkillDamage() {
+        if (progression == null || typeBosses != null) return false;
+        try {
+            Class<?> injury = getClass().getMethod("injured", Player.class, int.class, boolean.class, boolean.class).getDeclaringClass();
+            if (injury != Boss.class && injury != FutureBoss.class) return false;
+            for (Class<?> type = getClass(); type != Boss.class; type = type.getSuperclass()) {
+                for (var method : type.getDeclaredMethods()) {
+                    String name = method.getName();
+                    if (name.equals("methodBeforeGetDamage") || name.equals("handleDamageForSpecialBoss")
+                            || name.equals("useSkillWhenDie") || name.equals("nextLevel")) return false;
+                }
+            }
+            return true;
+        } catch (NoSuchMethodException error) { return false; }
+    }
+
+    public synchronized java.math.BigInteger injuredExact(Player attacker, java.math.BigInteger incoming, boolean piercing) {
+        if (!acceptsExactSkillDamage()) throw new IllegalStateException("Boss requires a specific exact injury adapter");
+        if (incoming.signum() < 0) throw new IllegalArgumentException("Negative damage");
+        if (nPoint.exactHp().signum() == 0 || incoming.signum() == 0) return java.math.BigInteger.ZERO;
+        if (!piercing && Util.isTrue(nPoint.tlNeDon, 1)) return java.math.BigInteger.ZERO;
+        java.math.BigInteger damage = incoming;
+        if (this instanceof FutureBoss) {
+            if (attacker == null) return java.math.BigInteger.ZERO;
+            damage = damage.divide(java.math.BigInteger.valueOf(100)).multiply(java.math.BigInteger.valueOf(80));
+        }
+        // Keep the original base Boss order: half damage, armor/consumables, shielding, HP.
+        damage = nPoint.subDameInjureWithDeff(damage.divide(java.math.BigInteger.TWO));
+        if (!piercing && effectSkill.isShielding) {
+            if (damage.compareTo(nPoint.exactHpMax()) > 0) EffectSkillService.gI().breakShield(this);
+            damage = java.math.BigInteger.ONE;
+        }
+        var hit = nPoint.damageExact(damage);
+        if (hit.killed()) {
+            try { rewards(attacker); notifyPlayeKill(attacker); }
+            finally { die(); }
+        }
+        return hit.applied();
+    }
+
     // type dame
     public static final byte DAME_NORMAL = 0;
     public static final byte DAME_PERCENT_HP_HUND = 1;

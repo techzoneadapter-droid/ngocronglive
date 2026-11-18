@@ -1314,7 +1314,7 @@ public class NPoint {
     }
 
     public long calSucManhTiemNang(long tiemNang) {
-        if (power < getPowerLimit()) {
+        if (unlimitedBase != null || power < getPowerLimit()) {
             for (Integer tl : this.tlTNSM) {
                 tiemNang += calPercent(tiemNang, tl);
             }
@@ -1420,6 +1420,7 @@ public class NPoint {
     }
 
     public long getPowerLimit() {
+        if (unlimitedBase != null) return Long.MAX_VALUE;
         if (powerLimit != null) {
             return powerLimit.getPower();
         }
@@ -1437,15 +1438,18 @@ public class NPoint {
     // **************************************************************************
     // POWER - TIEM NANG
     public void powerUp(long power) {
+        if (nro.progression.PlayerProgressionRuntime.reward(player, power, 0)) return;
         this.power = ProgressionMath.addReward(this.power, power);
         TaskService.gI().checkDoneTaskPower(player, this.power);
     }
 
     public void tiemNangUp(long tiemNang) {
+        if (nro.progression.PlayerProgressionRuntime.reward(player, 0, tiemNang)) return;
         this.tiemNang = ProgressionMath.addReward(this.tiemNang, tiemNang);
     }
 
     public void increasePoint(byte type, short point) {
+        if (nro.progression.PlayerProgressionRuntime.increase(player, type, point)) return;
         if (powerLimit == null) {
             return;
         }

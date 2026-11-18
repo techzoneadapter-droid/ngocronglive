@@ -17,6 +17,9 @@ public final class UnlimitedProgressionTest {
         check(state.get(HP).equals(BigInteger.valueOf(100)),"immutable input");
         check(UnlimitedProgression.restore(hp.state().snapshot()).snapshot().equals(hp.state().snapshot()),"lossless decimal restore");
         check(state.reward(huge,huge).get(POWER).equals(huge.multiply(BigInteger.TWO)),"unbounded reward");
+        var purchased=state.purchase(HP,BigInteger.valueOf(100));
+        check(purchased.points().intValueExact()==100 && purchased.state().get(HP).intValueExact()==2100,"exact legacy point count purchase");
+        check(purchased.state().get(POTENTIAL).add(purchased.cost()).equals(huge),"purchase balance conservation");
         Random random=new Random(1811);
         for(var stat:new UnlimitedProgression.Stat[]{HP,KI,ATTACK,DEFENSE}) {
             for(int test=0;test<200;test++) {

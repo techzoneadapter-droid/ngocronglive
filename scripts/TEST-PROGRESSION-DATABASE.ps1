@@ -39,17 +39,21 @@ try {
     & (Join-Path $bin 'mariadb.exe') --protocol=tcp --host=127.0.0.1 "--port=$Port" --user=root -e 'CREATE DATABASE nero_progression_test CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci'
     if($LASTEXITCODE){throw 'Cannot create disposable test schema'}
     $src = Join-Path $root 'game-source/server/src/main/java/nro/progression'
-    & javac -encoding UTF-8 -cp $runtime -d $classes (Join-Path $src 'UnlimitedProgression.java') (Join-Path $src 'ProgressionRepository.java') (Join-Path $src 'ProgressionCommands.java') (Join-Path $src 'BossProgression.java') (Join-Path $src 'BossProgressionRepository.java') (Join-Path $root 'tests/ProgressionRepositoryTest.java')
+    $production=@(Get-ChildItem $src -Filter '*.java' | ForEach-Object FullName)
+    $production+=@(Join-Path $root 'game-source/server/src/main/java/nro/models/player/NPoint.java';Join-Path $root 'game-source/server/src/main/java/nro/models/player/ProgressionMath.java';Join-Path $root 'game-source/server/src/main/java/nro/models/boss/Boss.java')
+    & javac -proc:none -encoding UTF-8 -cp $runtime -d $classes @production (Join-Path $root 'tests/ProgressionRepositoryTest.java')
     if($LASTEXITCODE){throw 'Repository test compilation failed'}
     $playerSource=Join-Path $root 'game-source/server/src/main/java/nro/models/player'
     & javac -proc:none -encoding UTF-8 -cp "$classes;$runtime" -d $classes (Join-Path $playerSource 'NPoint.java') (Join-Path $playerSource 'ProgressionMath.java') (Join-Path $src 'ExactCombat.java') (Join-Path $src 'BossEncounter.java') (Join-Path $root 'tests/NPointExactStatsTest.java') (Join-Path $root 'tests/BossEncounterDatabaseTest.java')
     if($LASTEXITCODE){throw 'Boss encounter test compilation failed'}
-    & javac -proc:none -encoding UTF-8 -cp "$classes;$runtime" -d $classes (Join-Path $root 'game-source/server/src/main/java/nro/models/boss/Boss.java') (Join-Path $src 'BossProgressionRuntime.java') (Join-Path $root 'tests/BossRuntimeDatabaseTest.java')
+    & javac -proc:none -encoding UTF-8 -cp "$classes;$runtime" -d $classes (Join-Path $root 'game-source/server/src/main/java/nro/models/boss/Boss.java') (Join-Path $src 'BossProgressionRuntime.java') (Join-Path $src 'ExactSkillDamage.java') (Join-Path $root 'tests/BossRuntimeDatabaseTest.java')
     if($LASTEXITCODE){throw 'Boss runtime compilation failed'}
     & javac -proc:none -encoding UTF-8 -cp "$classes;$runtime" -d $classes (Join-Path $src 'KaizenRecipes.java') (Join-Path $src 'KaizenForge.java') (Join-Path $src 'KaizenTransactions.java') (Join-Path $root 'tests/KaizenTransactionsTest.java')
     if($LASTEXITCODE){throw 'Kaizen compilation failed'}
     & javac -proc:none -encoding UTF-8 -cp "$classes;$runtime" -d $classes (Join-Path $src 'KaizenCatalog.java') (Join-Path $root 'tests/KaizenCatalogTest.java')
     if($LASTEXITCODE){throw 'Kaizen catalog compilation failed'}
+    & javac -proc:none -encoding UTF-8 -cp "$classes;$runtime" -d $classes (Join-Path $root 'tests/PlayerProgressionRuntimeTest.java')
+    if($LASTEXITCODE){throw 'Player runtime compilation failed'}
     $jdbc = "jdbc:mysql://127.0.0.1:$Port/nero_progression_test?useSSL=false&allowPublicKeyRetrieval=true"
     & java -cp "$classes;$runtime" nro.progression.ProgressionRepositoryTest $jdbc seed
     if($LASTEXITCODE){throw 'Repository integration tests failed'}
@@ -61,6 +65,8 @@ try {
     if($LASTEXITCODE){throw 'Kaizen transaction tests failed'}
     & java -cp "$classes;$runtime" nro.progression.KaizenCatalogTest $jdbc seed
     if($LASTEXITCODE){throw 'Kaizen catalog tests failed'}
+    & java -cp "$classes;$runtime" nro.progression.PlayerProgressionRuntimeTest $jdbc seed
+    if($LASTEXITCODE){throw 'Player runtime tests failed'}
     Stop-TestDatabase
     Start-TestDatabase
     & java -cp "$classes;$runtime" nro.progression.ProgressionRepositoryTest $jdbc reopen
@@ -73,5 +79,7 @@ try {
     if($LASTEXITCODE){throw 'Kaizen restart tests failed'}
     & java -cp "$classes;$runtime" nro.progression.KaizenCatalogTest $jdbc reopen
     if($LASTEXITCODE){throw 'Kaizen catalog restart failed'}
+    & java -cp "$classes;$runtime" nro.progression.PlayerProgressionRuntimeTest $jdbc reopen
+    if($LASTEXITCODE){throw 'Player runtime reconnect failed'}
     Write-Host "PASS PROGRESSION_DATABASE_TESTS ARTIFACTS=$stage"
 } finally { Stop-TestDatabase }
