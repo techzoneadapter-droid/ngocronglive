@@ -7,6 +7,6 @@
   "runtime_height": 72,
   "body_bob_px": 0,
   "status": "local preview, not published to mobile/production",
-  "native_y_to_visible_sole_px": 10,
-  "placement_note": "Revision3: illustration contact plane lowered8 logical pixels from previous native multipart offset2. Feet fixed; flame animation retained. User visual acceptance pending."
+  "native_y_to_visible_sole_px": 3,
+  "placement_note": "Revision4: restore sole to grass-edge depth; fixed feet, animated hammer energy only. Previous offset10 placed NPC in foreground road and was rejected."
 }

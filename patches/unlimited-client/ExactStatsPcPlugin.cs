@@ -5,7 +5,7 @@ using HarmonyLib;
 using UnityEngine;
 using System.IO;
 
-[BepInPlugin("nero.progression.exact", "NERO Exact Stats", "0.1.2")]
+[BepInPlugin("nero.progression.exact", "NERO Exact Stats", "0.1.3")]
 public sealed class ExactStatsPcPlugin : BasePlugin
 {
     public override void Load() { new Harmony("nero.progression.exact").PatchAll(typeof(ExactStatsPcPlugin).Assembly); }
@@ -119,8 +119,8 @@ internal static class KaizenNpcArt {
         // Feet are at source row646/724, not the bottom of the transparent atlas cell.
         // Keep the visible sole on the native NPC ground anchor; bob only lifts by at most0.8px.
         // The full illustration has a different sole/contact plane from multipart native sprites.
-        // Correct only this NPC art: lower contact plane8 logical pixels, keep feet fixed while flame cycles.
-        const float soleOffset=10;
+        // Correct only this NPC art: place the sole on the grass edge, keep feet fixed while flame cycles.
+        const float soleOffset=3;
         float ground=__instance.cy+soleOffset;
         float x=__instance.cx-width/2,y=ground-height*(646f/724f);
         if(G1.TileMap.bong!=null)__0.drawImage(G1.TileMap.bong,__instance.cx,(int)ground,3);
