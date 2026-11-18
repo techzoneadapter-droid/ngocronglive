@@ -179,6 +179,7 @@ public class MobService {
 
     public void hoiSinhMob(Mob mob) {
         boolean isDie = mob.isDie();
+        if(isDie)RewardService.gI().resetKaizenReward(mob);
         mob.point.hp = mob.point.maxHp;
         mob.setTiemNang();
         if (isDie) {

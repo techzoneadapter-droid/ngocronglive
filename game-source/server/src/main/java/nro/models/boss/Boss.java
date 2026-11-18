@@ -74,7 +74,7 @@ public abstract class Boss extends Player implements BossInterface {
         }
         var hit = nPoint.damageExact(damage);
         if (hit.killed()) {
-            try { rewards(attacker); notifyPlayeKill(attacker); }
+            try { rewards(attacker); RewardService.gI().kaizenBossReward(this,attacker); notifyPlayeKill(attacker); }
             finally { die(); }
         }
         return hit.applied();
@@ -462,6 +462,7 @@ public abstract class Boss extends Player implements BossInterface {
             this.nPoint.subHP(damage);
             if (isDie()) {
                 rewards(plAtt);
+                RewardService.gI().kaizenBossReward(this,plAtt);
                 notifyPlayeKill(plAtt);
                 die();
             }
@@ -637,6 +638,7 @@ public abstract class Boss extends Player implements BossInterface {
 
     @Override
     public void respawn() {
+        RewardService.gI().resetKaizenReward(this);
         if(progression==null)progression=BossProgressionRuntime.forBoss(this);
         if(progression!=null)progression.beforeRespawn();
         this.init();

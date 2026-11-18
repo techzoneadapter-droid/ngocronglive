@@ -31,12 +31,42 @@ public final class KaizenBootstrap {
             npc=installNpcTemplate(c);
         }
         KaizenEquipment.install(catalog.equipment());
+        installDropConfig(catalog);
         var forge=new KaizenPlayerForge(connections,new KaizenForge(catalog.forge()));
         var actor=new KaizenNpc(0,x,y,npc.id,npc.head,forge);
         map.addNpc(actor);
         // New catalog entries must be fetched rather than read from an older item/map cache.
         nro.data.DataGame.vsItem=26;nro.data.DataGame.vsMap=6;
         installed=true;
+    }
+    private static void installDropConfig(KaizenCatalog.Catalog catalog)throws SQLException {
+        java.nio.file.Path path=java.nio.file.Path.of("resources/config/kaizen-drops.json");
+        try {
+            var parsed=KaizenDropConfig.parse(java.nio.file.Files.readString(path),new KaizenDropConfig.RuntimeCatalog() {
+                public boolean mapExists(int id,String name) {
+                    var map=MapService.gI().getMapById(id);return map!=null && map.mapName.equals(name);
+                }
+                public boolean bossRegistered(String name,int id) {
+                    return nro.models.boss.BossManager.BOSSES_IN_GAME.stream().anyMatch(b->b.getClass().getName().equals(name)
+                        && b.zone!=null && b.zone.map.mapId==id && terminalHookPresent(b));
+                }
+                private boolean terminalHookPresent(nro.models.boss.Boss boss) {
+                    try {return boss.getClass().getMethod("injured",nro.models.player.Player.class,int.class,boolean.class,boolean.class)
+                            .getDeclaringClass()==nro.models.boss.Boss.class;}
+                    catch(NoSuchMethodException error){return false;}
+                }
+                public boolean mobExists(int template,int id) {
+                    var map=MapService.gI().getMapById(id);
+                    return map!=null && map.zones.stream().anyMatch(z->z.mobs.stream().anyMatch(m->m.tempId==template));
+                }
+                public boolean itemReady(KaizenRecipes kind,KaizenDropConfig.Form form) {
+                    var binding=catalog.forge().get(kind);
+                    return binding!=null && (form==KaizenDropConfig.Form.FRAGMENT || binding.options().toString().equals(KaizenStats.options(kind).toString()));
+                }
+            });
+            nro.services.RewardService.gI().configureKaizen(parsed,catalog.forge());
+            System.out.println("KAIZEN_DROP_CONFIG enabled="+parsed.enabled().size()+" pending="+parsed.disabled().size());
+        }catch(java.io.IOException|IllegalArgumentException error){throw new SQLException("Kaizen drop configuration not verified",error);}
     }
     private static NpcTemplate installNpcTemplate(Connection c)throws SQLException {
         var donor=Manager.NPC_TEMPLATES.stream().filter(n->n.id==21).findFirst()

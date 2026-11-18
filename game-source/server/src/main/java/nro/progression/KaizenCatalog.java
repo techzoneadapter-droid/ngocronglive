@@ -54,10 +54,7 @@ public final class KaizenCatalog {
                         ||!Manager.ITEM_TEMPLATES.get(item).name.equals(recipe.displayName))
                         throw new SQLException("Kaizen catalog mapping mismatch; refusing reallocation");
                 }
-                int baseOption=switch(recipe){case CROWN,BRACELET,NECKLACE -> 14;case CAPE,SCARF -> 47;case MASK -> 0;case HALO -> 7;};
-                int value=switch(baseOption){case 14 -> 3;case 47 -> 200;case 0 -> 1000;default -> 5000;};
-                // Initial development values; final balance must be reviewed in the local build.
-                forge.put(recipe,new KaizenForge.Binding(fragment,item,new JSONArray().put(new JSONArray().put(baseOption).put(value))));
+                forge.put(recipe,new KaizenForge.Binding(fragment,item,KaizenStats.options(recipe)));
                 equipment.put(recipe,item);
             }
             c.commit();

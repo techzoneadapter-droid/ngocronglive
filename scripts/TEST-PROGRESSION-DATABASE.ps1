@@ -40,6 +40,7 @@ try {
     if($LASTEXITCODE){throw 'Cannot create disposable test schema'}
     $src = Join-Path $root 'game-source/server/src/main/java/nro/progression'
     $production=@(Get-ChildItem $src -Filter '*.java' | ForEach-Object FullName)
+    $production+=@(Join-Path $root 'game-source/server/src/main/java/nro/services/RewardService.java')
     $production+=@(Join-Path $root 'game-source/server/src/main/java/nro/models/player/NPoint.java';Join-Path $root 'game-source/server/src/main/java/nro/models/player/ProgressionMath.java';Join-Path $root 'game-source/server/src/main/java/nro/models/boss/Boss.java')
     & javac -proc:none -encoding UTF-8 -cp $runtime -d $classes @production (Join-Path $root 'tests/ProgressionRepositoryTest.java')
     if($LASTEXITCODE){throw 'Repository test compilation failed'}

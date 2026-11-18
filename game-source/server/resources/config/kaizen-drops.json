@@ -1,0 +1,286 @@
+{
+  "version": 1,
+  "denominator": 10000,
+  "sources": [
+    {
+      "key": "omega_shenron",
+      "name": "Omega Shenron",
+      "region": "Long_Gioi_Hac_Am",
+      "map_asset": "06_Ngai_Vuong_Hac_Long",
+      "enabled": false,
+      "map_id": null,
+      "map_name": null,
+      "boss_class": null,
+      "source_type": "BOSS",
+      "rewards": [
+        {
+          "kind": "CROWN",
+          "form": "WHOLE",
+          "chance": 30,
+          "quantity": 1
+        }
+      ],
+      "blocked_reason": "Map/boss mới chưa có binding runtime được xác minh"
+    },
+    {
+      "key": "lord_slug",
+      "name": "Lord Slug",
+      "region": "Namek_Co_Dai",
+      "map_asset": "03_Di_Tich_Namek",
+      "enabled": false,
+      "map_id": null,
+      "map_name": null,
+      "boss_class": null,
+      "source_type": "BOSS",
+      "rewards": [
+        {
+          "kind": "BRACELET",
+          "form": "WHOLE",
+          "chance": 300,
+          "quantity": 1
+        }
+      ],
+      "blocked_reason": "Map/boss mới chưa có binding runtime được xác minh"
+    },
+    {
+      "key": "longmach_guardian",
+      "name": "Hộ Vệ Long Mạch",
+      "region": "Namek_Co_Dai",
+      "map_asset": "04_Vuc_Long_Mach",
+      "enabled": false,
+      "map_id": null,
+      "map_name": null,
+      "boss_class": null,
+      "source_type": "BOSS",
+      "rewards": [
+        {
+          "kind": "NECKLACE",
+          "form": "WHOLE",
+          "chance": 200,
+          "quantity": 1
+        }
+      ],
+      "blocked_reason": "Map/boss mới chưa có binding runtime được xác minh"
+    },
+    {
+      "key": "dark_elder",
+      "name": "Đại Trưởng Lão Namek Hắc Hóa",
+      "region": "Namek_Co_Dai",
+      "map_asset": "05_Than_Dien_Namek",
+      "enabled": false,
+      "map_id": null,
+      "map_name": null,
+      "boss_class": null,
+      "source_type": "BOSS",
+      "rewards": [
+        {
+          "kind": "CAPE",
+          "form": "WHOLE",
+          "chance": 100,
+          "quantity": 1
+        }
+      ],
+      "blocked_reason": "Map/boss mới chưa có binding runtime được xác minh"
+    },
+    {
+      "key": "super_janemba",
+      "name": "Super Janemba",
+      "region": "Dia_Nguc_Ma_Gioi",
+      "map_asset": "05_Nguc_Tinh_The",
+      "enabled": false,
+      "map_id": null,
+      "map_name": null,
+      "boss_class": null,
+      "source_type": "BOSS",
+      "rewards": [
+        {
+          "kind": "MASK",
+          "form": "WHOLE",
+          "chance": 100,
+          "quantity": 1
+        }
+      ],
+      "blocked_reason": "Map/boss mới chưa có binding runtime được xác minh"
+    },
+    {
+      "key": "dabura",
+      "name": "Dabura",
+      "region": "Dia_Nguc_Ma_Gioi",
+      "map_asset": "03_Thanh_Ma_Vuong",
+      "enabled": false,
+      "map_id": null,
+      "map_name": null,
+      "boss_class": null,
+      "source_type": "BOSS",
+      "rewards": [
+        {
+          "kind": "SCARF",
+          "form": "WHOLE",
+          "chance": 200,
+          "quantity": 1
+        }
+      ],
+      "blocked_reason": "Map/boss mới chưa có binding runtime được xác minh"
+    },
+    {
+      "key": "ultimate_janemba",
+      "name": "Ma Thần Janemba Tối Thượng",
+      "region": "Dia_Nguc_Ma_Gioi",
+      "map_asset": "06_Dien_Ma_Than",
+      "enabled": false,
+      "map_id": null,
+      "map_name": null,
+      "boss_class": null,
+      "source_type": "BOSS",
+      "rewards": [
+        {
+          "kind": "HALO",
+          "form": "WHOLE",
+          "chance": 20,
+          "quantity": 1
+        }
+      ],
+      "blocked_reason": "Map/boss mới chưa có binding runtime được xác minh"
+    },
+    {
+      "key": "five_star_dragon",
+      "name": "Rồng Năm Sao",
+      "region": "Long_Gioi_Hac_Am",
+      "map_asset": null,
+      "enabled": false,
+      "map_id": null,
+      "map_name": null,
+      "boss_class": null,
+      "source_type": "BOSS",
+      "rewards": [
+        {
+          "kind": "BRACELET",
+          "form": "FRAGMENT",
+          "chance": 2000,
+          "quantity": 1
+        }
+      ],
+      "blocked_reason": "Map/boss mới chưa có binding runtime được xác minh"
+    },
+    {
+      "key": "four_star_dragon",
+      "name": "Rồng Bốn Sao",
+      "region": "Long_Gioi_Hac_Am",
+      "map_asset": "04_Dien_That_Long",
+      "enabled": false,
+      "map_id": null,
+      "map_name": null,
+      "boss_class": null,
+      "source_type": "BOSS",
+      "rewards": [
+        {
+          "kind": "NECKLACE",
+          "form": "FRAGMENT",
+          "chance": 2000,
+          "quantity": 1
+        }
+      ],
+      "blocked_reason": "Map/boss mới chưa có binding runtime được xác minh"
+    },
+    {
+      "key": "syn_shenron",
+      "name": "Syn Shenron",
+      "region": "Long_Gioi_Hac_Am",
+      "map_asset": "05_Long_Dien_Huy_Diet",
+      "enabled": false,
+      "map_id": null,
+      "map_name": null,
+      "boss_class": null,
+      "source_type": "BOSS",
+      "rewards": [
+        {
+          "kind": "CROWN",
+          "form": "FRAGMENT",
+          "chance": 1500,
+          "quantity": 1
+        }
+      ],
+      "blocked_reason": "Map/boss mới chưa có binding runtime được xác minh"
+    },
+    {
+      "key": "janemba",
+      "name": "Janemba",
+      "region": "Dia_Nguc_Ma_Gioi",
+      "map_asset": "04_Me_Cung_Khong_Gian",
+      "enabled": false,
+      "map_id": null,
+      "map_name": null,
+      "boss_class": null,
+      "source_type": "BOSS",
+      "rewards": [
+        {
+          "kind": "MASK",
+          "form": "FRAGMENT",
+          "chance": 2000,
+          "quantity": 1
+        }
+      ],
+      "blocked_reason": "Map/boss mới chưa có binding runtime được xác minh"
+    },
+    {
+      "key": "skinny_buu",
+      "name": "Ma Bư Gầy",
+      "region": "Mabu_Cot_Truyen",
+      "map_asset": "01_Phao_Dai_Majin",
+      "enabled": false,
+      "map_id": null,
+      "map_name": null,
+      "boss_class": null,
+      "source_type": "BOSS",
+      "rewards": [
+        {
+          "kind": "SCARF",
+          "form": "FRAGMENT",
+          "chance": 1500,
+          "quantity": 1
+        }
+      ],
+      "blocked_reason": "Map/boss mới chưa có binding runtime được xác minh"
+    },
+    {
+      "key": "evil_buu",
+      "name": "Ma Bư Ác",
+      "region": "Mabu_Cot_Truyen",
+      "map_asset": "01_Phao_Dai_Majin",
+      "enabled": false,
+      "map_id": null,
+      "map_name": null,
+      "boss_class": null,
+      "source_type": "BOSS",
+      "rewards": [
+        {
+          "kind": "CAPE",
+          "form": "FRAGMENT",
+          "chance": 1500,
+          "quantity": 1
+        }
+      ],
+      "blocked_reason": "Map/boss mới chưa có binding runtime được xác minh"
+    },
+    {
+      "key": "kid_buu",
+      "name": "Kid Buu",
+      "region": "Mabu_Cot_Truyen",
+      "map_asset": "01_Phao_Dai_Majin",
+      "enabled": false,
+      "map_id": null,
+      "map_name": null,
+      "boss_class": null,
+      "source_type": "BOSS",
+      "rewards": [
+        {
+          "kind": "HALO",
+          "form": "FRAGMENT",
+          "chance": 1000,
+          "quantity": 1
+        }
+      ],
+      "blocked_reason": "Map/boss mới chưa có binding runtime được xác minh"
+    }
+  ]
+}

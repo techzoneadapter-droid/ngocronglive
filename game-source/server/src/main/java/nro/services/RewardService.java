@@ -38,6 +38,56 @@ import java.util.logging.Logger;
  */
 public class RewardService {
 
+    private volatile List<nro.progression.KaizenDropConfig.Source> kaizenSources=List.of();
+    private volatile java.util.Map<nro.progression.KaizenRecipes,nro.progression.KaizenForge.Binding> kaizenItems=java.util.Map.of();
+    private final java.util.Map<Object,Boolean> kaizenClaimed=java.util.Collections.synchronizedMap(new java.util.WeakHashMap<>());
+
+    /** Called only after map/spawn/item verification; no broad boss or mob fallback. */
+    public synchronized void configureKaizen(nro.progression.KaizenDropConfig.Parsed config,
+            java.util.Map<nro.progression.KaizenRecipes,nro.progression.KaizenForge.Binding> catalog) {
+        for(var source:config.enabled())for(var reward:source.rewards()) {
+            var binding=catalog.get(reward.kind());
+            if(binding==null || (reward.form()==nro.progression.KaizenDropConfig.Form.WHOLE && binding.options().length()!=3))
+                throw new IllegalArgumentException("Kaizen catalog/options not ready");
+        }
+        kaizenItems=java.util.Map.copyOf(catalog);kaizenSources=config.enabled();
+    }
+    public void resetKaizenReward(Object spawn) { kaizenClaimed.remove(spawn); }
+    private boolean kaizenRecipient(Player player,nro.models.map.Zone zone) {
+        return player!=null && zone!=null && player.zone==zone && !player.isBoss && !player.isPet && !player.isMiniPet
+                && player.getSession()!=null && player.getSession().actived;
+    }
+    private List<ItemMap> kaizenItems(Object spawn,Player player,nro.models.map.Zone zone,
+            nro.progression.KaizenDropConfig.SourceType type,String bossClass,int mobId,int x,int y) {
+        if(!kaizenRecipient(player,zone))return List.of();
+        var source=kaizenSources.stream().filter(s->s.type()==type && s.mapId()==zone.map.mapId
+                && (type==nro.progression.KaizenDropConfig.SourceType.BOSS?s.bossClass().equals(bossClass):s.mobId()==mobId))
+                .findFirst().orElse(null);
+        if(source==null)return List.of();
+        synchronized(kaizenClaimed) {if(kaizenClaimed.putIfAbsent(spawn,Boolean.TRUE)!=null)return List.of();}
+        List<ItemMap> result=new ArrayList<>();
+        for(var reward:nro.progression.KaizenDropConfig.roll(source,()->Util.nextInt(0,9999))) {
+            var binding=kaizenItems.get(reward.kind());
+            int id=reward.form()==nro.progression.KaizenDropConfig.Form.WHOLE?binding.equipmentId():binding.fragmentId();
+            var item=new ItemMap(zone,id,reward.quantity(),x,y,player.id);
+            if(reward.form()==nro.progression.KaizenDropConfig.Form.WHOLE) {
+                org.json.JSONArray options=binding.options();
+                for(int i=0;i<options.length();i++) {
+                    var option=options.getJSONArray(i);item.options.add(new ItemOption(option.getInt(0),option.getInt(1)));
+                }
+            }
+            result.add(item);
+        }
+        return result;
+    }
+    /** Called only on a terminal, eligible kill, with the original reward owner. */
+    public void kaizenBossReward(nro.models.boss.Boss boss,Player owner) {
+        if(boss==null || boss.nPoint==null || boss.nPoint.exactHp().signum()!=0 || boss.zone==null)return;
+        int x=boss.location.x,y=boss.zone.map.yPhysicInTop(x,Math.max(0,boss.location.y-24));
+        for(var item:kaizenItems(boss,owner,boss.zone,nro.progression.KaizenDropConfig.SourceType.BOSS,
+                boss.getClass().getName(),-1,x,y))Service.gI().dropItemMap(boss.zone,item);
+    }
+
     // id option set kich hoat (tên set, hiệu ứng set, tỉ lệ, type tỉ lệ)
     public static final int[][][] ACTIVATION_SET = {
             { { 129, 141, 1, 1000 }, { 127, 139, 1, 1000 }, { 128, 140, 1, 1000 } }, // songoku - thien xin hang - kirin
@@ -329,6 +379,9 @@ public class RewardService {
                 }
             }
         }
+        if(mob!=null && mob.isDie())list.addAll(kaizenItems(mob,player,mob.zone,
+                mob.lvMob>0?nro.progression.KaizenDropConfig.SourceType.ELITE_MOB:nro.progression.KaizenDropConfig.SourceType.NORMAL_MOB,
+                "",mob.tempId,x,yEnd));
         return list;
     }
 

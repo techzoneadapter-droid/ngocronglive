@@ -42,6 +42,7 @@ public final class PlayerProgressionRuntimeTest {
  static Probe make(sun.misc.Unsafe memory)throws Exception {
   var p=(Probe)memory.allocateInstance(Probe.class);NPointExactStatsTest.initialize(p);p.isBoss=false;p.id=250;
   p.session=(Session)memory.allocateInstance(Session.class);p.session.userId=77;
+  p.playerTask=new nro.models.task.TaskPlayer(p);p.playerTask.taskMain=new nro.models.task.TaskMain();p.playerTask.taskMain.id=999;
   p.nPoint.hpg=500;p.nPoint.mpg=200;p.nPoint.dameg=30;p.nPoint.defg=40;p.nPoint.calPoint();
   p.nPoint.hp=250;p.nPoint.mp=100;return p;
  }

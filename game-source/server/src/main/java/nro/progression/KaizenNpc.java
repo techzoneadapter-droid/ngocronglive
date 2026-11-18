@@ -49,6 +49,8 @@ public final class KaizenNpc extends Npc {
         }
     }
     private static String guide() {
-        return "Vương miện: boss Thần Linh.\nVòng tay: quái tinh anh và boss.\nVòng cổ: nhiệm vụ hằng ngày hoặc đổi thưởng.\nÁo choàng: boss cuối phó bản.\nMặt nạ: Cell, Broly, Ma Bư, Black Goku.\nKhăn choàng: Đại Hội Võ Thuật và sự kiện.\nHào quang sau đầu: boss thần cấp cao và ghép mảnh.\nTrang bị nâng cấp tối đa +7; khảm sao theo giới hạn trang bị.";
+        StringBuilder text=new StringBuilder("Ghép mảnh thành công 100%. Trang bị nhận cấp +0.\n");
+        for(var recipe:KaizenRecipes.values())text.append(recipe.displayName).append(": ").append(recipe.fragments).append(" mảnh + ").append(String.format(java.util.Locale.ROOT,"%,d",recipe.gold)).append(" vàng.\n");
+        return text.append("Nâng cấp tối đa +7; khảm sao theo giới hạn trang bị.\nCác khu săn Thần Trang mới chưa mở.").toString(); khảm sao theo giới hạn trang bị.";
     }
 }

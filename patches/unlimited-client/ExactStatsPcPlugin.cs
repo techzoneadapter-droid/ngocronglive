@@ -49,6 +49,7 @@ internal static class ExactPcPoll { static void Postfix() { ExactPc.Poll(); } }
 [HarmonyPatch(typeof(G1.Panel), "paintItemBodyBagInfo", new Type[] { typeof(G1.mGraphics), typeof(int), typeof(int) })]
 internal static class ExactPcInventoryHeader
 {
+    static bool Prepare() { return AccessTools.Method(typeof(G1.Panel),"paintItemBodyBagInfo",new Type[]{typeof(G1.mGraphics),typeof(int),typeof(int)})!=null; }
     internal static bool Prefix(G1.Panel __instance, G1.mGraphics __0, int __1, int __2)
     {
         var actor = G1.Char.myCharz();
@@ -65,5 +66,6 @@ internal static class ExactPcInventoryHeader
 [HarmonyPatch(typeof(G1.Panel), "paintItemBodyBagInfo", new Type[] { typeof(G1.mGraphics) })]
 internal static class ExactPcInventoryTop
 {
+    static bool Prepare() { return AccessTools.Method(typeof(G1.Panel),"paintItemBodyBagInfo",new Type[]{typeof(G1.mGraphics)})!=null; }
     static bool Prefix(G1.Panel __instance, G1.mGraphics __0) { return ExactPcInventoryHeader.Prefix(__instance, __0, __instance.X + 60, 0); }
 }

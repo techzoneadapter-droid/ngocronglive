@@ -1438,8 +1438,8 @@ public class NPoint {
     // **************************************************************************
     // POWER - TIEM NANG
     public void powerUp(long power) {
-        if (nro.progression.PlayerProgressionRuntime.reward(player, power, 0)) return;
-        this.power = ProgressionMath.addReward(this.power, power);
+        if (!nro.progression.PlayerProgressionRuntime.reward(player, power, 0))
+            this.power = ProgressionMath.addReward(this.power, power);
         TaskService.gI().checkDoneTaskPower(player, this.power);
     }
 

@@ -55,3 +55,13 @@ Run `powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/TEST-PROGRE
 3. Actual boss types and exactly-once durable defeat advancement; apply new stats only at respawn.
 4. Seven equipment slots and Kaizen adapters to existing CombineServiceNew. Use original inventory/trade/currency rules and configured source-specific drops.
 5. Runtime and regression checks, commit and PR. No merge or live deployment without the user's instruction.
+
+
+## Integration evidence — 18/11/2026
+
+- Isolated lab `outputs/NERO-VO-HAN-LOCAL` uses a copied database on loopback port 15484 and game port 14615. Production is untouched. Original QA remains separate.
+- Real PC client login succeeded as local fixture player 6 in map 84. ExactStatsPc loaded after handling the older PC-only inventory header signature; `nero_progression_state` contains player 6, proving negotiated runtime attach. Screenshot/log retained in lab logs. This is login/transport evidence, not a completed combat/menu/equipment audit.
+- Server startup actually installed Kaizen NPC/catalog and configured Kuku/Rambo growth. Log `KAIZEN_DROP_CONFIG enabled=0 pending=14` confirms future source rules remain disabled per owner clarification. No new map or boss created from ZIP prototypes.
+- Owner supplied final three-stat equipment balance on 18/11; all percentages multiplied by 100 in `KaizenStats`. Catalog keeps existing IDs. Forging and whole drops share these options, +0 by omission of upgrade option.
+- Source drop integration and test scope are documented in `KAIZEN-DROP-PREPARATION.md`. Native RewardService/ItemMap concurrency test and 140000-draw boundary enumeration pass. MariaDB crafting/progression/boss tests pass after database restart with the approved three-stat gear.
+- Old pending statements above are historical: bootstrap/runtime/client transport now run locally, while full seven-slot UI, actual Kaizen upgrade/socket/trade roundtrips, arbitrary-precision combat on all target types and mobile exact-stat synchronization remain unfinished. Do not advertise a complete unlimited release.

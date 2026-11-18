@@ -19,6 +19,7 @@ public final class KaizenCatalogTest {
    if(catalog.forge().size()!=7 || Manager.ITEM_TEMPLATES.size()!=34)throw new AssertionError("seven real gear/fragment pairs");
    for(var recipe:KaizenRecipes.values()) {
     var binding=catalog.forge().get(recipe);
+    if(binding.options().length()!=3 || !binding.options().toString().equals(KaizenStats.options(recipe).toString()))throw new AssertionError("owner-approved x100 options");
     if(!Manager.ITEM_TEMPLATES.get(binding.fragmentId()).name.equals("Mảnh "+recipe.displayName))throw new AssertionError("fragment runtime entry");
     if(!Manager.ITEM_TEMPLATES.get(binding.equipmentId()).name.equals(recipe.displayName))throw new AssertionError("gear runtime entry");
    }
