@@ -8,7 +8,7 @@ using Il2CppInterop.Runtime.Injection;
 using UnityEngine;
 using HarmonyLib;
 
-[BepInPlugin("nero.qa.unlimited.local", "Unlimited isolated local QA", "0.1.3")]
+[BepInPlugin("nero.qa.unlimited.local", "Unlimited isolated local QA", "0.1.4")]
 public sealed class UnlimitedLocalQa : BasePlugin {
  public override void Load() {
   if(!Environment.GetCommandLineArgs().Contains("-unlimitedLocalQa"))return;
@@ -21,6 +21,9 @@ public sealed class UnlimitedLocalQaStep : MonoBehaviour {
  private float next=8;private bool sent,done;
  private int phase;
  private int gearIndex;private short gearId;
+ private int beforeMain,beforeStone,stoneId,attempts;private long beforeGold;
+ private G1.Item Bag(short id){var items=G1.Char.myCharz().arrItemBag;for(int i=0;i<items.Length;i++)if(items[i]?.template?.id==id)return items[i];return null;}
+ private int Option(G1.Item item,int id){if(item?.itemOption!=null)foreach(var option in item.itemOption)if(option?.optionTemplate?.id==id)return option.param;return 0;}
  private static readonly string Lab=Path.GetFullPath(Path.Combine(Path.GetDirectoryName(System.Diagnostics.Process.GetCurrentProcess().MainModule.FileName),".."));
  public void Update() {
   Application.runInBackground=true;
@@ -38,6 +41,11 @@ public sealed class UnlimitedLocalQaStep : MonoBehaviour {
    if(screen.GetIl2CppType().Name=="GameScr" && !G1.Char.isLoadingMap) {
     var actor=G1.Char.myCharz();
     if(actor==null)return;
+    if(Environment.GetCommandLineArgs().Contains("-unlimitedUpgradeReview")) {
+     for(int slot=13;slot<20;slot++)if(Option(actor.arrItemBody[slot],72)!=1)throw new InvalidOperationException("Upgrade +1 lost after relog slot="+slot);
+     var review=G1.GameCanvas.panel;review.setTypeMain();review.currentTabIndex=1;AccessTools.Method(typeof(G1.Panel),"setTabInventory").Invoke(review,new object[]{true});review.show();review.cmy=review.cmtoY=Math.Min(13*24,review.cmyLim);
+     File.AppendAllText(Path.Combine(Lab,"logs/client-qa.log"),"KAIZEN_ALL_SEVEN_PLUS1_RELOGIN_PASS"+Environment.NewLine);done=true;return;
+    }
     File.AppendAllText(Path.Combine(Lab,"logs/client-qa.log"),"IN_GAME actor="+actor.charID+" map="+G1.TileMap.mapID+" bodySlots="+(actor.arrItemBody==null?0:actor.arrItemBody.Length)+Environment.NewLine);
     if(phase==0) {phase=1;next=Time.realtimeSinceStartup+5;return;}
     if(phase==1) {
@@ -72,7 +80,9 @@ public sealed class UnlimitedLocalQaStep : MonoBehaviour {
      if(actor.arrItemBody[13+gearIndex]!=null)throw new InvalidOperationException("Unequip failed at slot "+(13+gearIndex));
      for(int i=0;i<actor.arrItemBag.Length;i++)if(actor.arrItemBag[i]?.template?.id==gearId) {
       File.AppendAllText(Path.Combine(Lab,"logs/client-qa.log"),"KAIZEN_CLIENT_UNEQUIP_PASS id="+gearId+" slot="+(13+gearIndex)+Environment.NewLine);
-      G1.Service.gI().getItem(4,(sbyte)i);phase=10;return;
+      var gear=actor.arrItemBag[i];beforeMain=gear.itemOption[0].param;
+      stoneId=new int[]{223,222,224,221,220}[gear.template.type];
+      G1.Service.gI().openMenu(81);phase=11;return;
      }
      throw new InvalidOperationException("Unequipped gear missing from inventory "+gearId);
     }
@@ -81,6 +91,26 @@ public sealed class UnlimitedLocalQaStep : MonoBehaviour {
      File.AppendAllText(Path.Combine(Lab,"logs/client-qa.log"),"KAIZEN_CLIENT_REEQUIP_PASS id="+gearId+" slot="+(13+gearIndex)+Environment.NewLine);
      if(++gearIndex<7){phase=8;return;}
      File.AppendAllText(Path.Combine(Lab,"logs/client-qa.log"),"KAIZEN_ALL_SEVEN_NETWORK_EQUIP_PASS"+Environment.NewLine);done=true;return;
+    }
+    if(phase==11){G1.GameCanvas.menu.showMenu=false;G1.Service.gI().confirmMenu(81,2);phase=12;return;}
+    if(phase==12){
+     var stone=Bag((short)stoneId);var gear=Bag(gearId);
+     if(stone==null || stone.quantity<3 || gear==null)throw new InvalidOperationException("Upgrade materials missing");
+     beforeStone=stone.quantity;beforeGold=actor.xu;
+     var selected=new G1.MyVector();selected.addElement(gear);selected.addElement(stone);G1.Service.gI().combine(1,selected);phase=13;return;
+    }
+    if(phase==13){
+     if(!G1.GameCanvas.menu.showMenu)throw new InvalidOperationException("Upgrade confirmation missing");
+     ScreenCapture.CaptureScreenshot(Path.Combine(Lab,"logs/upgrade-confirm-"+gearId+".png"));
+     G1.GameCanvas.menu.showMenu=false;G1.Service.gI().confirmMenu(81,0);phase=14;return;
+    }
+    if(phase==14){
+     var gear=Bag(gearId);var stone=Bag((short)stoneId);
+     if(gear==null || stone==null || stone.quantity!=beforeStone-3 || actor.xu>=beforeGold)throw new InvalidOperationException("Upgrade cost/stone debit mismatch");
+     if(Option(gear,72)==0){if(++attempts>12)throw new InvalidOperationException("No success after 12 natural rolls");phase=12;return;}
+     if(Option(gear,72)!=1 || gear.itemOption[0].param!=beforeMain+beforeMain/10)throw new InvalidOperationException("Upgrade +1/main stat mismatch");
+     File.AppendAllText(Path.Combine(Lab,"logs/client-qa.log"),"KAIZEN_CLIENT_UPGRADE_PASS id="+gearId+" level=1 main="+beforeMain+"->"+gear.itemOption[0].param+" stone="+beforeStone+"->"+stone.quantity+" gold="+beforeGold+"->"+actor.xu+Environment.NewLine);
+     attempts=0;G1.GameCanvas.panel.hideNow();G1.Service.gI().getItem(4,(sbyte)gear.indexUI);phase=10;return;
     }
    }
    if(sent || screen.GetIl2CppType().Name!="ServerListScreen")return;

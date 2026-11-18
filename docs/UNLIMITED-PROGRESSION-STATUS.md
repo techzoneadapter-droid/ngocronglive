@@ -111,3 +111,14 @@ The previous image-only grounding claim was insufficient. Inspected actual clien
 - Added Kaizen portrait resource32064, scoped PC portrait renderer using the approved source atlas head, and native NPC avatar binding. Screenshot local-kaizen-upgrade-menu.png confirms correct face instead of trousers and corrected Thần Trang instruction.
 - Live network QA0.1.3 sends Service.getItem(5,slot) and Service.getItem(4,bagIndex) for each of seven new pieces, checking both returned body and bag state. This is distinct from direct server fixture equip tests. Confirmed KAIZEN_ALL_SEVEN_NETWORK_EQUIP_PASS: client successfully unequipped and re-equipped IDs2182/2184/2186/2188/2190/2192/2194 in slots13–19; server-error.log had no application exception during this run.
 - User accepted grass-edge NPC placement; soleOffset3 remains unchanged.
+
+
+### Natural-probability upgrade client run
+
+- QA0.1.4 now unequips each gear, opens native Kaizen upgrade panel, selects gear and type-matched stone through Service.combine(1, items), confirms through Service.confirmMenu, verifies option72 level1, +10% main stat and exactly3 stones/positive gold debit, then re-equips.
+- Uses original level0 80% probability. First crown attempt failed naturally and charged correct resources; fixture lacked enough stones, so offline local-only SeedLocalUpgrade replenished player6 with999 of stones220–224 and100B gold, restoring unequipped gear. No production data or rates changed.
+- Real client pass markers recorded for crown/bracelet/necklace500->550 and cape400->440. Remaining pieces continue in the active client; full summary appended after completion.
+- Deterministic actual CombineServiceNew regression still passes +0 through +7,8 holes/8 sockets, unchanged secondary stats, legacy-item compatibility and cap no-charge checks. Do not confuse this fixture with a natural all-level client run.
+
+- Completed natural client +1 upgrades for all seven IDs:2182/2184/2186 main500->550,2188/2190/2192/2194 main400->440. Each successful attempt consumed3 matched stones and10,000 gold; natural failures consumed the same costs without gaining level. All seven re-equipped. This client run covers +0->+1; +2..+7 are covered by deterministic actual-method tests, not falsely labeled as live client completion.
+`n- Real client logout/relogin verified KAIZEN_ALL_SEVEN_PLUS1_RELOGIN_PASS, all slots13–19 retain option72=1; local client left with inventory open for review.
