@@ -23,7 +23,7 @@ import nro.services.func.ChangeMapService;
 import nro.utils.Log;
 import nro.utils.SkillUtil;
 import nro.utils.Util;
-import lombok.Setter;
+import nro.progression.BossProgressionRuntime;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -65,8 +65,9 @@ public abstract class Boss extends Player implements BossInterface {
 
     // --------------------------------------------------------------------------
     protected BossData data;
-    @Setter
     protected byte status;
+    public void setStatus(byte status) { this.status=status; }
+    private BossProgressionRuntime.Encounter progression;
     protected short[] outfit;
     protected byte typeDame;
     protected byte typeHp;
@@ -458,6 +459,7 @@ public abstract class Boss extends Player implements BossInterface {
 
     @Override
     public void die() {
+        if(progression!=null)progression.died();
         setJustRest();
         changeStatus(DIE);
     }
@@ -594,7 +596,10 @@ public abstract class Boss extends Player implements BossInterface {
 
     @Override
     public void respawn() {
+        if(progression==null)progression=BossProgressionRuntime.forBoss(this);
+        if(progression!=null)progression.beforeRespawn();
         this.init();
+        if(progression!=null)progression.afterInit();
         this.indexTalkBefore = 0;
         this.indexTalkAfter = 0;
         this.nPoint.setFullHpMp();

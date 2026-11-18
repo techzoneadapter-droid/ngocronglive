@@ -74,5 +74,5 @@ public final class BossProgressionRepository {
     }
     private static String encode(BossProgression state){return new JSONObject(state.snapshot()).toString();}
     private static void transaction(Connection c)throws SQLException {if(c.getAutoCommit())throw new SQLException("Boss progression requires caller-owned transaction");}
-    private static void key(String key){if(key==null || !key.matches("[A-Za-z0-9_.:-]{1,128}"))throw new IllegalArgumentException("Invalid boss or spawn key");}
+    private static void key(String key){if(key==null || !key.matches("[A-Za-z0-9_$.:\\-]{1,128}"))throw new IllegalArgumentException("Invalid boss or spawn key");}
 }

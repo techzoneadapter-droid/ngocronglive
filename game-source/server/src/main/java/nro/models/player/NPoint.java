@@ -1687,6 +1687,12 @@ public class NPoint {
     /** Call only after a confirmed progression transaction; no inventory mutation. */
     public void bindUnlimitedBase(UnlimitedProgression state) { this.unlimitedBase = java.util.Objects.requireNonNull(state); }
 
+    /** Boss spawn initialization must start from its original BossData, not the previous grown state. */
+    public synchronized void clearExactStateForRespawn() {
+        unlimitedBase=null;exactHp=exactMp=null;
+        exactHpMax=exactMpMax=exactDamage=exactDefense=null;
+    }
+
     private BigInteger exactBase(UnlimitedProgression.Stat stat, int legacy) {
         return unlimitedBase == null ? BigInteger.valueOf(legacy) : unlimitedBase.get(stat);
     }

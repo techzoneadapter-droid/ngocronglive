@@ -44,16 +44,22 @@ try {
     $playerSource=Join-Path $root 'game-source/server/src/main/java/nro/models/player'
     & javac -proc:none -encoding UTF-8 -cp "$classes;$runtime" -d $classes (Join-Path $playerSource 'NPoint.java') (Join-Path $playerSource 'ProgressionMath.java') (Join-Path $src 'ExactCombat.java') (Join-Path $src 'BossEncounter.java') (Join-Path $root 'tests/NPointExactStatsTest.java') (Join-Path $root 'tests/BossEncounterDatabaseTest.java')
     if($LASTEXITCODE){throw 'Boss encounter test compilation failed'}
+    & javac -proc:none -encoding UTF-8 -cp "$classes;$runtime" -d $classes (Join-Path $root 'game-source/server/src/main/java/nro/models/boss/Boss.java') (Join-Path $src 'BossProgressionRuntime.java') (Join-Path $root 'tests/BossRuntimeDatabaseTest.java')
+    if($LASTEXITCODE){throw 'Boss runtime compilation failed'}
     $jdbc = "jdbc:mysql://127.0.0.1:$Port/nero_progression_test?useSSL=false&allowPublicKeyRetrieval=true"
     & java -cp "$classes;$runtime" nro.progression.ProgressionRepositoryTest $jdbc seed
     if($LASTEXITCODE){throw 'Repository integration tests failed'}
     & java -cp "$classes;$runtime" nro.progression.BossEncounterDatabaseTest $jdbc seed
     if($LASTEXITCODE){throw 'Boss encounter integration test failed'}
+    & java -cp "$classes;$runtime" nro.progression.BossRuntimeDatabaseTest $jdbc seed
+    if($LASTEXITCODE){throw 'Actual boss lifecycle tests failed'}
     Stop-TestDatabase
     Start-TestDatabase
     & java -cp "$classes;$runtime" nro.progression.ProgressionRepositoryTest $jdbc reopen
     if($LASTEXITCODE){throw 'Database restart verification failed'}
     & java -cp "$classes;$runtime" nro.progression.BossEncounterDatabaseTest $jdbc reopen
     if($LASTEXITCODE){throw 'Boss encounter restart verification failed'}
+    & java -cp "$classes;$runtime" nro.progression.BossRuntimeDatabaseTest $jdbc reopen
+    if($LASTEXITCODE){throw 'Actual boss lifecycle restart failed'}
     Write-Host "PASS PROGRESSION_DATABASE_TESTS ARTIFACTS=$stage"
 } finally { Stop-TestDatabase }
