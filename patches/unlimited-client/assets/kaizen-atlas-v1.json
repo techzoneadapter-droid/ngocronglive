@@ -1,0 +1,12 @@
+{
+  "tool": "image_gen builtin",
+  "source": "User-provided Kaizen blacksmith reference, 18/11/2026",
+  "prompt": "Preserve supplied blacksmith, full body and hammer; four equal transparent cells with successive pale cyan hammer-energy flames; same pose/scale/foot baseline; no redesign, text or background.",
+  "frames": 4,
+  "fps": 7,
+  "runtime_height": 72,
+  "body_bob_px": 0,
+  "status": "local preview, not published to mobile/production",
+  "native_y_to_visible_sole_px": 3,
+  "placement_note": "Revision4: restore sole to grass-edge depth; fixed feet, animated hammer energy only. Previous offset10 placed NPC in foreground road and was rejected."
+}

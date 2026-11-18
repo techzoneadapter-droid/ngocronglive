@@ -45,6 +45,7 @@ public class Controller {
         long st = System.currentTimeMillis();
         try {
             Player player = _session.player;
+            if (nro.progression.ExactStatsChannel.request(_session, _msg)) return;
             byte cmd = _msg.command;
             if (Manager.debug) {
                 System.out.println("CMD receive: " + cmd);

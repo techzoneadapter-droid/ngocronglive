@@ -979,6 +979,7 @@ public class PlayerDAO {
                         ps.setString(51, checkNhanQua);
                         ps.setInt(52, (int) player.id);
                         ps.executeUpdate();
+                        nro.progression.PlayerProgressionRuntime.saveVitals(connection,player);
                         if (updateTimeLogout) {
                             AccountDAO.updateAccoutLogout(player.getSession());
                         }

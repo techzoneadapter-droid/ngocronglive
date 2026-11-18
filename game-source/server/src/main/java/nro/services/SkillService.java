@@ -525,7 +525,7 @@ public class SkillService {
     private void phanSatThuong(Player plAtt, Player plTarget, int dame) {
         int percentPST = plTarget.nPoint.tlPST;
         if (percentPST != 0) {
-            int damePST = dame * percentPST / 100;
+            int damePST = (int) Math.min(Integer.MAX_VALUE, Math.max(0L, (long) dame * percentPST / 100));
             Message msg;
             try {
                 msg = new Message(56);
@@ -564,8 +564,8 @@ public class SkillService {
     private void hutHPMP(Player player, int dame, boolean attackMob) {
         int tiLeHutHp = player.nPoint.getTileHutHp(attackMob);
         int tiLeHutMp = player.nPoint.getTiLeHutMp();
-        int hpHoi = dame * tiLeHutHp / 100;
-        int mpHoi = dame * tiLeHutMp / 100;
+        int hpHoi = (int) Math.min(Integer.MAX_VALUE, Math.max(0L, (long) dame * tiLeHutHp / 100));
+        int mpHoi = (int) Math.min(Integer.MAX_VALUE, Math.max(0L, (long) dame * tiLeHutMp / 100));
         if (hpHoi > 0 || mpHoi > 0) {
             PlayerService.gI().hoiPhuc(player, hpHoi, mpHoi);
         }
@@ -575,10 +575,16 @@ public class SkillService {
         if (plInjure.effectSkill.anTroi) {
             plAtt.nPoint.isCrit100 = true;
         }
-        int dameHit = plInjure.injured(plAtt, miss ? 0 : damage != -1 ? damage : plAtt.nPoint.getDameAttack(false),
-                false, false);
+        java.math.BigInteger exactHit = nro.progression.ExactSkillDamage.hit(plAtt, plInjure, miss, damage);
+        int dameHit = exactHit == null
+                ? plInjure.injured(plAtt, miss ? 0 : damage != -1 ? damage : plAtt.nPoint.getDameAttack(false), false, false)
+                : nro.progression.ExactSkillDamage.legacy(exactHit);
         phanSatThuong(plAtt, plInjure, dameHit);
         hutHPMP(plAtt, dameHit, false);
+        if (exactHit != null) {
+            nro.progression.ExactStatsChannel.broadcast(plInjure);
+            nro.progression.ExactStatsChannel.broadcast(plAtt);
+        }
         Message msg;
         try {
             msg = new Message(-60);

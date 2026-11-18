@@ -339,6 +339,7 @@ public class GodGK {
                     if (player.inventory.itemsBody.size() == 12) {
                         player.inventory.itemsBody.add(ItemService.gI().createItemNull());
                     }
+                    nro.progression.KaizenEquipment.ensureSlots(player);
                     dataArray.clear();
                     dataObject.clear();
 

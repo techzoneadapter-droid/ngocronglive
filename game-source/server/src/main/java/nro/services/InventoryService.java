@@ -39,6 +39,32 @@ public class InventoryService {
         return copyList(player.inventory.itemsBag);
     }
 
+    /** Existing release ABI used by AdminGrantItems; keep native stacking rules. */
+    public boolean canStack999(Item item) {
+        return item != null && item.isNotNullItem() && isItemIncremental(item)
+                && isItemIncrementalOption(item) != 1;
+    }
+
+    /** Release compatibility: compare option multisets, including trade/card flags. */
+    public static boolean sameStackAttributes(Item first, Item second) {
+        if (!first.isNotNullItem() || !second.isNotNullItem()
+                || first.template.id != second.template.id) return false;
+        boolean timed = first.itemOptions.stream().anyMatch(o -> o.optionTemplate.id == 93)
+                || second.itemOptions.stream().anyMatch(o -> o.optionTemplate.id == 93);
+        if (timed && first.createTime != second.createTime) return false;
+        return stackOptionCounts(first).equals(stackOptionCounts(second));
+    }
+
+    private static java.util.Map<String,Integer> stackOptionCounts(Item item) {
+        var counts = new java.util.HashMap<String,Integer>();
+        for (ItemOption option : item.itemOptions) {
+            if (option.optionTemplate.id == 73 && option.param == 0) continue;
+            String key = option.optionTemplate.id + ":" + option.param + ":" + option.activeCard;
+            counts.merge(key, 1, Integer::sum);
+        }
+        return counts;
+    }
+
     private List<Item> copyList(List<Item> items) {
         List<Item> list = new ArrayList<>();
         for (Item item : items) {
@@ -453,6 +479,12 @@ public class InventoryService {
                                 case 39:
                                     index = 12;
                                     break;
+                            }
+                            int kaizenSlot = nro.progression.KaizenEquipment.slot(item.template.id);
+                            if (kaizenSlot >= 0) {
+                                if (player.isPet || player.isBoss || player.isMiniPet) return sItem;
+                                nro.progression.KaizenEquipment.ensureSlots(player);
+                                index = (byte) kaizenSlot;
                             }
                             sItem = player.inventory.itemsBody.get(index);
                             player.inventory.itemsBody.set(index, item);
@@ -899,6 +931,7 @@ public class InventoryService {
             for (int i = 0; i < player.inventory.itemsBag.size(); i++) {
                 Item item = player.inventory.itemsBag.get(i);
                 if (!item.isNotNullItem()) {
+                    msg.writer().writeShort(-1);
                     continue;
                 }
                 msg.writer().writeShort(item.template.id);
