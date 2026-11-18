@@ -1408,12 +1408,12 @@ public class NPoint {
     // **************************************************************************
     // POWER - TIEM NANG
     public void powerUp(long power) {
-        this.power += power;
+        this.power = ProgressionMath.addReward(this.power, power);
         TaskService.gI().checkDoneTaskPower(player, this.power);
     }
 
     public void tiemNangUp(long tiemNang) {
-        this.tiemNang += tiemNang;
+        this.tiemNang = ProgressionMath.addReward(this.tiemNang, tiemNang);
     }
 
     public void increasePoint(byte type, short point) {
@@ -1427,8 +1427,8 @@ public class NPoint {
         long tiemNangUse = 0;
         if (type == 0) {
             int pointHp = point * 20;
-            tiemNangUse = point * (2 * (this.hpg + 1000) + pointHp - 20) / 2;
-            if ((this.hpg + pointHp) <= powerLimit.getHp()) {
+            tiemNangUse = ProgressionMath.arithmeticCost(point, (long) this.hpg + 1000, 20, 1);
+            if (((long) this.hpg + pointHp) <= powerLimit.getHp()) {
                 if (doUseTiemNang(tiemNangUse)) {
                     hpg += pointHp;
                     updatePoint = true;
@@ -1441,8 +1441,8 @@ public class NPoint {
         }
         if (type == 1) {
             int pointMp = point * 20;
-            tiemNangUse = point * (2 * (this.mpg + 1000) + pointMp - 20) / 2;
-            if ((this.mpg + pointMp) <= powerLimit.getMp()) {
+            tiemNangUse = ProgressionMath.arithmeticCost(point, (long) this.mpg + 1000, 20, 1);
+            if (((long) this.mpg + pointMp) <= powerLimit.getMp()) {
                 if (doUseTiemNang(tiemNangUse)) {
                     mpg += pointMp;
                     updatePoint = true;
@@ -1454,8 +1454,8 @@ public class NPoint {
             }
         }
         if (type == 2) {
-            tiemNangUse = point * (2 * this.dameg + point - 1) / 2 * 100;
-            if ((this.dameg + point) <= powerLimit.getDamage()) {
+            tiemNangUse = ProgressionMath.arithmeticCost(point, this.dameg, 1, 100);
+            if (((long) this.dameg + point) <= powerLimit.getDamage()) {
                 if (doUseTiemNang(tiemNangUse)) {
                     dameg += point;
                     updatePoint = true;
@@ -1467,8 +1467,8 @@ public class NPoint {
             }
         }
         if (type == 3) {
-            tiemNangUse = 2 * (this.defg + 5) / 2 * 100000;
-            if ((this.defg + point) <= powerLimit.getDefense()) {
+            tiemNangUse = ((long) this.defg + 5) * 100000;
+            if (((long) this.defg + point) <= powerLimit.getDefense()) {
                 if (doUseTiemNang(tiemNangUse)) {
                     defg += point;
                     updatePoint = true;
@@ -1480,11 +1480,8 @@ public class NPoint {
             }
         }
         if (type == 4) {
-            tiemNangUse = 50000000L;
-            for (int i = 0; i < this.critg; i++) {
-                tiemNangUse *= 5L;
-            }
-            if ((this.critg + point) <= powerLimit.getCritical()) {
+            tiemNangUse = ProgressionMath.criticalCost(this.critg);
+            if (((long) this.critg + point) <= powerLimit.getCritical()) {
                 if (doUseTiemNang(tiemNangUse)) {
                     critg += point;
                     updatePoint = true;
@@ -1501,7 +1498,7 @@ public class NPoint {
     }
 
     private boolean doUseTiemNang(long tiemNang) {
-        if (this.tiemNang < tiemNang) {
+        if (tiemNang < 0 || this.tiemNang < tiemNang) {
             Service.getInstance().sendThongBaoOK(player, "Bạn không đủ tiềm năng");
             return false;
         }
