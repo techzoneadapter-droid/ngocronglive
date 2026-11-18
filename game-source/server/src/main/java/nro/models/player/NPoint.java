@@ -1605,7 +1605,7 @@ public class NPoint {
     }
 
     public long calPercent(long param, int percent) {
-        return param * percent / 100;
+        return ProgressionMath.percent(param, percent);
     }
 
     public void dispose() {

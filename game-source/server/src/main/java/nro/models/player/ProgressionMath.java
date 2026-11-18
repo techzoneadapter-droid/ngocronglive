@@ -1,5 +1,7 @@
 package nro.models.player;
 
+import java.math.BigInteger;
+
 /** Checked arithmetic for the existing progression and potential APIs. */
 final class ProgressionMath {
     private ProgressionMath() {
@@ -45,5 +47,17 @@ final class ProgressionMath {
             cost *= 5;
         }
         return cost;
+    }
+
+    static long percent(long value, int percent) {
+        try {
+            return Math.multiplyExact(value, (long) percent) / 100;
+        } catch (ArithmeticException overflow) {
+            BigInteger result = BigInteger.valueOf(value).multiply(BigInteger.valueOf(percent))
+                    .divide(BigInteger.valueOf(100));
+            if (result.compareTo(BigInteger.valueOf(Long.MAX_VALUE)) > 0) return Long.MAX_VALUE;
+            if (result.compareTo(BigInteger.valueOf(Long.MIN_VALUE)) < 0) return Long.MIN_VALUE;
+            return result.longValueExact();
+        }
     }
 }

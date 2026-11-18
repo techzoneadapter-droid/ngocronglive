@@ -24,7 +24,15 @@ public final class ProgressionMathTest {
         check(ProgressionMath.addReward(100,-1)==100,"negative reward");
         check(ProgressionMath.criticalCost(0)==50000000L,"first critical cost");
         check(ProgressionMath.criticalCost(100)==-1,"critical overflow refused");
-        System.out.println("PASS 20000 exact progression cost comparisons and overflow boundaries");
+        for (int trial=0; trial<20000; trial++) {
+            long value=random.nextLong(); int percent=random.nextInt();
+            BigInteger exact=BigInteger.valueOf(value).multiply(BigInteger.valueOf(percent)).divide(BigInteger.valueOf(100));
+            long expected=exact.max(BigInteger.valueOf(Long.MIN_VALUE)).min(BigInteger.valueOf(Long.MAX_VALUE)).longValueExact();
+            check(ProgressionMath.percent(value,percent)==expected,"percentage oracle");
+        }
+        check(ProgressionMath.percent(Long.MAX_VALUE,50)==Long.MAX_VALUE/2,"large percentage before division");
+        check(ProgressionMath.percent(-101,1)==-1,"signed truncation unchanged");
+        System.out.println("PASS 40000 exact cost/percentage comparisons and overflow boundaries");
     }
     private static void check(boolean condition,String message) {
         if(!condition)throw new AssertionError(message);
