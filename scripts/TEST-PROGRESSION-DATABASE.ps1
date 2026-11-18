@@ -46,6 +46,8 @@ try {
     if($LASTEXITCODE){throw 'Boss encounter test compilation failed'}
     & javac -proc:none -encoding UTF-8 -cp "$classes;$runtime" -d $classes (Join-Path $root 'game-source/server/src/main/java/nro/models/boss/Boss.java') (Join-Path $src 'BossProgressionRuntime.java') (Join-Path $root 'tests/BossRuntimeDatabaseTest.java')
     if($LASTEXITCODE){throw 'Boss runtime compilation failed'}
+    & javac -proc:none -encoding UTF-8 -cp "$classes;$runtime" -d $classes (Join-Path $src 'KaizenRecipes.java') (Join-Path $src 'KaizenForge.java') (Join-Path $src 'KaizenTransactions.java') (Join-Path $root 'tests/KaizenTransactionsTest.java')
+    if($LASTEXITCODE){throw 'Kaizen compilation failed'}
     $jdbc = "jdbc:mysql://127.0.0.1:$Port/nero_progression_test?useSSL=false&allowPublicKeyRetrieval=true"
     & java -cp "$classes;$runtime" nro.progression.ProgressionRepositoryTest $jdbc seed
     if($LASTEXITCODE){throw 'Repository integration tests failed'}
@@ -53,6 +55,8 @@ try {
     if($LASTEXITCODE){throw 'Boss encounter integration test failed'}
     & java -cp "$classes;$runtime" nro.progression.BossRuntimeDatabaseTest $jdbc seed
     if($LASTEXITCODE){throw 'Actual boss lifecycle tests failed'}
+    & java -cp "$classes;$runtime" nro.progression.KaizenTransactionsTest $jdbc seed
+    if($LASTEXITCODE){throw 'Kaizen transaction tests failed'}
     Stop-TestDatabase
     Start-TestDatabase
     & java -cp "$classes;$runtime" nro.progression.ProgressionRepositoryTest $jdbc reopen
@@ -61,5 +65,7 @@ try {
     if($LASTEXITCODE){throw 'Boss encounter restart verification failed'}
     & java -cp "$classes;$runtime" nro.progression.BossRuntimeDatabaseTest $jdbc reopen
     if($LASTEXITCODE){throw 'Actual boss lifecycle restart failed'}
+    & java -cp "$classes;$runtime" nro.progression.KaizenTransactionsTest $jdbc reopen
+    if($LASTEXITCODE){throw 'Kaizen restart tests failed'}
     Write-Host "PASS PROGRESSION_DATABASE_TESTS ARTIFACTS=$stage"
 } finally { Stop-TestDatabase }

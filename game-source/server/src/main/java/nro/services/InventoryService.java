@@ -454,6 +454,12 @@ public class InventoryService {
                                     index = 12;
                                     break;
                             }
+                            int kaizenSlot = nro.progression.KaizenEquipment.slot(item.template.id);
+                            if (kaizenSlot >= 0) {
+                                if (player.isPet || player.isBoss || player.isMiniPet) return sItem;
+                                nro.progression.KaizenEquipment.ensureSlots(player);
+                                index = (byte) kaizenSlot;
+                            }
                             sItem = player.inventory.itemsBody.get(index);
                             player.inventory.itemsBody.set(index, item);
                         } else {
