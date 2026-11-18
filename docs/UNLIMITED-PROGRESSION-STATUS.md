@@ -98,3 +98,8 @@ Run `powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/TEST-PROGRE
 - ExactVitalsRepository stores current HP/KI decimal strings in separate table initialized with progression schema. PlayerDAO original save connection writes exact vitals for negotiated players; attach restores saved values and clamps to current equipment maxima, using legacy ratio only for first migration.
 - MariaDB tests verify HP1234/KI123 survive new Player attach and database restart;10^100 current-vital serialization and rollback also pass. Full real-client relog with updated PlayerDAO overlay remains under validation; no production rollout.
 - Kaizen combine instructions now mention Thần Trang only when invoked from Kaizen. Other NPC instructions remain unchanged. Portrait still needs dedicated NPC resource mapping.
+
+
+### Grounding correction after user rejection
+
+The previous image-only grounding claim was insufficient. Inspected actual client Npc.paint and Controller map loading: native NPCs receive server y+3, render legs at cy-CharInfo[frame][1][2]+part.dy with native leg-image height. Kaizen now derives the standing foot offset from Bunma (NPC7) using that same data, retains character size, and draws the original TileMap.bong shadow at native NPC origin. Runtime diagnostic confirmed npcY435 and BunmaFootOffset2. New exact plugin version0.1.1 is verified loaded. User visual acceptance remains pending.

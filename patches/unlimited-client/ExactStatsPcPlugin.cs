@@ -5,7 +5,7 @@ using HarmonyLib;
 using UnityEngine;
 using System.IO;
 
-[BepInPlugin("nero.progression.exact", "NERO Exact Stats", "0.1.0")]
+[BepInPlugin("nero.progression.exact", "NERO Exact Stats", "0.1.1")]
 public sealed class ExactStatsPcPlugin : BasePlugin
 {
     public override void Load() { new Harmony("nero.progression.exact").PatchAll(typeof(ExactStatsPcPlugin).Assembly); }
@@ -103,6 +103,19 @@ internal static class ExactHudText {
 [HarmonyPatch(typeof(G1.Npc),"paint")]
 internal static class KaizenNpcArt {
     private static Texture2D atlas;
+    private static bool logged;
+    private static float NativeFootOffset() {
+        // Use Bunma's standing leg placement, exactly as Npc.paint does for ground NPCs.
+        var donor=G1.Npc.arrNpcTemplate[7];
+        var pose=G1.Char.CharInfo[0][1];
+        var leg=G1.GameScr.parts[donor.legId].pi[pose[0]];
+        int imageHeight=0;
+        if(G1.SmallImage.smallImg!=null && leg.id<G1.SmallImage.smallImg.Length && G1.SmallImage.smallImg[leg.id]!=null)
+            imageHeight=G1.SmallImage.smallImg[leg.id][4];
+        if(imageHeight<=0 && G1.SmallImage.imgNew!=null && leg.id<G1.SmallImage.imgNew.Length && G1.SmallImage.imgNew[leg.id]?.img!=null)
+            imageHeight=G1.mGraphics.getImageHeight(G1.SmallImage.imgNew[leg.id].img);
+        return imageHeight>0?-pose[2]+leg.dy+imageHeight:0;
+    }
     static bool Prefix(G1.Npc __instance,G1.mGraphics __0) {
         if(__instance.template==null || __instance.template.name!="Thần Rèn Kaizen")return true;
         if(Event.current==null || Event.current.type!=EventType.Repaint)return false;
@@ -118,7 +131,10 @@ internal static class KaizenNpcArt {
         // Feet are at source row646/724, not the bottom of the transparent atlas cell.
         // Keep the visible sole on the native NPC ground anchor; bob only lifts by at most0.8px.
         float lift=(Mathf.Sin(Time.realtimeSinceStartup*2.7f)+1)*.4f;
-        float x=__instance.cx-width/2,y=__instance.cy-height*(646f/724f)-lift;
+        float nativeOffset=NativeFootOffset();
+        float x=__instance.cx-width/2,y=__instance.cy+nativeOffset-height*(646f/724f)-lift;
+        if(G1.TileMap.bong!=null)__0.drawImage(G1.TileMap.bong,__instance.cx,__instance.cy,3);
+        if(!logged){Debug.Log("KAIZEN_NATIVE_FOOT npcY="+__instance.cy+" BunmaFootOffset="+nativeOffset);logged=true;}
         var rect=new Rect((x+__0.getTranslateX())*zoom,(y+__0.getTranslateY())*zoom,width*zoom,height*zoom);
         var color=GUI.color;
         try{GUI.color=Color.white;Graphics.DrawTexture(rect,atlas,new Rect(frame/4f,0,.25f,1),0,0,0,0);}
