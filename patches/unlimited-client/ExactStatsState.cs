@@ -23,6 +23,16 @@ public sealed class ExactStatsState
         return map == currentMap && zone == currentZone && actors.TryGetValue(id, out actor) ? actor : null;
     }
     public void Clear() { actors.Clear(); map = zone = -1; sequence = -1; }
+    public static string CompactBar(BigInteger value) {
+        string digits=value.ToString(System.Globalization.CultureInfo.InvariantCulture);
+        if(digits.Length<=6)return value.ToString("N0",System.Globalization.CultureInfo.GetCultureInfo("vi-VN"));
+        int group=(digits.Length-1)/3;
+        string[] units={"","k","tr","tỷ","T","P"};
+        if(group>=units.Length)return digits[0]+","+digits.Substring(1,2)+"e"+(digits.Length-1);
+        int leading=digits.Length-group*3;
+        string fraction=digits.Substring(leading,Math.Min(2,digits.Length-leading)).TrimEnd('0');
+        return digits.Substring(0,leading)+(fraction.Length==0?"":","+fraction)+units[group];
+    }
     public static string Compact(BigInteger value)
     {
         string digits = value.ToString(System.Globalization.CultureInfo.InvariantCulture);

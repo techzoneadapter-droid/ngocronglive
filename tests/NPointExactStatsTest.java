@@ -120,7 +120,17 @@ public final class NPointExactStatsTest {
         check(!nro.progression.ExactCombat.hit(point,huge,normalRules).killed(),"dead target does not die twice");
         point.setFullHpMp();
         check(nro.progression.ExactCombat.hit(point,huge.multiply(BigInteger.TEN),normalRules).killed(),"respawn can die again");
-        System.out.println("PASS real NPoint: VIP costume/mount exceed int, equip/unequip/recalculate, 1000 ordinary formula comparisons, 10^100 base stats");
+        var gearCatalog=new java.util.EnumMap<nro.progression.KaizenRecipes,Integer>(nro.progression.KaizenRecipes.class);
+        for(int i=0;i<7;i++){var template=new ItemTemplate();template.id=(short)i;template.type=0;Manager.ITEM_TEMPLATES.add(template);gearCatalog.put(nro.progression.KaizenRecipes.values()[i],i);}
+        nro.progression.KaizenEquipment.install(gearCatalog);
+        var smith=(Subject)memory.allocateInstance(Subject.class);initialize(smith);smith.nPoint.defg=100;
+        smith.inventory.itemsBody.set(0,equipment(3,new int[][]{{94,300}}));calculate.invoke(smith.nPoint);
+        check(smith.nPoint.exactDefense().intValueExact()==1600 && smith.nPoint.tlGiamst==0,"Kaizen armor percent must increase armor rather than grant legacy reduction");
+        smith.inventory.itemsBody.set(1,equipment(5,new int[][]{{94,200}}));calculate.invoke(smith.nPoint);
+        check(smith.nPoint.exactDefense().intValueExact()==2400,"two new armor sources stack");
+        smith.inventory.itemsBody.set(0,equipment(99,new int[][]{{94,30}}));smith.inventory.itemsBody.set(1,new Item());calculate.invoke(smith.nPoint);
+        check(smith.nPoint.exactDefense().intValueExact()==400 && smith.nPoint.tlGiamst==30,"legacy option 94 semantics changed");
+        System.out.println("PASS real NPoint: VIP costume/mount exceed int, equip/unequip/recalculate, 1000 ordinary formula comparisons, 10^100 base stats, Kaizen armor and unchanged legacy reduction");
     }
     public static void initialize(Player p) {
         p.isBoss=true;

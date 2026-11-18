@@ -51,6 +51,6 @@ public final class KaizenNpc extends Npc {
     private static String guide() {
         StringBuilder text=new StringBuilder("Ghép mảnh thành công 100%. Trang bị nhận cấp +0.\n");
         for(var recipe:KaizenRecipes.values())text.append(recipe.displayName).append(": ").append(recipe.fragments).append(" mảnh + ").append(String.format(java.util.Locale.ROOT,"%,d",recipe.gold)).append(" vàng.\n");
-        return text.append("Nâng cấp tối đa +7; khảm sao theo giới hạn trang bị.\nCác khu săn Thần Trang mới chưa mở.").toString(); khảm sao theo giới hạn trang bị.";
+        return text.append("Nâng cấp tối đa +7; khảm sao theo giới hạn trang bị.\nCác khu săn Thần Trang mới chưa mở.").toString();
     }
 }

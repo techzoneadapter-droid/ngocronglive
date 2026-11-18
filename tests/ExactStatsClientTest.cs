@@ -6,6 +6,8 @@ public static class ExactStatsClientTest
     public static void Main(string[] args)
     {
         byte[] bytes=File.ReadAllBytes(args[0]);
+        if(ExactStatsState.CompactBar(new BigInteger(70178749920L))!="70,17tỷ")throw new Exception("HUD overflow formatting");
+        if(ExactStatsState.CompactBar(new BigInteger(999999))!="999.999")throw new Exception("HUD small value formatting");
         var state=ExactStatsClient.Decode(bytes);
         var actor=state.Actors[-1007230];
         if(state.Sequence!=123 || state.Map!=84 || actor.Hp!=BigInteger.Pow(10,100) || actor.HpMax!=2*actor.Hp)

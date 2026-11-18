@@ -58,6 +58,7 @@ public class NPoint {
     private BigInteger exactHpMax, exactMpMax, exactDamage, exactDefense;
     private BigInteger exactHpAdd = BigInteger.ZERO, exactMpAdd = BigInteger.ZERO;
     private BigInteger exactDamageAdd = BigInteger.ZERO, exactDefenseAdd = BigInteger.ZERO;
+    private BigInteger kaizenDefensePercent=BigInteger.ZERO;
     private UnlimitedProgression unlimitedBase;
     private BigInteger exactHp, exactMp;
     public byte speed = 5;
@@ -385,7 +386,10 @@ public class NPoint {
                     teleport = true;
                 }
                 for (ItemOption io : item.itemOptions) {
-                    setPoint(io);
+                    // Legacy option 94 means damage reduction. On new Kaizen gear it is armor %.
+                    if(nro.progression.KaizenEquipment.slot(item.template.id)>=0 && io.optionTemplate.id==94)
+                        kaizenDefensePercent=kaizenDefensePercent.add(BigInteger.valueOf(io.param));
+                    else setPoint(io);
                 }
             }
         }
@@ -944,6 +948,7 @@ public class NPoint {
     }
     private void setDef() {
         BigInteger value = exactBase(UnlimitedProgression.Stat.DEFENSE, this.defg).multiply(BigInteger.valueOf(4)).add(exactDefenseAdd);
+        value=value.add(value.multiply(kaizenDefensePercent).divide(BigInteger.valueOf(100)));
         // đồ
         for (Integer tl : this.tlDef) {
             this.tlGiamst += tl;
@@ -1007,6 +1012,7 @@ public class NPoint {
 
     private void resetPoint() {
         exactHpAdd = exactMpAdd = exactDamageAdd = exactDefenseAdd = BigInteger.ZERO;
+        kaizenDefensePercent=BigInteger.ZERO;
         this.hpAdd = 0;
         this.mpAdd = 0;
         this.dameAdd = 0;
