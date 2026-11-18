@@ -148,7 +148,10 @@ public class CombineServiceNew {
         try {
             msg = new Message(-81);
             msg.writer().writeByte(OPEN_TAB_COMBINE);
-            msg.writer().writeUTF(getTextInfoTabCombine(type));
+            String instruction=getTextInfoTabCombine(type);
+            if(player.iDMark.getNpcChose() instanceof nro.progression.KaizenNpc)
+                instruction=instruction.replace("(Áo, quần, găng, giày hoặc rađa)","(Thần Trang hoặc trang bị)").replace("(Áo,quần,găng,giày hoặc rada)","(Thần Trang hoặc trang bị)");
+            msg.writer().writeUTF(instruction);
             msg.writer().writeUTF(getTextTopTabCombine(type));
             if (player.iDMark.getNpcChose() != null) {
                 msg.writer().writeShort(player.iDMark.getNpcChose().tempId);

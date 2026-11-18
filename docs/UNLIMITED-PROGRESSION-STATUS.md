@@ -90,3 +90,11 @@ Run `powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/TEST-PROGRE
 - Local QA 0.1.2 walks to native NPC distance and sends Service.openMenu(81)/confirmMenu(81,2); real server returns native 5-choice menu and combine panel. Screenshots local-kaizen-root-menu.png/local-kaizen-upgrade-menu.png and marker KAIZEN_NATIVE_ROOT_AND_UPGRADE_PANEL_PASS verified.
 - Remaining UI defects revealed: combine portrait still uses native donor head resource (looks like an equipment icon); combine instruction still lists only old clothes; full exact current HP/KI after repeated login can reflect legacy stored ratios. These are pending, not release-ready.
 - Repeated database test passed including 14 icon bindings and seven persisted equipment recipes, with old templates preserved. Branch remains draft and no production changes made.
+
+
+### NPC grounding and exact current-vital persistence
+
+- Kaizen atlas visible foot baseline is source row646 of724; sprite origin now uses this baseline instead of transparent image bottom. Bob lift ranges0..0.8px. Screenshot local-world-hud-kaizen.png verified soles on native ground after change; character size unchanged.
+- ExactVitalsRepository stores current HP/KI decimal strings in separate table initialized with progression schema. PlayerDAO original save connection writes exact vitals for negotiated players; attach restores saved values and clamps to current equipment maxima, using legacy ratio only for first migration.
+- MariaDB tests verify HP1234/KI123 survive new Player attach and database restart;10^100 current-vital serialization and rollback also pass. Full real-client relog with updated PlayerDAO overlay remains under validation; no production rollout.
+- Kaizen combine instructions now mention Thần Trang only when invoked from Kaizen. Other NPC instructions remain unchanged. Portrait still needs dedicated NPC resource mapping.

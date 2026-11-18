@@ -25,6 +25,7 @@ public final class PlayerProgressionRuntimeTest {
   var player=make(memory);PlayerProgressionRuntime.attach(player);
   if(args[1].equals("reopen")) {
    check(player.nPoint.hpg==2500&&player.nPoint.power==120000000123L,"real player reconnect did not restore exact state");
+   check(player.nPoint.exactHp().equals(BigInteger.valueOf(1234)) && player.nPoint.exactMp().equals(BigInteger.valueOf(123)),"exact current vitals lost after restart");
    System.out.println("PASS actual player progression reconnect after database restart");return;
   }
   check(PlayerProgressionRuntime.active(player)&&player.nPoint.exactHp().intValueExact()==250,"attach preserves HP ratio");
@@ -34,6 +35,15 @@ public final class PlayerProgressionRuntimeTest {
   check(player.nPoint.tiemNang==900000000000L+123-249000,"exact potential debit");
   var other=make(memory);PlayerProgressionRuntime.attach(other);
   check(other.nPoint.hpg==2500&&other.nPoint.tiemNang==player.nPoint.tiemNang,"new player instance restored committed allocation");
+  player.nPoint.setExactVitals(BigInteger.valueOf(1234),BigInteger.valueOf(123));
+  try(Connection c=DriverManager.getConnection(args[0],"root","")){PlayerProgressionRuntime.saveVitals(c,player);}
+  var reconnected=make(memory);PlayerProgressionRuntime.attach(reconnected);
+  check(reconnected.nPoint.exactHp().equals(BigInteger.valueOf(1234))&&reconnected.nPoint.exactMp().equals(BigInteger.valueOf(123)),"current vitals restored from legacy projection");
+  try(Connection c=DriverManager.getConnection(args[0],"root","")) {
+   c.setAutoCommit(false);ExactVitalsRepository.save(c,250,BigInteger.TEN.pow(100),BigInteger.TEN.pow(99));
+   check(ExactVitalsRepository.load(c,250).hp().equals(BigInteger.TEN.pow(100)),"huge vitals truncated");c.rollback();
+   check(ExactVitalsRepository.load(c,250).hp().equals(BigInteger.valueOf(1234)),"vitals rollback failed");
+  }
   try(Connection c=DriverManager.getConnection(args[0],"root","" );var q=c.createStatement();var r=q.executeQuery("SELECT items_bag,items_body FROM player WHERE id=250")) {
    r.next();check(r.getString(1).equals("[]")&&r.getString(2).equals("[]"),"progression touched inventory");
   }

@@ -115,8 +115,10 @@ internal static class KaizenNpcArt {
         }
         int zoom=Math.Max(1,G1.mGraphics.zoomLevel),frame=(int)(Time.realtimeSinceStartup*7)%4;
         float height=72,width=height*(atlas.width/4f)/atlas.height;
-        float bob=Mathf.Sin(Time.realtimeSinceStartup*2.7f)*.8f;
-        float x=__instance.cx-width/2,y=__instance.cy-height+bob;
+        // Feet are at source row646/724, not the bottom of the transparent atlas cell.
+        // Keep the visible sole on the native NPC ground anchor; bob only lifts by at most0.8px.
+        float lift=(Mathf.Sin(Time.realtimeSinceStartup*2.7f)+1)*.4f;
+        float x=__instance.cx-width/2,y=__instance.cy-height*(646f/724f)-lift;
         var rect=new Rect((x+__0.getTranslateX())*zoom,(y+__0.getTranslateY())*zoom,width*zoom,height*zoom);
         var color=GUI.color;
         try{GUI.color=Color.white;Graphics.DrawTexture(rect,atlas,new Rect(frame/4f,0,.25f,1),0,0,0,0);}

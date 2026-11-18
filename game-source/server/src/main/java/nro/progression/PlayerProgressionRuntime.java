@@ -20,15 +20,19 @@ public final class PlayerProgressionRuntime {
                 c.setAutoCommit(false);
                 try {
                     var saved=ProgressionCommands.open(c,player.id,player.getSession().userId);
+                    var vitals=ExactVitalsRepository.load(c,player.id);
                     c.commit();
                     int oldHp=player.nPoint.hp,oldMp=player.nPoint.mp;
                     int oldHpMax=Math.max(1,player.nPoint.hpMax),oldMpMax=Math.max(1,player.nPoint.mpMax);
                     apply(player,saved);player.nPoint.calPoint();
-                    player.nPoint.setExactVitals(player.nPoint.exactHpMax().multiply(BigInteger.valueOf(Math.max(0,oldHp))).divide(BigInteger.valueOf(oldHpMax)),
-                        player.nPoint.exactMpMax().multiply(BigInteger.valueOf(Math.max(0,oldMp))).divide(BigInteger.valueOf(oldMpMax)));
+                    player.nPoint.setExactVitals(vitals==null?player.nPoint.exactHpMax().multiply(BigInteger.valueOf(Math.max(0,oldHp))).divide(BigInteger.valueOf(oldHpMax)):vitals.hp(),
+                        vitals==null?player.nPoint.exactMpMax().multiply(BigInteger.valueOf(Math.max(0,oldMp))).divide(BigInteger.valueOf(oldMpMax)):vitals.ki());
                 }catch(Exception error){c.rollback();throw error;}
             }
         }
+    }
+    public static void saveVitals(Connection connection,Player player)throws SQLException {
+        if(active(player))ExactVitalsRepository.save(connection,player.id,player.nPoint.exactHp(),player.nPoint.exactMp());
     }
     public static boolean reward(Player player,long power,long potential) {
         if(!active(player))return false;

@@ -18,6 +18,7 @@ public final class ProgressionRepository {
     /** Run explicitly at startup, outside a gameplay transaction (DDL can commit implicitly). */
     public static void initialize(Connection connection) throws SQLException {
         if(!connection.getAutoCommit()) throw new SQLException("Initialize schema outside a transaction");
+        ExactVitalsRepository.initialize(connection);
         try(var query=connection.createStatement()) {
             query.executeUpdate("""
                 CREATE TABLE IF NOT EXISTS nero_progression_state (
