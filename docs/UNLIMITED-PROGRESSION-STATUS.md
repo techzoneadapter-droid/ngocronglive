@@ -17,13 +17,17 @@ Development branch: `codex/noel-market-kaizen`. Excluded from the Noel deploymen
 - `ProgressionCommands` provides authenticated character open/reconnect, revision-checked budget allocation and internal power/potential reward operations. All work in caller-owned transactions; update live state only after commit.
 - Durable per-character request keys prevent recharging a retried allocation or duplicating an internal reward. Reusing a key with different inputs is refused. Replays return current state rather than rolling a client back to an old snapshot.
 - MariaDB tests cover simultaneous duplicate allocation requests, account ownership refusal, stale revision refusal, rollback and request/reward replay after database restart. These call the service directly, not the game login UI or Controller.
+- Real `NPoint` equipment formula bodies now compute exact HP/KI/attack/defense, preserving their existing condition/order, including percentage bonuses, transformations and fusion. Flat item options are accumulated exactly too. Compatibility int fields saturate rather than wrap; they are not the authoritative unlimited result.
+- Real `NPoint` attack formulas expose BigInteger results for normal/focused and unfocused skills, critical hits and KI-based damage, with uniform integer damage variation. Legacy callers still receive bounded int projections.
+- Exact defense subtraction and armor consumable reductions have a BigInteger overload. This is not yet an end-to-end HP injury migration.
+- `scripts/TEST-NPOINT-EXACT.ps1 -RuntimeJar <existing-runtime.jar>` compiles the actual modified NPoint and checks VIP equipment beyond int, equip/unequip/recalculate, 1,000 ordinary equipment comparisons, 10^100 base stats, normal/critical/KI attacks and defense buffs. Synthetic player fixtures avoid starting the database/server; no actual client battle has been tested.
 
 Run `powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/TEST-PROGRESSION.ps1`.
 
 ## Not yet implemented or verified
 
 - Unlimited state is not connected to a live character. Database persistence is tested independently; actual login/logout and combat integration remain pending.
-- `NPoint` HP/KI/attack/defense remain int; power/potential remain long. BossData, damage APIs and skill/mob/companion/fusion computations require migration.
+- `NPoint` legacy HP/KI/attack/defense fields remain int; power/potential remain long. Exact derived stats and attack APIs exist but current HP, injury dispatch, BossData, mob damage and callers still need migration. QCKK total-map HP currently uses the legacy long aggregate and is not unlimited yet.
 - Service.point, HP updates, companion stats and combat notifications currently transmit int fields. Existing packets must remain compatible; new clients need negotiated extended decimal fields and rendering.
 - Runtime boss death lifecycle and per-type configuration have not been wired to the tested durable repository. Bosses do not yet grow automatically in the running game.
 - Preserve scripted encounter mechanics and non-attacking Noel boss behavior. Do not apply one global boss multiplier.
