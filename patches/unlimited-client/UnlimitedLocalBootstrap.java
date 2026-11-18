@@ -49,6 +49,71 @@ public final class UnlimitedLocalBootstrap {
    System.out.println("UNLIMITED_QA_BOSS id="+boss.id+" hp="+boss.nPoint.exactHp());
   }
   System.out.println("UNLIMITED_LOCAL_READY game=14615 Kaizen_map=0 exact_stats=true");
+  Thread shopCheck=new Thread(()->{
+   var request=java.nio.file.Path.of("../local-data/bulma-test.request");
+   while(true)try{
+    Thread.sleep(500);
+    var noelRequest=java.nio.file.Path.of("../local-data/noel-boss-test.request");
+    if(java.nio.file.Files.exists(noelRequest)){
+     java.nio.file.Files.delete(noelRequest);
+     var noel=BossManager.gI().getBossById(-1007230);
+     if(noel==null)throw new IllegalStateException("Actual Noel boss not initialized");
+     if(noel.zone!=null)MapService.gI().exitMap(noel);
+     var target=MapService.gI().getMapById(3).zones.get(0);
+     var spawn=noel.getClass().getDeclaredMethod("spawnAt",nro.models.map.Zone.class,int.class,int.class);spawn.setAccessible(true);
+     if(!(boolean)spawn.invoke(noel,target,target.map.mapWidth/2,24)||noel.zone!=target||!target.getBosses().contains(noel))throw new IllegalStateException("Noel spawn failed");
+     if((boolean)spawn.invoke(noel,target,target.map.mapWidth/2,24))throw new IllegalStateException("Duplicate spawn accepted");
+     if(!noel.name.equals("Bố Già Noel"))throw new IllegalStateException("Noel name mismatch");
+     System.out.println("NOEL_ACTUAL_SPAWN_AND_DUPLICATE_PASS map="+target.map.mapId+" zone="+target.zoneId+" name="+noel.name);
+    }
+    if(!java.nio.file.Files.exists(request))continue;
+    var player=nro.server.Client.gI().getPlayers().stream().filter(p->p.id==6).findFirst().orElse(null);
+    if(player==null)continue;
+    java.nio.file.Files.delete(request);
+    synchronized(player){
+     int oldShop=player.iDMark.getShopId();long gold=player.inventory.gold;
+     int before=player.inventory.itemsBag.stream().filter(i->i.isNotNullItem()&&i.template.id==379).mapToInt(i->i.quantity).sum();
+     player.iDMark.setShopId(nro.consts.ConstNpc.SHOP_BUNMA_TL_0);
+     nro.services.func.ShopService.gI().buyItem(player,(byte)0,379);
+     int after=player.inventory.itemsBag.stream().filter(i->i.isNotNullItem()&&i.template.id==379).mapToInt(i->i.quantity).sum();
+     player.iDMark.setShopId(oldShop);
+     System.out.println("BULMA_NATIVE_PURCHASE_RESULT count="+before+"->"+after+" gold="+gold+"->"+player.inventory.gold);
+     if(after!=before+1||player.inventory.gold!=gold-100_000_000L)throw new IllegalStateException("Bulma actual purchase failed");
+     System.out.println("BULMA_NATIVE_PURCHASE_PASS");
+     player.iDMark.setShopId(nro.consts.ConstNpc.SHOP_BUNMA_TL_0);
+     var bytes=new java.io.ByteArrayOutputStream();var out=new java.io.DataOutputStream(bytes);
+     out.writeByte(0);out.writeShort(379);out.writeShort(3);
+     var packet=new nro.server.io.Message((byte)6,bytes.toByteArray());
+     if(!nro.admin.NpcBundlePurchase.packet(player.getSession(),packet))throw new IllegalStateException("Bulk packet not handled");
+     int bulk=player.inventory.itemsBag.stream().filter(i->i.isNotNullItem()&&i.template.id==379).mapToInt(i->i.quantity).sum();
+     if(bulk!=after+3||player.inventory.gold!=gold-400_000_000L)throw new IllegalStateException("Bulma bulk purchase failed");
+     System.out.println("BULMA_BULK_PURCHASE_PASS quantity=3 gold=300000000");
+     Thread.sleep(300);
+     long gems=player.inventory.gem;
+     int capsules=player.inventory.itemsBag.stream().filter(i->i.isNotNullItem()&&i.template.id==194).mapToInt(i->i.quantity).sum();
+     player.iDMark.setShopId(nro.consts.ConstNpc.SHOP_BUNMA_QK_0);
+     bytes=new java.io.ByteArrayOutputStream();out=new java.io.DataOutputStream(bytes);
+     out.writeByte(0);out.writeShort(194);out.writeShort(2);
+     packet=new nro.server.io.Message((byte)6,bytes.toByteArray());
+     nro.admin.NpcBundlePurchase.packet(player.getSession(),packet);
+     int capsulesAfter=player.inventory.itemsBag.stream().filter(i->i.isNotNullItem()&&i.template.id==194).mapToInt(i->i.quantity).sum();
+     if(capsulesAfter!=capsules+2||player.inventory.gem!=gems-2000)throw new IllegalStateException("Normal non-Santa gem shop bulk failed");
+     System.out.println("ALL_NPC_BULK_GEM_PURCHASE_PASS quantity=2 gems=2000");
+     Thread.sleep(300);
+     player.iDMark.setShopId(nro.consts.ConstNpc.SHOP_BUNMA_TL_0);
+     long balance=player.inventory.gold;player.inventory.gold=0;
+     bytes=new java.io.ByteArrayOutputStream();out=new java.io.DataOutputStream(bytes);
+     out.writeByte(0);out.writeShort(379);out.writeShort(3);
+     packet=new nro.server.io.Message((byte)6,bytes.toByteArray());
+     nro.admin.NpcBundlePurchase.packet(player.getSession(),packet);
+     int refused=player.inventory.itemsBag.stream().filter(i->i.isNotNullItem()&&i.template.id==379).mapToInt(i->i.quantity).sum();
+     if(refused!=bulk||player.inventory.gold!=0)throw new IllegalStateException("Insufficient funds granted items");
+     player.inventory.gold=balance;
+     System.out.println("BULK_INSUFFICIENT_FUNDS_NO_DEBIT_OR_ITEMS_PASS");
+     player.iDMark.setShopId(oldShop);
+    }
+   }catch(Exception error){error.printStackTrace();}
+  },"local-bulma-purchase-check");shopCheck.setDaemon(true);shopCheck.start();
   Thread audit=new Thread(()->{
    try {
     for(int attempt=0;attempt<300;attempt++) {
@@ -86,6 +151,9 @@ public final class UnlimitedLocalBootstrap {
       throw new IllegalStateException("Local boss respawn failed to grow");
   System.out.println("UNLIMITED_LOCAL_REAL_SKILL_KILL_RESPAWN_PASS elapsedMs="+(System.currentTimeMillis()-killed)+" hp="+hp+"->"+boss.nPoint.exactHpMax()+" attack="+attack+"->"+boss.nPoint.exactDamage()+" armor="+armor+"->"+boss.nPoint.exactDefense());
   ExactStatsChannel.broadcast(boss);
+  // Keep the test boss distinct from Noel during the user's Aru review.
+  var reviewMap=MapService.gI().getMapById(3).zones.get(1);
+  nro.services.func.ChangeMapService.gI().changeMap(boss,reviewMap,240,reviewMap.map.yPhysicInTop(240,0));
  }
  private static void auditEquipment(nro.models.player.Player player,BossProgressionRuntime.Connections database)throws Exception {
   KaizenCatalog.Catalog catalog;try(var c=database.open()){catalog=KaizenCatalog.install(c);}

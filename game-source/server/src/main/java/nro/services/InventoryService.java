@@ -45,6 +45,26 @@ public class InventoryService {
                 && isItemIncrementalOption(item) != 1;
     }
 
+    /** Release compatibility: compare option multisets, including trade/card flags. */
+    public static boolean sameStackAttributes(Item first, Item second) {
+        if (!first.isNotNullItem() || !second.isNotNullItem()
+                || first.template.id != second.template.id) return false;
+        boolean timed = first.itemOptions.stream().anyMatch(o -> o.optionTemplate.id == 93)
+                || second.itemOptions.stream().anyMatch(o -> o.optionTemplate.id == 93);
+        if (timed && first.createTime != second.createTime) return false;
+        return stackOptionCounts(first).equals(stackOptionCounts(second));
+    }
+
+    private static java.util.Map<String,Integer> stackOptionCounts(Item item) {
+        var counts = new java.util.HashMap<String,Integer>();
+        for (ItemOption option : item.itemOptions) {
+            if (option.optionTemplate.id == 73 && option.param == 0) continue;
+            String key = option.optionTemplate.id + ":" + option.param + ":" + option.activeCard;
+            counts.merge(key, 1, Integer::sum);
+        }
+        return counts;
+    }
+
     private List<Item> copyList(List<Item> items) {
         List<Item> list = new ArrayList<>();
         for (Item item : items) {

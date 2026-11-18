@@ -61,12 +61,14 @@ public final class NpcBundlePurchase {
         if(offer==null) return false;
         int pack=units(offer);
         if(lots==1 && pack==1) return false;
-        // Santa's ordinary priced inventory uses gold or blue gems.
+        // Ordinary priced items use this atomic path at every NPC, not a whitelist.
         if(offer.tabShop==null || offer.tabShop.shop==null
-            || offer.tabShop.shop.npcId!=ConstNpc.SANTA || offer.itemExchange>0
+            || offer.itemExchange>0
             || offer.costSpec>0 || offer.gold<0 || offer.gem<0 || (offer.gold<=0 && offer.gem<=0)
             || offer.temp.type<0 || offer.temp.type==9 || offer.temp.type==10
-            || offer.temp.type==34 || offer.temp.id==457) {
+            || offer.temp.type==34 || offer.temp.id==457 || offer.temp.id==517
+            || offer.temp.id==518 || offer.temp.id==988
+            || (offer.temp.id>=1074 && offer.temp.id<=1086)) {
             if(lots==1) return false;
             Service.gI().sendThongBao(player,"Món này cần mua từng lượt.");
             return true;
@@ -77,16 +79,28 @@ public final class NpcBundlePurchase {
             if(last!=null && now-last<TimeUnit.MILLISECONDS.toNanos(250)) return true;
             LAST.put(player,now);
             try {
+                if(player.nPoint.power<offer.temp.strRequire)
+                    throw new IllegalArgumentException("Không đủ sức mạnh để mua vật phẩm này.");
                 long gold=Math.multiplyExact((long)offer.gold,lots);
                 long gems=Math.multiplyExact((long)offer.gem,lots);
                 if(gold>player.inventory.gold || gems>player.inventory.gem)
                     throw new IllegalArgumentException("Không đủ vàng hoặc kim cương xanh.");
                 Item reward=ItemService.gI().createItemFromItemShop(offer);
-                reward.quantity=Math.multiplyExact(pack,lots);
+                int receivedQuantity=Math.multiplyExact(pack,lots);
+                reward.quantity=receivedQuantity;
                 reward.itemOptions.removeIf(option->option.optionTemplate.id==31);
                 var bag=ConsignmentStore.copyBag(player);
-                if(!InventoryService.gI().addItemList(bag,reward,99999))
-                    throw new IllegalArgumentException("Hành trang không đủ chỗ nhận đủ vật phẩm.");
+                if(InventoryService.gI().canStack999(reward)) {
+                    if(!InventoryStacks.add(bag,reward))
+                        throw new IllegalArgumentException("Hành trang không đủ chỗ nhận đủ vật phẩm.");
+                } else {
+                    // Equipment must occupy separate slots, never one item of quantity N.
+                    for(int unit=0;unit<receivedQuantity;unit++) {
+                        var single=ItemService.gI().copyItem(reward);single.quantity=1;
+                        if(!InventoryService.gI().addItemList(bag,single,999))
+                            throw new IllegalArgumentException("Hành trang không đủ chỗ nhận đủ vật phẩm.");
+                    }
+                }
                 long remainingGold=player.inventory.gold-gold;
                 int remainingGems=Math.toIntExact(player.inventory.gem-gems);
                 try(Connection connection=DBHika.getConnection()) {
@@ -111,7 +125,7 @@ public final class NpcBundlePurchase {
                 player.inventory.gem=remainingGems;
                 InventoryService.gI().sendItemBags(player);
                 Service.gI().sendMoney(player);
-                Service.gI().sendThongBao(player,"Đã mua "+reward.quantity+" "+offer.temp.name+".");
+                Service.gI().sendThongBao(player,"Đã mua "+receivedQuantity+" "+offer.temp.name+".");
             } catch(IllegalArgumentException error) {
                 Service.gI().sendThongBao(player,error.getMessage());
             } catch(Exception error) {

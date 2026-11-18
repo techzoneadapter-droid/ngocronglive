@@ -8,7 +8,7 @@ using Il2CppInterop.Runtime.Injection;
 using UnityEngine;
 using HarmonyLib;
 
-[BepInPlugin("nero.qa.unlimited.local", "Unlimited isolated local QA", "0.1.5")]
+[BepInPlugin("nero.qa.unlimited.local", "Unlimited isolated local QA", "0.1.6")]
 public sealed class UnlimitedLocalQa : BasePlugin {
  public override void Load() {
   if(!Environment.GetCommandLineArgs().Contains("-unlimitedLocalQa"))return;
@@ -36,6 +36,7 @@ public sealed class UnlimitedLocalQaStep : MonoBehaviour {
   try {
    var screen=G1.GameCanvas.currentScreen;
    if(screen==null)return;
+   ScreenCapture.CaptureScreenshot(Path.Combine(Lab,"logs/qa-current.png"));
    File.AppendAllText(Path.Combine(Lab,"logs/client-qa.log"),"STEP phase="+phase+" screen="+screen.GetIl2CppType().Name+" loading="+G1.Char.isLoadingMap+Environment.NewLine);
    if(phase>0 && (screen.GetIl2CppType().Name!="GameScr" || G1.Char.isLoadingMap))
     File.AppendAllText(Path.Combine(Lab,"logs/client-qa.log"),"WAIT phase="+phase+" screen="+screen.GetIl2CppType().Name+" loading="+G1.Char.isLoadingMap+Environment.NewLine);
@@ -54,7 +55,9 @@ public sealed class UnlimitedLocalQaStep : MonoBehaviour {
      var panel=G1.GameCanvas.panel;panel.setTypeMain();panel.currentTabIndex=1;
      AccessTools.Method(typeof(G1.Panel),"setTabInventory").Invoke(panel,new object[]{true});panel.show();phase=2;return;
     }
-    if(phase==2) {var panel=G1.GameCanvas.panel;panel.cmy=panel.cmtoY=Math.Min(13*24,panel.cmyLim);ScreenCapture.CaptureScreenshot(Path.Combine(Lab,"logs/local-seven-equipped.png"));phase=3;return;}
+    if(phase==2) {var panel=G1.GameCanvas.panel;panel.cmy=panel.cmtoY=Math.Min(13*24,panel.cmyLim);ScreenCapture.CaptureScreenshot(Path.Combine(Lab,"logs/local-seven-equipped.png"));phase=Environment.GetCommandLineArgs().Contains("-unlimitedPortraitReview")?30:3;return;}
+    if(phase==30){ScreenCapture.CaptureScreenshot(Path.Combine(Lab,"logs/local-seven-icons-top.png"));var panel=G1.GameCanvas.panel;panel.cmy=panel.cmtoY=panel.cmyLim;phase=31;return;}
+    if(phase==31){ScreenCapture.CaptureScreenshot(Path.Combine(Lab,"logs/local-seven-icons-bottom.png"));phase=3;return;}
     if(phase==3) {
      G1.GameCanvas.panel.hideNow();
      ScreenCapture.CaptureScreenshot(Path.Combine(Lab,"logs/local-world-hud-kaizen.png"));phase=4;return;
@@ -67,6 +70,7 @@ public sealed class UnlimitedLocalQaStep : MonoBehaviour {
     if(phase==5) {
      if(!G1.GameCanvas.menu.showMenu || G1.GameCanvas.menu.menuItems.size()!=5)throw new InvalidOperationException("Kaizen native root menu did not open with five entries");
      ScreenCapture.CaptureScreenshot(Path.Combine(Lab,"logs/local-kaizen-root-menu.png"));
+     if(Environment.GetCommandLineArgs().Contains("-unlimitedPortraitReview")){File.AppendAllText(Path.Combine(Lab,"logs/client-qa.log"),"PORTRAIT_AND_ICONS_REVIEW_CAPTURED"+Environment.NewLine);done=true;return;}
      if(Environment.GetCommandLineArgs().Contains("-unlimitedCraftQa")){phase=20;return;}
      phase=6;return;
     }
@@ -115,7 +119,7 @@ public sealed class UnlimitedLocalQaStep : MonoBehaviour {
      File.AppendAllText(Path.Combine(Lab,"logs/client-qa.log"),"KAIZEN_CLIENT_UPGRADE_PASS id="+gearId+" level=1 main="+beforeMain+"->"+gear.itemOption[0].param+" stone="+beforeStone+"->"+stone.quantity+" gold="+beforeGold+"->"+actor.xu+Environment.NewLine);
      attempts=0;G1.GameCanvas.panel.hideNow();G1.Service.gI().getItem(4,(sbyte)gear.indexUI);phase=10;return;
     }
-    if(phase==20){G1.GameCanvas.menu.showMenu=false;G1.Service.gI().confirmMenu(81,1);phase=21;return;}
+    if(phase==20){if(!G1.GameCanvas.menu.showMenu || G1.GameCanvas.menu.menuItems.size()!=5){G1.Service.gI().openMenu(81);return;}G1.GameCanvas.menu.showMenu=false;G1.Service.gI().confirmMenu(81,1);phase=21;return;}
     if(phase==21){
      if(!G1.GameCanvas.menu.showMenu || G1.GameCanvas.menu.menuItems.size()!=7)throw new InvalidOperationException("Seven native recipes missing");
      G1.GameCanvas.menu.showMenu=false;G1.Service.gI().confirmMenu(81,(sbyte)gearIndex);phase=22;return;

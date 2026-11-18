@@ -24,6 +24,11 @@ public final class KaizenPlayerForge {
                     player.inventory.goldLimit,player.inventory.itemsBag,"").bagJson();
             String money=new JSONArray().put(player.inventory.gold).put(player.inventory.gem)
                     .put(player.inventory.ruby).put(player.inventory.goldLimit).toString();
+            // Flush through the game's existing save path before comparing the locked
+            // row: ordinary purchases/rewards may still exist only in live memory.
+            try(Connection save=connections.open()) {
+                nro.jdbc.daos.PlayerDAO.updatePlayer(player,save);
+            }
             try(Connection c=connections.open()) {
                 c.setAutoCommit(false);
                 try {
