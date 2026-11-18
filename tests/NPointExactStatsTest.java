@@ -79,6 +79,25 @@ public final class NPointExactStatsTest {
         check(point.subDameInjureWithDeff(huge.multiply(BigInteger.TEN)).equals(huge.multiply(BigInteger.valueOf(3))),"exact armor buff");
         player.itemTime.isUseGiapXen=false;player.itemTime.isUseGiapXen2=true;
         check(point.subDameInjureWithDeff(huge.multiply(BigInteger.TEN)).equals(huge.multiply(BigInteger.valueOf(24)).divide(BigInteger.TEN)),"exact second armor buff");
+        point.setExactVitals(point.exactHpMax(),point.exactMpMax());
+        BigInteger initialHp=point.exactHp();
+        var hit=point.damageExact(huge);
+        check(hit.applied().equals(huge)&&!hit.killed()&&point.exactHp().equals(initialHp.subtract(huge)),"actual exact HP deduction");
+        point.healExact(huge.multiply(BigInteger.TEN),BigInteger.ZERO);
+        check(point.exactHp().equals(initialHp),"recovery clamps to exact maximum");
+        check(!point.spendExactKi(huge.multiply(BigInteger.TEN))&&point.exactMp().equals(point.exactMpMax()),"insufficient KI unchanged");
+        check(point.spendExactKi(huge)&&point.exactMp().equals(point.exactMpMax().subtract(huge)),"exact KI consumption");
+        point.setExactVitals(huge,BigInteger.ZERO);
+        var pool=java.util.concurrent.Executors.newFixedThreadPool(2);
+        try {
+            var first=pool.submit(()->point.damageExact(huge));var second=pool.submit(()->point.damageExact(huge));
+            var a=first.get();var b=second.get();
+            check(a.killed()!=b.killed()&&a.applied().add(b.applied()).equals(huge),"concurrent lethal transition only once");
+        }finally{pool.shutdownNow();}
+        point.setFullHpMp();check(point.exactHp().equals(initialHp)&&point.hp>0,"respawn restores exact HP");
+        point.subHP(100);check(point.exactHp().equals(initialHp.subtract(BigInteger.valueOf(100))),"legacy HP method routes exact session");
+        player.inventory.itemsBody.set(5,new Item());calculate.invoke(point);
+        check(point.exactHp().equals(huge)&&point.exactHpMax().equals(huge),"unequip clamps exact current HP");
         System.out.println("PASS real NPoint: VIP costume/mount exceed int, equip/unequip/recalculate, 1000 ordinary formula comparisons, 10^100 base stats");
     }
     static void initialize(Player p) {

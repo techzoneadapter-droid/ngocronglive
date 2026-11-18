@@ -59,6 +59,7 @@ public class NPoint {
     private BigInteger exactHpAdd = BigInteger.ZERO, exactMpAdd = BigInteger.ZERO;
     private BigInteger exactDamageAdd = BigInteger.ZERO, exactDefenseAdd = BigInteger.ZERO;
     private UnlimitedProgression unlimitedBase;
+    private BigInteger exactHp, exactMp;
     public byte speed = 5;
 
     public boolean teleport;
@@ -681,6 +682,7 @@ public class NPoint {
     // (hp sư phụ + hp đệ tử ) + 15%
     // (hp sư phụ + 15% +hp đệ tử)
     private void setHp() {
+        if (exactHp != null) { exactHp=exactHp.min(exactHpMax());hp=legacyStat(exactHp);return; }
         if (this.hp > this.hpMax) {
             this.hp = this.hpMax;
         }
@@ -814,6 +816,7 @@ public class NPoint {
         this.mpMax = legacyStat(this.exactMpMax);
     }
     private void setMp() {
+        if (exactMp != null) { exactMp=exactMp.min(exactMpMax());mp=legacyStat(exactMp);return; }
         if (this.mp > this.mpMax) {
             this.mp = this.mpMax;
         }
@@ -1057,6 +1060,7 @@ public class NPoint {
     }
 
     public void addHp(long hp) {
+        if (exactHp != null) { healExact(BigInteger.valueOf(hp), BigInteger.ZERO); return; }
         this.hp += hp;
         if (this.hp > this.hpMax) {
             this.hp = this.hpMax;
@@ -1064,10 +1068,12 @@ public class NPoint {
     }
 
     public void subHp(long hp) {
+        if (exactHp != null) { damageExact(BigInteger.valueOf(hp)); return; }
         this.hp -= hp;
     }
 
     public void addMp(long mp) {
+        if (exactMp != null) { healExact(BigInteger.ZERO, BigInteger.valueOf(mp)); return; }
         this.mp += mp;
         if (this.mp > this.mpMax) {
             this.mp = this.mpMax;
@@ -1075,6 +1081,7 @@ public class NPoint {
     }
 
     public void setHp(long hp) {
+        if (exactHp != null) { setExactVitals(BigInteger.valueOf(hp), exactMp); return; }
         if (hp > this.hpMax) {
             this.hp = this.hpMax;
         } else {
@@ -1083,6 +1090,7 @@ public class NPoint {
     }
 
     public void setMp(long mp) {
+        if (exactMp != null) { setExactVitals(exactHp, BigInteger.valueOf(mp)); return; }
         if (mp > this.mpMax) {
             this.mp = this.mpMax;
         } else {
@@ -1271,6 +1279,7 @@ public class NPoint {
     }
 
     public int getCurrPercentHP() {
+        if (exactHp != null) return exactPercent(exactHp, exactHpMax());
         if (this.hpMax == 0) {
             return 100;
         }
@@ -1278,15 +1287,18 @@ public class NPoint {
     }
 
     public int getCurrPercentMP() {
+        if (exactMp != null) return exactPercent(exactMp, exactMpMax());
         return (int) ((long) this.mp * 100 / this.mpMax);
     }
 
     public void setFullHpMp() {
+        if (exactHp != null) { setExactVitals(exactHpMax(), exactMpMax()); return; }
         this.hp = this.hpMax;
         this.mp = this.mpMax;
     }
 
     public void subHP(long sub) {
+        if (exactHp != null) { damageExact(BigInteger.valueOf(sub)); return; }
         this.hp -= sub;
         if (this.hp < 0) {
             this.hp = 0;
@@ -1294,6 +1306,7 @@ public class NPoint {
     }
 
     public void subMP(long sub) {
+        if (exactMp != null) { spendExactKi(BigInteger.valueOf(sub)); return; }
         this.mp -= sub;
         if (this.mp < 0) {
             this.mp = 0;
@@ -1632,6 +1645,44 @@ public class NPoint {
     public BigInteger exactMpMax() { return exactMpMax == null ? BigInteger.valueOf(mpMax) : exactMpMax; }
     public BigInteger exactDamage() { return exactDamage == null ? BigInteger.valueOf(dame) : exactDamage; }
     public BigInteger exactDefense() { return exactDefense == null ? BigInteger.valueOf(def) : exactDefense; }
+
+    public synchronized BigInteger exactHp() { return exactHp == null ? BigInteger.valueOf(hp) : exactHp; }
+    public synchronized BigInteger exactMp() { return exactMp == null ? BigInteger.valueOf(mp) : exactMp; }
+
+    /** Enable only for a session whose combat and protocol adapters use exact values. */
+    public synchronized void setExactVitals(BigInteger currentHp, BigInteger currentMp) {
+        if (currentHp.signum()<0 || currentMp.signum()<0) throw new IllegalArgumentException("Negative current vitals");
+        exactHp=currentHp.min(exactHpMax());exactMp=currentMp.min(exactMpMax());
+        hp=legacyStat(exactHp);mp=legacyStat(exactMp);
+    }
+
+    public record ExactHit(BigInteger applied, boolean killed) {}
+
+    /** Raw HP deduction; caller resolves defense/effects first. Only the lethal transition reports killed. */
+    public synchronized ExactHit damageExact(BigInteger damage) {
+        if(exactHp==null)throw new IllegalStateException("Exact vitals not enabled");
+        if(damage.signum()<0)throw new IllegalArgumentException("Negative damage");
+        BigInteger before=exactHp,applied=before.min(damage);
+        exactHp=before.subtract(applied);hp=legacyStat(exactHp);
+        return new ExactHit(applied,before.signum()>0 && exactHp.signum()==0);
+    }
+
+    public synchronized void healExact(BigInteger health,BigInteger ki) {
+        if(exactHp==null)throw new IllegalStateException("Exact vitals not enabled");
+        if(health.signum()<0 || ki.signum()<0)throw new IllegalArgumentException("Negative recovery");
+        setExactVitals(exactHp.add(health),exactMp.add(ki));
+    }
+
+    public synchronized boolean spendExactKi(BigInteger amount) {
+        if(exactMp==null)throw new IllegalStateException("Exact vitals not enabled");
+        if(amount.signum()<0)throw new IllegalArgumentException("Negative KI cost");
+        if(exactMp.compareTo(amount)<0)return false;
+        exactMp=exactMp.subtract(amount);mp=legacyStat(exactMp);return true;
+    }
+
+    private static int exactPercent(BigInteger current,BigInteger maximum) {
+        return maximum.signum()==0 ? 0 : current.multiply(BigInteger.valueOf(100)).divide(maximum).min(BigInteger.valueOf(100)).intValueExact();
+    }
 
     /** Call only after a confirmed progression transaction; no inventory mutation. */
     public void bindUnlimitedBase(UnlimitedProgression state) { this.unlimitedBase = java.util.Objects.requireNonNull(state); }
