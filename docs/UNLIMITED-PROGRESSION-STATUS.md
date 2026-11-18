@@ -103,3 +103,11 @@ Run `powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/TEST-PROGRE
 ### Grounding correction after user rejection
 
 The previous image-only grounding claim was insufficient. Inspected actual client Npc.paint and Controller map loading: native NPCs receive server y+3, render legs at cy-CharInfo[frame][1][2]+part.dy with native leg-image height. Kaizen now derives the standing foot offset from Bunma (NPC7) using that same data, retains character size, and draws the original TileMap.bong shadow at native NPC origin. Runtime diagnostic confirmed npcY435 and BunmaFootOffset2. New exact plugin version0.1.1 is verified loaded. User visual acceptance remains pending.
+
+
+### Inventory protocol and Kaizen portrait follow-up
+
+- Fixed original InventoryService.sendItemBags to emit short -1 for every empty slot, matching declared capacity and the real Controller -36 decoder. Previously omitted empty records could truncate inventory packets after unequip/consume. TEST-INVENTORY-PACKET.ps1 verifies all-empty, alternating-empty, full and cleared bags with complete decode and no trailing bytes.
+- Added Kaizen portrait resource32064, scoped PC portrait renderer using the approved source atlas head, and native NPC avatar binding. Screenshot local-kaizen-upgrade-menu.png confirms correct face instead of trousers and corrected Thần Trang instruction.
+- Live network QA0.1.3 sends Service.getItem(5,slot) and Service.getItem(4,bagIndex) for each of seven new pieces, checking both returned body and bag state. This is distinct from direct server fixture equip tests. Confirmed KAIZEN_ALL_SEVEN_NETWORK_EQUIP_PASS: client successfully unequipped and re-equipped IDs2182/2184/2186/2188/2190/2192/2194 in slots13–19; server-error.log had no application exception during this run.
+- User accepted grass-edge NPC placement; soleOffset3 remains unchanged.

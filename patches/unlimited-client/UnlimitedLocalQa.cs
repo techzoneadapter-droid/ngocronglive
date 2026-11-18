@@ -8,7 +8,7 @@ using Il2CppInterop.Runtime.Injection;
 using UnityEngine;
 using HarmonyLib;
 
-[BepInPlugin("nero.qa.unlimited.local", "Unlimited isolated local QA", "0.1.2")]
+[BepInPlugin("nero.qa.unlimited.local", "Unlimited isolated local QA", "0.1.3")]
 public sealed class UnlimitedLocalQa : BasePlugin {
  public override void Load() {
   if(!Environment.GetCommandLineArgs().Contains("-unlimitedLocalQa"))return;
@@ -20,6 +20,7 @@ public sealed class UnlimitedLocalQaStep : MonoBehaviour {
  public UnlimitedLocalQaStep(IntPtr ptr):base(ptr){}
  private float next=8;private bool sent,done;
  private int phase;
+ private int gearIndex;private short gearId;
  private static readonly string Lab=Path.GetFullPath(Path.Combine(Path.GetDirectoryName(System.Diagnostics.Process.GetCurrentProcess().MainModule.FileName),".."));
  public void Update() {
   Application.runInBackground=true;
@@ -59,8 +60,28 @@ public sealed class UnlimitedLocalQaStep : MonoBehaviour {
      ScreenCapture.CaptureScreenshot(Path.Combine(Lab,"logs/local-kaizen-root-menu.png"));phase=6;return;
     }
     if(phase==6){G1.GameCanvas.menu.showMenu=false;G1.Service.gI().confirmMenu(81,2);phase=7;return;}
-    if(!G1.GameCanvas.panel.isShow)throw new InvalidOperationException("Kaizen native combine panel did not open");
-    ScreenCapture.CaptureScreenshot(Path.Combine(Lab,"logs/local-kaizen-upgrade-menu.png"));File.AppendAllText(Path.Combine(Lab,"logs/client-qa.log"),"KAIZEN_NATIVE_ROOT_AND_UPGRADE_PANEL_PASS"+Environment.NewLine);done=true;return;
+    if(phase==7) {
+     if(!G1.GameCanvas.panel.isShow)throw new InvalidOperationException("Kaizen native combine panel did not open");
+     ScreenCapture.CaptureScreenshot(Path.Combine(Lab,"logs/local-kaizen-upgrade-menu.png"));File.AppendAllText(Path.Combine(Lab,"logs/client-qa.log"),"KAIZEN_NATIVE_ROOT_AND_UPGRADE_PANEL_PASS"+Environment.NewLine);phase=8;return;
+    }
+    if(phase==8) {
+     G1.GameCanvas.panel.hideNow();G1.GameCanvas.menu.showMenu=false;
+     gearId=actor.arrItemBody[13+gearIndex].template.id;G1.Service.gI().getItem(5,(sbyte)(13+gearIndex));phase=9;return;
+    }
+    if(phase==9) {
+     if(actor.arrItemBody[13+gearIndex]!=null)throw new InvalidOperationException("Unequip failed at slot "+(13+gearIndex));
+     for(int i=0;i<actor.arrItemBag.Length;i++)if(actor.arrItemBag[i]?.template?.id==gearId) {
+      File.AppendAllText(Path.Combine(Lab,"logs/client-qa.log"),"KAIZEN_CLIENT_UNEQUIP_PASS id="+gearId+" slot="+(13+gearIndex)+Environment.NewLine);
+      G1.Service.gI().getItem(4,(sbyte)i);phase=10;return;
+     }
+     throw new InvalidOperationException("Unequipped gear missing from inventory "+gearId);
+    }
+    if(phase==10) {
+     if(actor.arrItemBody[13+gearIndex]?.template?.id!=gearId)throw new InvalidOperationException("Re-equip failed "+gearId);
+     File.AppendAllText(Path.Combine(Lab,"logs/client-qa.log"),"KAIZEN_CLIENT_REEQUIP_PASS id="+gearId+" slot="+(13+gearIndex)+Environment.NewLine);
+     if(++gearIndex<7){phase=8;return;}
+     File.AppendAllText(Path.Combine(Lab,"logs/client-qa.log"),"KAIZEN_ALL_SEVEN_NETWORK_EQUIP_PASS"+Environment.NewLine);done=true;return;
+    }
    }
    if(sent || screen.GetIl2CppType().Name!="ServerListScreen")return;
    G1.GameMidlet.IP="127.0.0.1";G1.GameMidlet.PORT=14615;

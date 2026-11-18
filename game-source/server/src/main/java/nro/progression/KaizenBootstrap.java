@@ -33,7 +33,7 @@ public final class KaizenBootstrap {
         KaizenEquipment.install(catalog.equipment());
         installDropConfig(catalog);
         var forge=new KaizenPlayerForge(connections,new KaizenForge(catalog.forge()));
-        var actor=new KaizenNpc(0,x,y,npc.id,npc.head,forge);
+        var actor=new KaizenNpc(0,x,y,npc.id,KaizenIcons.NPC_PORTRAIT,forge);
         map.addNpc(actor);
         // New catalog entries must be fetched rather than read from an older item/map cache.
         nro.data.DataGame.vsItem=27;nro.data.DataGame.vsMap=6;

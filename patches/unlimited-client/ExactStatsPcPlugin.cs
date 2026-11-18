@@ -134,6 +134,31 @@ internal static class KaizenNpcArt {
 }
 
 [HarmonyPatch(typeof(G1.SmallImage),"drawSmallImage",new Type[]{typeof(G1.mGraphics),typeof(int),typeof(int),typeof(int),typeof(int),typeof(int)})]
+internal static class KaizenNpcPortrait {
+    private static Texture2D atlas;
+    static bool Prefix(G1.mGraphics __0,int __1,int __2,int __3,int __4,int __5) {
+        if(__1!=32064)return true;
+        if(Event.current==null || Event.current.type!=EventType.Repaint)return false;
+        if(atlas==null) {
+            string file=Path.Combine(Path.GetDirectoryName(typeof(ExactStatsPcPlugin).Assembly.Location),"KaizenAssets","kaizen-atlas-v1.png");
+            if(!File.Exists(file))return true;
+            atlas=new Texture2D(2,2,TextureFormat.RGBA32,false);
+            if(!ImageConversion.LoadImage(atlas,File.ReadAllBytes(file),true))return true;
+            atlas.filterMode=FilterMode.Bilinear;
+        }
+        const float w=31,h=36;float x=__2,y=__3;
+        if((__5&1)!=0)x-=w/2;else if((__5&8)!=0)x-=w;
+        if((__5&2)!=0)y-=h/2;else if((__5&32)!=0)y-=h;
+        int zoom=Math.Max(1,G1.mGraphics.zoomLevel);
+        var rect=new Rect((x+__0.getTranslateX())*zoom,(y+__0.getTranslateY())*zoom,w*zoom,h*zoom);
+        var color=GUI.color;
+        try{GUI.color=Color.white;Graphics.DrawTexture(rect,atlas,new Rect(175f/2172f,1-390f/724f,150f/2172f,190f/724f),0,0,0,0);}
+        finally{GUI.color=color;}
+        return false;
+    }
+}
+
+[HarmonyPatch(typeof(G1.SmallImage),"drawSmallImage",new Type[]{typeof(G1.mGraphics),typeof(int),typeof(int),typeof(int),typeof(int),typeof(int)})]
 internal static class KaizenInventoryIcons {
     private static Texture2D atlas;
     static bool Prefix(G1.mGraphics __0,int __1,int __2,int __3,int __4,int __5) {
