@@ -6,7 +6,11 @@ import nro.server.Manager;
 import nro.models.item.*;
 public final class KaizenTransactionsTest {
  public static void main(String[] args)throws Exception {
+  check(KaizenTransactions.sameInventory(new JSONArray("[{\"temp_id\":-1,\"quantity\":0,\"create_time\":0,\"option\":[]}]"),new JSONArray("[{\"temp_id\":-1,\"quantity\":1,\"create_time\":123,\"option\":[]}]")),"empty slot metadata should not block crafting");
+  check(!KaizenTransactions.sameInventory(new JSONArray("[{\"temp_id\":80,\"quantity\":1}]"),new JSONArray("[{\"temp_id\":80,\"quantity\":2}]")),"real quantity mismatch must remain blocked");
   Class.forName("com.mysql.cj.jdbc.Driver");
+  check(KaizenTransactions.sameInventory(new JSONArray().put(item(-1,0)).put(item(80,3)),new JSONArray().put(item(80,3)).put(item(-1,1))),"native inventory compaction is harmless");
+  check(!KaizenTransactions.sameInventory(new JSONArray().put(item(80,3)).put(item(80,3)),new JSONArray().put(item(80,3)).put(item(-1,0))),"duplicate item cannot match the same slot twice");
   for(int i=0;i<251;i++)Manager.ITEM_OPTION_TEMPLATES.add(new ItemOptionTemplate(i,"fixture",0));
   for(int i=0;i<104;i++){var t=new ItemTemplate();t.id=(short)i;t.name="fixture";t.description="";t.type=27;Manager.ITEM_TEMPLATES.add(t);}
   var bindings=new EnumMap<KaizenRecipes,KaizenForge.Binding>(KaizenRecipes.class);int id=80;

@@ -8,7 +8,7 @@ using Il2CppInterop.Runtime.Injection;
 using UnityEngine;
 using HarmonyLib;
 
-[BepInPlugin("nero.qa.unlimited.local", "Unlimited isolated local QA", "0.1.4")]
+[BepInPlugin("nero.qa.unlimited.local", "Unlimited isolated local QA", "0.1.5")]
 public sealed class UnlimitedLocalQa : BasePlugin {
  public override void Load() {
   if(!Environment.GetCommandLineArgs().Contains("-unlimitedLocalQa"))return;
@@ -23,6 +23,7 @@ public sealed class UnlimitedLocalQaStep : MonoBehaviour {
  private int gearIndex;private short gearId;
  private int beforeMain,beforeStone,stoneId,attempts;private long beforeGold;
  private G1.Item Bag(short id){var items=G1.Char.myCharz().arrItemBag;for(int i=0;i<items.Length;i++)if(items[i]?.template?.id==id)return items[i];return null;}
+ private int Count(short id){int n=0;foreach(var item in G1.Char.myCharz().arrItemBag)if(item?.template?.id==id)n+=item.quantity;return n;}
  private int Option(G1.Item item,int id){if(item?.itemOption!=null)foreach(var option in item.itemOption)if(option?.optionTemplate?.id==id)return option.param;return 0;}
  private static readonly string Lab=Path.GetFullPath(Path.Combine(Path.GetDirectoryName(System.Diagnostics.Process.GetCurrentProcess().MainModule.FileName),".."));
  public void Update() {
@@ -65,7 +66,9 @@ public sealed class UnlimitedLocalQaStep : MonoBehaviour {
     }
     if(phase==5) {
      if(!G1.GameCanvas.menu.showMenu || G1.GameCanvas.menu.menuItems.size()!=5)throw new InvalidOperationException("Kaizen native root menu did not open with five entries");
-     ScreenCapture.CaptureScreenshot(Path.Combine(Lab,"logs/local-kaizen-root-menu.png"));phase=6;return;
+     ScreenCapture.CaptureScreenshot(Path.Combine(Lab,"logs/local-kaizen-root-menu.png"));
+     if(Environment.GetCommandLineArgs().Contains("-unlimitedCraftQa")){phase=20;return;}
+     phase=6;return;
     }
     if(phase==6){G1.GameCanvas.menu.showMenu=false;G1.Service.gI().confirmMenu(81,2);phase=7;return;}
     if(phase==7) {
@@ -111,6 +114,25 @@ public sealed class UnlimitedLocalQaStep : MonoBehaviour {
      if(Option(gear,72)!=1 || gear.itemOption[0].param!=beforeMain+beforeMain/10)throw new InvalidOperationException("Upgrade +1/main stat mismatch");
      File.AppendAllText(Path.Combine(Lab,"logs/client-qa.log"),"KAIZEN_CLIENT_UPGRADE_PASS id="+gearId+" level=1 main="+beforeMain+"->"+gear.itemOption[0].param+" stone="+beforeStone+"->"+stone.quantity+" gold="+beforeGold+"->"+actor.xu+Environment.NewLine);
      attempts=0;G1.GameCanvas.panel.hideNow();G1.Service.gI().getItem(4,(sbyte)gear.indexUI);phase=10;return;
+    }
+    if(phase==20){G1.GameCanvas.menu.showMenu=false;G1.Service.gI().confirmMenu(81,1);phase=21;return;}
+    if(phase==21){
+     if(!G1.GameCanvas.menu.showMenu || G1.GameCanvas.menu.menuItems.size()!=7)throw new InvalidOperationException("Seven native recipes missing");
+     G1.GameCanvas.menu.showMenu=false;G1.Service.gI().confirmMenu(81,(sbyte)gearIndex);phase=22;return;
+    }
+    if(phase==22){
+     if(!G1.GameCanvas.menu.showMenu)throw new InvalidOperationException("Craft confirmation missing");
+     gearId=(short)(2182+gearIndex*2);beforeMain=Count(gearId);beforeGold=actor.xu;
+     ScreenCapture.CaptureScreenshot(Path.Combine(Lab,"logs/craft-confirm-"+gearId+".png"));
+     G1.GameCanvas.menu.showMenu=false;G1.Service.gI().confirmMenu(81,0);phase=23;return;
+    }
+    if(phase==23){
+     long cost=new long[]{500000000,50000000,75000000,150000000,100000000,100000000,1000000000}[gearIndex];
+     if(Count(gearId)!=beforeMain+1 || actor.xu!=beforeGold-cost || Count((short)(gearId-1))!=0)throw new InvalidOperationException("Craft count/cost/fragment mismatch id="+gearId);
+     var crafted=Bag(gearId);if(crafted.itemOption.Length!=3 || Option(crafted,72)!=0)throw new InvalidOperationException("Crafted gear not +0/three stats");
+     File.AppendAllText(Path.Combine(Lab,"logs/client-qa.log"),"KAIZEN_CLIENT_CRAFT_PASS id="+gearId+" gold="+beforeGold+"->"+actor.xu+" fragments=0 level=0 options=3"+Environment.NewLine);
+     if(++gearIndex==7){File.AppendAllText(Path.Combine(Lab,"logs/client-qa.log"),"KAIZEN_ALL_SEVEN_NATIVE_CRAFT_PASS"+Environment.NewLine);done=true;return;}
+     G1.Service.gI().openMenu(81);phase=20;return;
     }
    }
    if(sent || screen.GetIl2CppType().Name!="ServerListScreen")return;

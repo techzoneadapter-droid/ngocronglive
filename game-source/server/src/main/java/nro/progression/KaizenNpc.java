@@ -43,7 +43,7 @@ public final class KaizenNpc extends Npc {
         }else if(menu==CONFIRM && select==0) {
             var request=pending.get(player);if(request==null)return;
             try {forge.craft(player,request.recipe(),request.request());pending.remove(player);Service.gI().sendThongBao(player,"Đã ghép "+request.recipe().displayName+".");}
-            catch(java.sql.SQLException error){Service.gI().sendThongBao(player,"Dữ liệu hành trang vừa thay đổi. Vui lòng mở lại Thần Rèn.");}
+            catch(java.sql.SQLException error){System.err.println("KAIZEN_CRAFT_REFUSED state="+error.getSQLState()+" reason="+error.getMessage());Service.gI().sendThongBao(player,"Dữ liệu hành trang vừa thay đổi. Vui lòng mở lại Thần Rèn.");}
             catch(IllegalArgumentException error){Service.gI().sendThongBao(player,error.getMessage());}
         }else if(menu==ConstNpc.MENU_START_COMBINE) {
             int type=player.combineNew.typeCombine;

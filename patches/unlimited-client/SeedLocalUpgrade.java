@@ -21,6 +21,18 @@ public final class SeedLocalUpgrade {
       if(slot<0)throw new SQLException("No local fixture space");bag.put(slot,new JSONObject().put("temp_id",id).put("quantity",999).put("create_time",System.currentTimeMillis()).put("option",new JSONArray()));}
     }
     money.put(0,100_000_000_000L);
+    if(args.length>1 && args[1].equals("fragments")) {
+     while(bag.length()<64)bag.put(empty());
+     try(var q=c.createStatement();var r=q.executeQuery("SELECT kind,fragment_id FROM nero_kaizen_catalog")) {
+      while(r.next()) {
+       int id=r.getInt(2),count=KaizenRecipes.valueOf(r.getString(1)).fragments,slot=-1;
+       for(int i=0;i<bag.length();i++)if(bag.getJSONObject(i).getInt("temp_id")==id){slot=i;break;}
+       if(slot<0)for(int i=0;i<bag.length();i++)if(bag.getJSONObject(i).getInt("temp_id")<0){slot=i;break;}
+       if(slot<0)throw new SQLException("Local fragment space missing");
+       bag.put(slot,new JSONObject().put("temp_id",id).put("quantity",count).put("create_time",System.currentTimeMillis()).put("option",new JSONArray()));
+      }
+     }
+    }
     try(var q=c.prepareStatement("UPDATE player SET items_bag=?,items_body=?,data_inventory=? WHERE id=6 AND account_id=3")){q.setString(1,bag.toString());q.setString(2,body.toString());q.setString(3,money.toString());q.executeUpdate();}
     c.commit();System.out.println("LOCAL_ONLY_UPGRADE_MATERIALS_READY player6 five_stones999 gold100B");
    }catch(Exception error){c.rollback();throw error;}

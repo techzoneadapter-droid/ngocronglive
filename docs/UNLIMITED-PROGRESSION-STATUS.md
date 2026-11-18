@@ -121,4 +121,11 @@ The previous image-only grounding claim was insufficient. Inspected actual clien
 - Deterministic actual CombineServiceNew regression still passes +0 through +7,8 holes/8 sockets, unchanged secondary stats, legacy-item compatibility and cap no-charge checks. Do not confuse this fixture with a natural all-level client run.
 
 - Completed natural client +1 upgrades for all seven IDs:2182/2184/2186 main500->550,2188/2190/2192/2194 main400->440. Each successful attempt consumed3 matched stones and10,000 gold; natural failures consumed the same costs without gaining level. All seven re-equipped. This client run covers +0->+1; +2..+7 are covered by deterministic actual-method tests, not falsely labeled as live client completion.
-`n- Real client logout/relogin verified KAIZEN_ALL_SEVEN_PLUS1_RELOGIN_PASS, all slots13–19 retain option72=1; local client left with inventory open for review.
+- Real client logout/relogin verified KAIZEN_ALL_SEVEN_PLUS1_RELOGIN_PASS, all slots13–19 retain option72=1.
+
+### Follow-up: crafting and portrait review
+
+- Real client seven-recipe QA added. Crafting is NOT yet passing: first native run exposed missing InventoryService.canStack999 ABI used by the existing AdminGrantItems. Restored the exact release predicate. Subsequent run still refused the first craft; investigate live-versus-saved inventory/currency synchronization before marking complete.
+- Transaction comparison now tolerates native bag compaction and empty-slot metadata, while retaining exact item/options/quantity checks and one-to-one matching. Crafts preserve live slot order. MariaDB test run progression-db-188f0f03e31b42f7b0ecd224d6cd9417 passes atomic craft, rollback/retry, stale state refusal and restart tests.
+- Generated dedicated transparent Kaizen frontal portrait v2, used instead of a cropped full-body sprite. PC exact plugin0.1.4 uses36x40 portrait and enlarges Noel avatar from28x27 to37x36. Compiled and loaded in isolated local client. NPC world placement unchanged (approved soleOffset3).
+- Android updater source repair prepared separately; not an APK release. Bulma-future Capsule purchase remains under investigation.

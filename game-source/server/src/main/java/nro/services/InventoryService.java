@@ -39,6 +39,12 @@ public class InventoryService {
         return copyList(player.inventory.itemsBag);
     }
 
+    /** Existing release ABI used by AdminGrantItems; keep native stacking rules. */
+    public boolean canStack999(Item item) {
+        return item != null && item.isNotNullItem() && isItemIncremental(item)
+                && isItemIncrementalOption(item) != 1;
+    }
+
     private List<Item> copyList(List<Item> items) {
         List<Item> list = new ArrayList<>();
         for (Item item : items) {
