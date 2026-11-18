@@ -36,7 +36,7 @@ function Stop-TestDatabase {
 }
 try {
     Start-TestDatabase
-    & (Join-Path $bin 'mariadb.exe') --protocol=tcp --host=127.0.0.1 "--port=$Port" --user=root -e 'CREATE DATABASE nero_progression_test'
+    & (Join-Path $bin 'mariadb.exe') --protocol=tcp --host=127.0.0.1 "--port=$Port" --user=root -e 'CREATE DATABASE nero_progression_test CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci'
     if($LASTEXITCODE){throw 'Cannot create disposable test schema'}
     $src = Join-Path $root 'game-source/server/src/main/java/nro/progression'
     & javac -encoding UTF-8 -cp $runtime -d $classes (Join-Path $src 'UnlimitedProgression.java') (Join-Path $src 'ProgressionRepository.java') (Join-Path $src 'ProgressionCommands.java') (Join-Path $src 'BossProgression.java') (Join-Path $src 'BossProgressionRepository.java') (Join-Path $root 'tests/ProgressionRepositoryTest.java')
@@ -48,6 +48,8 @@ try {
     if($LASTEXITCODE){throw 'Boss runtime compilation failed'}
     & javac -proc:none -encoding UTF-8 -cp "$classes;$runtime" -d $classes (Join-Path $src 'KaizenRecipes.java') (Join-Path $src 'KaizenForge.java') (Join-Path $src 'KaizenTransactions.java') (Join-Path $root 'tests/KaizenTransactionsTest.java')
     if($LASTEXITCODE){throw 'Kaizen compilation failed'}
+    & javac -proc:none -encoding UTF-8 -cp "$classes;$runtime" -d $classes (Join-Path $src 'KaizenCatalog.java') (Join-Path $root 'tests/KaizenCatalogTest.java')
+    if($LASTEXITCODE){throw 'Kaizen catalog compilation failed'}
     $jdbc = "jdbc:mysql://127.0.0.1:$Port/nero_progression_test?useSSL=false&allowPublicKeyRetrieval=true"
     & java -cp "$classes;$runtime" nro.progression.ProgressionRepositoryTest $jdbc seed
     if($LASTEXITCODE){throw 'Repository integration tests failed'}
@@ -57,6 +59,8 @@ try {
     if($LASTEXITCODE){throw 'Actual boss lifecycle tests failed'}
     & java -cp "$classes;$runtime" nro.progression.KaizenTransactionsTest $jdbc seed
     if($LASTEXITCODE){throw 'Kaizen transaction tests failed'}
+    & java -cp "$classes;$runtime" nro.progression.KaizenCatalogTest $jdbc seed
+    if($LASTEXITCODE){throw 'Kaizen catalog tests failed'}
     Stop-TestDatabase
     Start-TestDatabase
     & java -cp "$classes;$runtime" nro.progression.ProgressionRepositoryTest $jdbc reopen
@@ -67,5 +71,7 @@ try {
     if($LASTEXITCODE){throw 'Actual boss lifecycle restart failed'}
     & java -cp "$classes;$runtime" nro.progression.KaizenTransactionsTest $jdbc reopen
     if($LASTEXITCODE){throw 'Kaizen restart tests failed'}
+    & java -cp "$classes;$runtime" nro.progression.KaizenCatalogTest $jdbc reopen
+    if($LASTEXITCODE){throw 'Kaizen catalog restart failed'}
     Write-Host "PASS PROGRESSION_DATABASE_TESTS ARTIFACTS=$stage"
 } finally { Stop-TestDatabase }
