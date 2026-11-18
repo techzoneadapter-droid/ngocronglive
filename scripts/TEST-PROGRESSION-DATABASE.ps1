@@ -41,12 +41,19 @@ try {
     $src = Join-Path $root 'game-source/server/src/main/java/nro/progression'
     & javac -encoding UTF-8 -cp $runtime -d $classes (Join-Path $src 'UnlimitedProgression.java') (Join-Path $src 'ProgressionRepository.java') (Join-Path $src 'ProgressionCommands.java') (Join-Path $src 'BossProgression.java') (Join-Path $src 'BossProgressionRepository.java') (Join-Path $root 'tests/ProgressionRepositoryTest.java')
     if($LASTEXITCODE){throw 'Repository test compilation failed'}
+    $playerSource=Join-Path $root 'game-source/server/src/main/java/nro/models/player'
+    & javac -proc:none -encoding UTF-8 -cp "$classes;$runtime" -d $classes (Join-Path $playerSource 'NPoint.java') (Join-Path $playerSource 'ProgressionMath.java') (Join-Path $src 'ExactCombat.java') (Join-Path $src 'BossEncounter.java') (Join-Path $root 'tests/NPointExactStatsTest.java') (Join-Path $root 'tests/BossEncounterDatabaseTest.java')
+    if($LASTEXITCODE){throw 'Boss encounter test compilation failed'}
     $jdbc = "jdbc:mysql://127.0.0.1:$Port/nero_progression_test?useSSL=false&allowPublicKeyRetrieval=true"
     & java -cp "$classes;$runtime" nro.progression.ProgressionRepositoryTest $jdbc seed
     if($LASTEXITCODE){throw 'Repository integration tests failed'}
+    & java -cp "$classes;$runtime" nro.progression.BossEncounterDatabaseTest $jdbc seed
+    if($LASTEXITCODE){throw 'Boss encounter integration test failed'}
     Stop-TestDatabase
     Start-TestDatabase
     & java -cp "$classes;$runtime" nro.progression.ProgressionRepositoryTest $jdbc reopen
     if($LASTEXITCODE){throw 'Database restart verification failed'}
+    & java -cp "$classes;$runtime" nro.progression.BossEncounterDatabaseTest $jdbc reopen
+    if($LASTEXITCODE){throw 'Boss encounter restart verification failed'}
     Write-Host "PASS PROGRESSION_DATABASE_TESTS ARTIFACTS=$stage"
 } finally { Stop-TestDatabase }

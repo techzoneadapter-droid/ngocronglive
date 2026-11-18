@@ -98,9 +98,31 @@ public final class NPointExactStatsTest {
         point.subHP(100);check(point.exactHp().equals(initialHp.subtract(BigInteger.valueOf(100))),"legacy HP method routes exact session");
         player.inventory.itemsBody.set(5,new Item());calculate.invoke(point);
         check(point.exactHp().equals(huge)&&point.exactHpMax().equals(huge),"unequip clamps exact current HP");
+        player.itemTime.isUseGiapXen2=false;
+        var normalRules=new nro.progression.ExactCombat.Rules(false,0,null);
+        var pipeline=nro.progression.ExactCombat.hit(point,huge.multiply(BigInteger.valueOf(45)).divide(BigInteger.TEN),normalRules);
+        check(pipeline.applied().equals(huge.divide(BigInteger.TWO))&&!pipeline.killed(),"end-to-end exact armor to HP");
+        check(pipeline.remaining().equals(huge.divide(BigInteger.TWO)),"exact remaining HP");
+        point.setFullHpMp();
+        var capped=new nro.progression.ExactCombat.Rules(true,90,huge.divide(BigInteger.valueOf(400)));
+        var cappedHit=nro.progression.ExactCombat.hit(point,huge,capped);
+        check(cappedHit.applied().equals(huge.divide(BigInteger.valueOf(400))),"encounter mitigation and HP-fraction cap");
+        var immune=nro.progression.ExactCombat.hit(point,huge,new nro.progression.ExactCombat.Rules(true,100,null));
+        check(immune.applied().signum()==0&&!immune.killed(),"100 percent reduction");
+        point.setFullHpMp();
+        var combatPool=java.util.concurrent.Executors.newFixedThreadPool(2);
+        try {
+            java.util.concurrent.Callable<nro.progression.ExactCombat.Result> strike=()->nro.progression.ExactCombat.hit(point,huge.multiply(BigInteger.TEN),normalRules);
+            var one=combatPool.submit(strike);var two=combatPool.submit(strike);
+            var a=one.get();var b=two.get();
+            check(a.killed()!=b.killed()&&a.applied().add(b.applied()).equals(huge),"combat pipeline lethal transition only once");
+        }finally{combatPool.shutdownNow();}
+        check(!nro.progression.ExactCombat.hit(point,huge,normalRules).killed(),"dead target does not die twice");
+        point.setFullHpMp();
+        check(nro.progression.ExactCombat.hit(point,huge.multiply(BigInteger.TEN),normalRules).killed(),"respawn can die again");
         System.out.println("PASS real NPoint: VIP costume/mount exceed int, equip/unequip/recalculate, 1000 ordinary formula comparisons, 10^100 base stats");
     }
-    static void initialize(Player p) {
+    public static void initialize(Player p) {
         p.isBoss=true;
         p.inventory=new Inventory(p);for(int i=0;i<13;i++)p.inventory.itemsBody.add(new Item());
         p.setClothes=new SetClothes(p);p.effectSkill=new EffectSkill(p);p.effectSkin=new EffectSkin(p);
