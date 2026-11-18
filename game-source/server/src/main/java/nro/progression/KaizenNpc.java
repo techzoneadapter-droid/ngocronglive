@@ -11,7 +11,7 @@ import nro.consts.ConstNpc;
 
 /** Native NPC menus backed by actual crafting and original CombineServiceNew routes. */
 public final class KaizenNpc extends Npc {
-    private static final int ROOT=30100,RECIPES=30101,CONFIRM=30102;
+    private static final int ROOT=30100,RECIPES=30101,CONFIRM=30102,SOCKET=30103;
     private record Pending(KaizenRecipes recipe,String request){}
     private final Map<Player,Pending> pending=java.util.Collections.synchronizedMap(new WeakHashMap<>());
     private final KaizenPlayerForge forge;
@@ -30,9 +30,12 @@ public final class KaizenNpc extends Npc {
             switch(select) {
                 case 0,1 -> createOtherMenu(player,RECIPES,"Chọn trang bị cần ghép.",java.util.Arrays.stream(KaizenRecipes.values()).map(r->r.displayName).toArray(String[]::new));
                 case 2 -> KaizenCombine.upgrade(player);
-                case 3 -> KaizenCombine.socket(player);
+                case 3 -> createOtherMenu(player,SOCKET,"Chọn thao tác sao pha lê.","Tạo lỗ sao","Khảm sao pha lê","Đóng");
                 case 4 -> Service.gI().sendThongBaoOK(player,guide());
             }
+        }else if(menu==SOCKET) {
+            if(select==0)KaizenCombine.createSocket(player);
+            else if(select==1)KaizenCombine.socket(player);
         }else if(menu==RECIPES && select>=0 && select<KaizenRecipes.values().length) {
             var recipe=KaizenRecipes.values()[select];
             pending.put(player,new Pending(recipe,UUID.randomUUID().toString()));

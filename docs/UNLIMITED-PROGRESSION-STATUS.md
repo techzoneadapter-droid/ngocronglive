@@ -75,3 +75,18 @@ Run `powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/TEST-PROGRE
 - Actual SkillService.playerAttackPlayer killed the configured Kuku. Local-only runner bypassed departure cosmetics and called the real Boss.respawn after 2,005ms: HP 10,500,000 -> 11,025,000; attack 30,600 -> 31,212; armor 0 -> 0 (zero base remains zero). This verifies real damage/death/persistence/respawn; normal production timing is unchanged.
 - PC Kaizen art now uses owner reference via generated transparent four-frame cyan-flame atlas, subtle code bob, scoped to exact NPC name. Atlas/prompt metadata is under patches/unlimited-client/assets. Local screenshots show the new character. Native name rendering remains in use. Not ported to mobile yet.
 - Inventory critical display fixes signed-byte negative formatting for current 200% value. Vital HUD compact-number patch visually confirmed in local-world-hud-kaizen.png: HP 70,17tỷ and KI 7,79tỷ, fitting native bars; old 2147483647 labels are gone. Inventory shows critical 200% without signed-byte wrap.
+
+
+### Upgrade/socket compatibility and new inventory art
+
+- Fixed real CombineServiceNew stat selection for Kaizen: main percentage options 50/77/103 now use existing success/failure algorithm rather than producing null option; legacy gear keeps original selector. No copied upgrade implementation, original costs/stone pairing/ratios retained.
+- TEST-KAIZEN-COMBINE.ps1 executes actual private CombineServiceNew upgrade/holes/socket methods for all seven pieces: 7 upgrade steps, 8 holes and 8 sockets per piece, no cost past cap, unchanged secondary stats and legacy armor upgrade. Success probability is forced only in fixture to test each branch deterministically; this is not client interaction proof.
+- New distinct icon IDs 32050–32063 are conflict-checked against unrelated DB templates, existing Kaizen IDs retained, runtime/catalog updated after commit. Item cache version bumped to27. PC icon art scoped to range, 20px equipment and15px fragments; uses native clip to avoid painting over tab headers. Atlas/prompt metadata under patches/unlimited-client/assets/kaizen-equipment-icons.*. Native mobile icon resource distribution remains pending.
+- Kaizen socket entry now exposes create-holes and insert-crystal menus through original CombineServiceNew. Client root/upgrade panel verification is ongoing.
+
+
+### Real client menu evidence
+
+- Local QA 0.1.2 walks to native NPC distance and sends Service.openMenu(81)/confirmMenu(81,2); real server returns native 5-choice menu and combine panel. Screenshots local-kaizen-root-menu.png/local-kaizen-upgrade-menu.png and marker KAIZEN_NATIVE_ROOT_AND_UPGRADE_PANEL_PASS verified.
+- Remaining UI defects revealed: combine portrait still uses native donor head resource (looks like an equipment icon); combine instruction still lists only old clothes; full exact current HP/KI after repeated login can reflect legacy stored ratios. These are pending, not release-ready.
+- Repeated database test passed including 14 icon bindings and seven persisted equipment recipes, with old templates preserved. Branch remains draft and no production changes made.

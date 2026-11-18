@@ -8,10 +8,11 @@ using Il2CppInterop.Runtime.Injection;
 using UnityEngine;
 using HarmonyLib;
 
-[BepInPlugin("nero.qa.unlimited.local", "Unlimited isolated local QA", "0.1.0")]
+[BepInPlugin("nero.qa.unlimited.local", "Unlimited isolated local QA", "0.1.2")]
 public sealed class UnlimitedLocalQa : BasePlugin {
  public override void Load() {
   if(!Environment.GetCommandLineArgs().Contains("-unlimitedLocalQa"))return;
+  Application.runInBackground=true;
   ClassInjector.RegisterTypeInIl2Cpp<UnlimitedLocalQaStep>();AddComponent<UnlimitedLocalQaStep>();
  }
 }
@@ -21,11 +22,18 @@ public sealed class UnlimitedLocalQaStep : MonoBehaviour {
  private int phase;
  private static readonly string Lab=Path.GetFullPath(Path.Combine(Path.GetDirectoryName(System.Diagnostics.Process.GetCurrentProcess().MainModule.FileName),".."));
  public void Update() {
+  Application.runInBackground=true;
+  if(phase==4 && G1.GameCanvas.currentScreen!=null && G1.GameCanvas.currentScreen.GetIl2CppType().Name=="GameScr") {
+   var moving=G1.Char.myCharz();G1.GameCanvas.keyHold[23]=moving.cx>128;G1.GameCanvas.keyHold[24]=moving.cx<80;
+  }
   if(done || Time.realtimeSinceStartup<next)return;
   next=Time.realtimeSinceStartup+3;
   try {
    var screen=G1.GameCanvas.currentScreen;
    if(screen==null)return;
+   File.AppendAllText(Path.Combine(Lab,"logs/client-qa.log"),"STEP phase="+phase+" screen="+screen.GetIl2CppType().Name+" loading="+G1.Char.isLoadingMap+Environment.NewLine);
+   if(phase>0 && (screen.GetIl2CppType().Name!="GameScr" || G1.Char.isLoadingMap))
+    File.AppendAllText(Path.Combine(Lab,"logs/client-qa.log"),"WAIT phase="+phase+" screen="+screen.GetIl2CppType().Name+" loading="+G1.Char.isLoadingMap+Environment.NewLine);
    if(screen.GetIl2CppType().Name=="GameScr" && !G1.Char.isLoadingMap) {
     var actor=G1.Char.myCharz();
     if(actor==null)return;
@@ -36,20 +44,23 @@ public sealed class UnlimitedLocalQaStep : MonoBehaviour {
      var panel=G1.GameCanvas.panel;panel.setTypeMain();panel.currentTabIndex=1;
      AccessTools.Method(typeof(G1.Panel),"setTabInventory").Invoke(panel,new object[]{true});panel.show();phase=2;return;
     }
-    if(phase==2) {var panel=G1.GameCanvas.panel;panel.cmy=panel.cmtoY=Math.Min(13*48,panel.cmyLim);ScreenCapture.CaptureScreenshot(Path.Combine(Lab,"logs/local-seven-equipped.png"));phase=3;return;}
+    if(phase==2) {var panel=G1.GameCanvas.panel;panel.cmy=panel.cmtoY=Math.Min(13*24,panel.cmyLim);ScreenCapture.CaptureScreenshot(Path.Combine(Lab,"logs/local-seven-equipped.png"));phase=3;return;}
     if(phase==3) {
      G1.GameCanvas.panel.hideNow();
-     for(int i=0;i<G1.GameScr.vCharInMap.size();i++) {
-      var target=G1.GameScr.vCharInMap.elementAt(i).TryCast<G1.Char>();
-      if(target==null || target.charID!=-100023)continue;
-      actor.charFocus=target;actor.mobFocus=null;
-      actor.myskill=actor.vSkillFight.elementAt(0).TryCast<G1.Skill>();G1.Service.gI().selectSkill(actor.myskill.template.id);
-      G1.GameScr.gI().auto=1;G1.GameScr.gI().doFire(false,true);
-      File.AppendAllText(Path.Combine(Lab,"logs/client-qa.log"),"KUKU_ATTACK_SENT"+Environment.NewLine);phase=4;next=Time.realtimeSinceStartup+8;return;
-     }
-     ScreenCapture.CaptureScreenshot(Path.Combine(Lab,"logs/local-world-hud-kaizen.png"));done=true;return;
+     ScreenCapture.CaptureScreenshot(Path.Combine(Lab,"logs/local-world-hud-kaizen.png"));phase=4;return;
     }
-    ScreenCapture.CaptureScreenshot(Path.Combine(Lab,"logs/local-boss-test.png"));G1.GameScr.gI().auto=0;done=true;return;
+    if(phase==4) {
+     if(actor.cx<80 || actor.cx>128)return;
+     G1.GameCanvas.keyHold[23]=G1.GameCanvas.keyHold[24]=false;
+     File.AppendAllText(Path.Combine(Lab,"logs/client-qa.log"),"OPEN_MENU_BEGIN x="+actor.cx+Environment.NewLine);G1.Service.gI().openMenu(81);phase=5;File.AppendAllText(Path.Combine(Lab,"logs/client-qa.log"),"OPEN_MENU_SENT"+Environment.NewLine);return;
+    }
+    if(phase==5) {
+     if(!G1.GameCanvas.menu.showMenu || G1.GameCanvas.menu.menuItems.size()!=5)throw new InvalidOperationException("Kaizen native root menu did not open with five entries");
+     ScreenCapture.CaptureScreenshot(Path.Combine(Lab,"logs/local-kaizen-root-menu.png"));phase=6;return;
+    }
+    if(phase==6){G1.GameCanvas.menu.showMenu=false;G1.Service.gI().confirmMenu(81,2);phase=7;return;}
+    if(!G1.GameCanvas.panel.isShow)throw new InvalidOperationException("Kaizen native combine panel did not open");
+    ScreenCapture.CaptureScreenshot(Path.Combine(Lab,"logs/local-kaizen-upgrade-menu.png"));File.AppendAllText(Path.Combine(Lab,"logs/client-qa.log"),"KAIZEN_NATIVE_ROOT_AND_UPGRADE_PANEL_PASS"+Environment.NewLine);done=true;return;
    }
    if(sent || screen.GetIl2CppType().Name!="ServerListScreen")return;
    G1.GameMidlet.IP="127.0.0.1";G1.GameMidlet.PORT=14615;

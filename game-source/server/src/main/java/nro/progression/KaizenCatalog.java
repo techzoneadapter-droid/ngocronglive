@@ -23,6 +23,7 @@ public final class KaizenCatalog {
         var pending=new ArrayList<ItemTemplate>();
         var forge=new EnumMap<KaizenRecipes,KaizenForge.Binding>(KaizenRecipes.class);
         var equipment=new EnumMap<KaizenRecipes,Integer>(KaizenRecipes.class);
+        var iconChanges=new java.util.HashMap<Integer,Short>();
         try {
             try(var s=c.createStatement();var r=s.executeQuery("SELECT GET_LOCK('nero_kaizen_catalog_install',5)")) {
                 if(!r.next()||r.getInt(1)!=1)throw new SQLException("Catalog migration busy");
@@ -38,13 +39,9 @@ public final class KaizenCatalog {
                     if(next!=Manager.ITEM_TEMPLATES.size()+pending.size()||next+1>Short.MAX_VALUE)
                         throw new SQLException("Item catalog is not contiguous or full");
                     fragment=next;item=next+1;
-                    // Existing icon resource/normal gear types keep native combine and trade semantics.
-                    int donor=switch(recipe){case CROWN,BRACELET,NECKLACE -> 12;case CAPE,SCARF -> 0;case MASK,HALO -> 6;};
-                    if(donor>=Manager.ITEM_TEMPLATES.size())throw new SQLException("Native icon donor missing");
-                    short icon=Manager.ITEM_TEMPLATES.get(donor).iconID;
-                    pending.add(insert(c,fragment,(byte)27,"Mảnh "+recipe.displayName,icon));
+                    pending.add(insert(c,fragment,(byte)27,"Mảnh "+recipe.displayName,KaizenIcons.fragment(recipe)));
                     byte type=switch(recipe){case CROWN,BRACELET,NECKLACE -> 4;case CAPE,SCARF -> 0;case MASK -> 2;case HALO -> 3;};
-                    pending.add(insert(c,item,type,recipe.displayName,icon));
+                    pending.add(insert(c,item,type,recipe.displayName,KaizenIcons.equipment(recipe)));
                     try(var q=c.prepareStatement("INSERT INTO nero_kaizen_catalog(kind,fragment_id,equipment_id) VALUES(?,?,?)")) {
                         q.setString(1,recipe.name());q.setInt(2,fragment);q.setInt(3,item);q.executeUpdate();
                     }
@@ -56,9 +53,18 @@ public final class KaizenCatalog {
                 }
                 forge.put(recipe,new KaizenForge.Binding(fragment,item,KaizenStats.options(recipe)));
                 equipment.put(recipe,item);
+                iconChanges.put(fragment,KaizenIcons.fragment(recipe));iconChanges.put(item,KaizenIcons.equipment(recipe));
+            }
+            try(var q=c.prepareStatement("SELECT id FROM item_template WHERE icon_id BETWEEN ? AND ?")) {
+                q.setInt(1,KaizenIcons.FIRST);q.setInt(2,KaizenIcons.FIRST+13);
+                try(var r=q.executeQuery()){while(r.next())if(!iconChanges.containsKey(r.getInt(1)))throw new SQLException("Kaizen icon range used by unrelated item");}
+            }
+            try(var q=c.prepareStatement("UPDATE item_template SET icon_id=? WHERE id=?")) {
+                for(var change:iconChanges.entrySet()){q.setShort(1,change.getValue());q.setInt(2,change.getKey());q.addBatch();}q.executeBatch();
             }
             c.commit();
             Manager.ITEM_TEMPLATES.addAll(pending);
+            for(var change:iconChanges.entrySet())Manager.ITEM_TEMPLATES.get(change.getKey()).iconID=change.getValue();
             return new Catalog(Map.copyOf(forge),Map.copyOf(equipment));
         }catch(Exception error){c.rollback();throw error;}
         finally {

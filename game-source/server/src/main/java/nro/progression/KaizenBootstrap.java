@@ -36,7 +36,7 @@ public final class KaizenBootstrap {
         var actor=new KaizenNpc(0,x,y,npc.id,npc.head,forge);
         map.addNpc(actor);
         // New catalog entries must be fetched rather than read from an older item/map cache.
-        nro.data.DataGame.vsItem=26;nro.data.DataGame.vsMap=6;
+        nro.data.DataGame.vsItem=27;nro.data.DataGame.vsMap=6;
         installed=true;
     }
     private static void installDropConfig(KaizenCatalog.Catalog catalog)throws SQLException {

@@ -124,3 +124,39 @@ internal static class KaizenNpcArt {
         return false;
     }
 }
+
+[HarmonyPatch(typeof(G1.SmallImage),"drawSmallImage",new Type[]{typeof(G1.mGraphics),typeof(int),typeof(int),typeof(int),typeof(int),typeof(int)})]
+internal static class KaizenInventoryIcons {
+    private static Texture2D atlas;
+    static bool Prefix(G1.mGraphics __0,int __1,int __2,int __3,int __4,int __5) {
+        int index=__1-32050;if(index<0 || index>=14)return true;
+        if(Event.current==null || Event.current.type!=EventType.Repaint)return false;
+        if(atlas==null) {
+            string path=Path.Combine(Path.GetDirectoryName(typeof(ExactStatsPcPlugin).Assembly.Location),"KaizenAssets","kaizen-equipment-icons.png");
+            if(!File.Exists(path))return true;
+            atlas=new Texture2D(2,2,TextureFormat.RGBA32,false);
+            if(!ImageConversion.LoadImage(atlas,File.ReadAllBytes(path),true))return true;
+            atlas.filterMode=FilterMode.Bilinear;atlas.wrapMode=TextureWrapMode.Clamp;
+        }
+        bool fragment=index%2==0;int frame=index/2;
+        float size=fragment?15:20,x=__2,y=__3;
+        if((__5&1)!=0)x-=size/2;else if((__5&8)!=0)x-=size;
+        if((__5&2)!=0)y-=size/2;else if((__5&32)!=0)y-=size;
+        int zoom=Math.Max(1,G1.mGraphics.zoomLevel);
+        var rect=new Rect((x+__0.getTranslateX())*zoom,(y+__0.getTranslateY())*zoom,size*zoom,size*zoom);
+        var uv=new Rect(frame/7f,.285f,1f/7f,.43f);
+        if(__0.isClip) {
+            var clip=new Rect(__0.getClipX()*zoom,__0.getClipY()*zoom,__0.getClipWidth()*zoom,__0.getClipHeight()*zoom);
+            float left=Math.Max(rect.xMin,clip.xMin),right=Math.Min(rect.xMax,clip.xMax);
+            float top=Math.Max(rect.yMin,clip.yMin),bottom=Math.Min(rect.yMax,clip.yMax);
+            if(right<=left || bottom<=top)return false;
+            uv=new Rect(uv.x+(left-rect.x)/rect.width*uv.width,uv.y+(rect.yMax-bottom)/rect.height*uv.height,
+                (right-left)/rect.width*uv.width,(bottom-top)/rect.height*uv.height);
+            rect=new Rect(left,top,right-left,bottom-top);
+        }
+        var color=GUI.color;
+        try{GUI.color=Color.white;Graphics.DrawTexture(rect,atlas,uv,0,0,0,0);}
+        finally{GUI.color=color;}
+        return false;
+    }
+}

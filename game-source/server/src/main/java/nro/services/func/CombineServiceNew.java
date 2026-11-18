@@ -988,13 +988,7 @@ public class CombineServiceNew {
                             String option = null;
                             int param = 0;
                             for (ItemOption io : itemDo.itemOptions) {
-                                if (io.optionTemplate.id == 47
-                                        || io.optionTemplate.id == 6
-                                        || io.optionTemplate.id == 0
-                                        || io.optionTemplate.id == 7
-                                        || io.optionTemplate.id == 14
-                                        || io.optionTemplate.id == 22
-                                        || io.optionTemplate.id == 23) {
+                                if (isUpgradeStat(itemDo, io)) {
                                     option = io.optionTemplate.name;
                                     param = io.param + (io.param * 10 / 100);
                                     break;
@@ -2908,13 +2902,7 @@ public class CombineServiceNew {
                     ItemOption option = null;
                     ItemOption option2 = null;
                     for (ItemOption io : itemDo.itemOptions) {
-                        if (io.optionTemplate.id == 47
-                                || io.optionTemplate.id == 6
-                                || io.optionTemplate.id == 0
-                                || io.optionTemplate.id == 7
-                                || io.optionTemplate.id == 14
-                                || io.optionTemplate.id == 22
-                                || io.optionTemplate.id == 23) {
+                        if (isUpgradeStat(itemDo, io)) {
                             option = io;
                         } else if (io.optionTemplate.id == 27
                                 || io.optionTemplate.id == 28) {
@@ -2967,6 +2955,16 @@ public class CombineServiceNew {
     }
 
     // --------------------------------------------------------------------------
+    private boolean isUpgradeStat(Item item, ItemOption option) {
+        int slot=nro.progression.KaizenEquipment.slot(item.template.id);
+        if(slot>=0) {
+            var kind=nro.progression.KaizenRecipes.values()[slot-nro.progression.KaizenEquipment.FIRST_SLOT];
+            return option.optionTemplate.id==nro.progression.KaizenStats.options(kind).getJSONArray(0).getInt(0);
+        }
+        int id=option.optionTemplate.id;
+        return id==47 || id==6 || id==0 || id==7 || id==14 || id==22 || id==23;
+    }
+
     private boolean isCoupleItemNangCapCheck(Item trangBi, Item daNangCap) {
         if (trangBi != null && daNangCap != null) {
             if (trangBi.template.type == 0 && daNangCap.template.id == 223) {

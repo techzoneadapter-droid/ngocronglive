@@ -53,7 +53,12 @@ public final class UnlimitedLocalBootstrap {
    try {
     for(int attempt=0;attempt<300;attempt++) {
      var player=nro.server.Client.gI().getPlayers().stream().filter(p->p.id==6).findFirst().orElse(null);
-     if(player!=null && PlayerProgressionRuntime.active(player)) { auditEquipment(player,database);auditBoss(player);return; }
+     if(player!=null && PlayerProgressionRuntime.active(player)) {
+      auditEquipment(player,database);auditBoss(player);
+      var forge=nro.server.Manager.NPCS.stream().filter(n->n instanceof KaizenNpc).findFirst().orElseThrow();
+      nro.services.func.ChangeMapService.gI().changeMap(player,player.zone,forge.cx+32,forge.cy);
+      return;
+     }
      Thread.sleep(1000);
     }
     throw new IllegalStateException("Local test player did not subscribe");

@@ -22,6 +22,8 @@ public final class KaizenCatalogTest {
     if(binding.options().length()!=3 || !binding.options().toString().equals(KaizenStats.options(recipe).toString()))throw new AssertionError("owner-approved x100 options");
     if(!Manager.ITEM_TEMPLATES.get(binding.fragmentId()).name.equals("Mảnh "+recipe.displayName))throw new AssertionError("fragment runtime entry");
     if(!Manager.ITEM_TEMPLATES.get(binding.equipmentId()).name.equals(recipe.displayName))throw new AssertionError("gear runtime entry");
+    if(Manager.ITEM_TEMPLATES.get(binding.fragmentId()).iconID!=KaizenIcons.fragment(recipe)
+       || Manager.ITEM_TEMPLATES.get(binding.equipmentId()).iconID!=KaizenIcons.equipment(recipe))throw new AssertionError("unique fragment/equipment icon binding");
    }
    var again=KaizenCatalog.install(c);
    if(!catalog.equipment().equals(again.equipment())||Manager.ITEM_TEMPLATES.size()!=34)throw new AssertionError("restart/reapply allocated duplicate IDs");

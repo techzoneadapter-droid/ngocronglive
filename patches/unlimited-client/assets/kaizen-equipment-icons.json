@@ -1,0 +1,14 @@
+{
+  "tool": "image_gen builtin",
+  "prompt": "Seven isolated flat-color 2D game icons: crown, bracelet, necklace, cape, mask, scarf, halo. Bold outlines, gold/cyan theme, transparent background, no text or cast shadows.",
+  "file": "kaizen-equipment-icons.png",
+  "columns": 7,
+  "source_uv_y": 0.285,
+  "source_uv_height": 0.43,
+  "native_icon_ids": [
+    32050,
+    32063
+  ],
+  "logical_equipment_size": 20,
+  "logical_fragment_size": 15
+}
